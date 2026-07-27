@@ -1,0 +1,2438 @@
+{
+  "format": "localbench-benchmark",
+  "format_version": "1.0",
+  "exported_at": "",
+  "name": "Code Reasoning & Correctness (Python)",
+  "description": "Output-prediction over original Python snippets, in the CRUXEval output-prediction format. Covers closures and scoping, mutation and aliasing, the data model (MRO, descriptors, dict key identity), generator lifecycle, and evaluation order. Every canonical answer is produced by executing the snippet on CPython 3, never written by hand. Deliberately excludes interpreter implementation details such as small-integer caching, which reward trivia about one runtime rather than reasoning about the language.",
+  "version": "4.0.0",
+  "tags": [
+    "coding",
+    "python",
+    "reasoning",
+    "deterministic"
+  ],
+  "scoring_config": {},
+  "performance_thresholds": {
+    "desired_ttft": 0.6,
+    "max_ttft": 12.0,
+    "desired_tps": 80.0,
+    "min_tps": 4.0,
+    "max_failure_rate": 0.1
+  },
+  "composite_weights": {
+    "quality": 0.9,
+    "reliability": 0.07,
+    "performance": 0.03
+  },
+  "prompts": [
+    {
+      "stable_id": "cr-closure-late-binding",
+      "title": "Late-binding closures in a comprehension",
+      "description": "Each lambda captures the variable i, not its value at creation time.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "output-prediction",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "[2, 2, 2]",
+        "accepted_aliases": [
+          "[2,2,2]"
+        ],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "fns = [lambda: i for i in range(3)]\nprint([f() for f in fns])",
+          "position": 1
+        }
+      ],
+      "position": 0
+    },
+    {
+      "stable_id": "cr-mutable-default",
+      "title": "Mutable default argument identity",
+      "description": "The default list is created once and shared across calls.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "output-prediction",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "True",
+        "accepted_aliases": [
+          "true"
+        ],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def f(x, acc=[]):\n    acc.append(x)\n    return acc\n\nprint(f(1) is f(3))",
+          "position": 1
+        }
+      ],
+      "position": 1
+    },
+    {
+      "stable_id": "cr-generator-exhaustion",
+      "title": "Generator exhaustion",
+      "description": "A generator can only be consumed once.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "output-prediction",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "0",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "g = (x * 2 for x in range(3))\nlist(g)\nprint(len(list(g)))",
+          "position": 1
+        }
+      ],
+      "position": 2
+    },
+    {
+      "stable_id": "cr-dict-key-collapse",
+      "title": "Equal keys collapse in a dict literal",
+      "description": "True == 1 == 1.0, so they are one key; last value wins, first key kept.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "output-prediction",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "{True: 'c'}",
+        "accepted_aliases": [
+          "{True:'c'}",
+          "{true: 'c'}",
+          "{true:'c'}"
+        ],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "print({True: 'a', 1: 'b', 1.0: 'c'})",
+          "position": 1
+        }
+      ],
+      "position": 3
+    },
+    {
+      "stable_id": "cr-finally-return",
+      "title": "return in finally overrides try",
+      "description": "A return in finally replaces any value the try block returned.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "output-prediction",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "2",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def f():\n    try:\n        return 1\n    finally:\n        return 2\n\nprint(f())",
+          "position": 1
+        }
+      ],
+      "position": 4
+    },
+    {
+      "stable_id": "cr-list-mult-aliasing",
+      "title": "Row aliasing from list multiplication",
+      "description": "The outer list holds three references to the same inner list.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "output-prediction",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "5",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "a = [[0] * 2] * 3\na[0][0] = 5\nprint(a[1][0])",
+          "position": 1
+        }
+      ],
+      "position": 5
+    },
+    {
+      "stable_id": "cr-or-short-circuit",
+      "title": "or returns the first truthy operand",
+      "description": "or yields the operand, not a boolean.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "output-prediction",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "x",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "print(0 or [] or 'x' or 3)",
+          "position": 1
+        }
+      ],
+      "position": 6
+    },
+    {
+      "stable_id": "cr-pow-right-assoc",
+      "title": "Exponent operator is right-associative",
+      "description": "2 ** (3 ** 2) = 2 ** 9.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "output-prediction",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "512",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "print(2 ** 3 ** 2)",
+          "position": 1
+        }
+      ],
+      "position": 7
+    },
+    {
+      "stable_id": "cr-running-max-sum",
+      "title": "Simulate a running-maximum accumulation",
+      "description": "Tracks state across a loop; one slip cascades.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "output-prediction",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "46",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "data = [3, 1, 4, 1, 5, 9, 2, 6]\nrm, tot = data[0], 0\nfor v in data:\n    rm = max(rm, v)\n    tot += rm\nprint(tot)",
+          "position": 1
+        }
+      ],
+      "position": 8
+    },
+    {
+      "stable_id": "cr-sum-bools",
+      "title": "Booleans are integers under sum",
+      "description": "True is 1 and False is 0.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "output-prediction",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "5",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "print(sum([True, True, False, 2, True]))",
+          "position": 1
+        }
+      ],
+      "position": 9
+    },
+    {
+      "stable_id": "cr-decorator-attr-target",
+      "title": "Decorator mutates the wrong object's attribute",
+      "description": "greet is now wrapper; the counter increments the inner fn, not wrapper.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "output-prediction",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "0",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def count_calls(fn):\n    fn.calls = 0\n    def wrapper(*a, **k):\n        fn.calls += 1\n        return fn(*a, **k)\n    wrapper.calls = 0\n    return wrapper\n\n@count_calls\ndef greet():\n    return \"hi\"\n\ngreet()\ngreet()\nprint(greet.calls)",
+          "position": 1
+        }
+      ],
+      "position": 10
+    },
+    {
+      "stable_id": "cr-floordiv-negatives",
+      "title": "Floor division and modulo with negatives",
+      "description": "Python floors toward negative infinity; modulo follows the divisor's sign.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "output-prediction",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "-4 1 -4",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "print(-7 // 2, -7 % 2, 7 // -2)",
+          "position": 1
+        }
+      ],
+      "position": 11
+    },
+    {
+      "stable_id": "cr-bankers-rounding",
+      "title": "Round-half-to-even (banker's rounding)",
+      "description": "round() ties go to the nearest even integer.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "output-prediction",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "0 2 2 4",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "print(round(0.5), round(1.5), round(2.5), round(3.5))",
+          "position": 1
+        }
+      ],
+      "position": 12
+    },
+    {
+      "stable_id": "cr-fstring-format-specs",
+      "title": "Format specifiers in f-strings",
+      "description": "Hex with prefix, fixed precision, zero-padded binary.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "output-prediction",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "0xff|3.14|00101010",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "print(f\"{255:#x}|{3.14159:.2f}|{42:08b}\")",
+          "position": 1
+        }
+      ],
+      "position": 13
+    },
+    {
+      "stable_id": "cr-reduce-fold",
+      "title": "Left fold with reduce",
+      "description": "Builds the number digit by digit.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "output-prediction",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "1234",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "from functools import reduce\nprint(reduce(lambda a, b: a * 10 + b, [1, 2, 3, 4]))",
+          "position": 1
+        }
+      ],
+      "position": 14
+    },
+    {
+      "stable_id": "cr-try-else",
+      "title": "try/except/else control flow",
+      "description": "else runs only when try did not raise.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "output-prediction",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "else",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def f():\n    try:\n        x = 1\n    except Exception:\n        return \"except\"\n    else:\n        return \"else\"\n    finally:\n        pass\n\nprint(f())",
+          "position": 1
+        }
+      ],
+      "position": 15
+    },
+    {
+      "stable_id": "cr-chained-aug-assign",
+      "title": "Chained assignment with in-place mutation",
+      "description": "a and b bind the same list; += extends it in place.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "output-prediction",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "2",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "a = b = [1]\na += [2]\nprint(len(b))",
+          "position": 1
+        }
+      ],
+      "position": 16
+    },
+    {
+      "stable_id": "cr-yield-from-sum",
+      "title": "Delegating generators with yield from",
+      "description": "Yields 0,1,2,0,1 which sum to 4.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "output-prediction",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "4",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def g():\n    yield from range(3)\n    yield from range(2)\n\nprint(sum(g()))",
+          "position": 1
+        }
+      ],
+      "position": 17
+    },
+    {
+      "stable_id": "cr-mro-diamond",
+      "title": "C3 linearization in a diamond hierarchy",
+      "description": "Method resolution order decides which override wins in multiple inheritance.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 18,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "BCA ['D', 'B', 'C', 'A']",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "class A:\n    def who(self): return 'A'\nclass B(A):\n    def who(self): return 'B' + super().who()\nclass C(A):\n    def who(self): return 'C' + super().who()\nclass D(B, C):\n    pass\n\nprint(D().who(), [k.__name__ for k in D.__mro__][:4])",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr-slice-assign-step",
+      "title": "Extended slice assignment",
+      "description": "Assigning through a strided slice replaces specific positions, and the lengths must match exactly.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 19,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "['x', 1, 2, 'y', 4, 5, 'z', 7] [0, 9, 4, 5]",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "a = list(range(8))\na[::3] = ['x', 'y', 'z']\nb = list(range(6))\nb[1:4] = [9]\nprint(a, b)",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr-nonlocal-counter",
+      "title": "nonlocal through two closure levels",
+      "description": "Rebinding versus mutation across nested scopes.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 20,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "(11, 22, 22)",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def outer():\n    n = 0\n    def mid():\n        nonlocal n\n        n += 1\n        def inner():\n            nonlocal n\n            n += 10\n            return n\n        return inner()\n    r1 = mid()\n    r2 = mid()\n    return r1, r2, n\n\nprint(outer())",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr-sort-key-stability",
+      "title": "Stable sort under a coarse key",
+      "description": "Python's sort is stable, so equal keys preserve input order.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 21,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "['fig', 'pear', 'kiwi', 'plum', 'date', 'apple']",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "words = ['pear', 'fig', 'apple', 'kiwi', 'plum', 'date']\nprint(sorted(words, key=len))",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr-dict-view-live",
+      "title": "Dict views are live",
+      "description": "A keys() view reflects later mutation rather than snapshotting.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 22,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "['a', 'b'] ['b'] 1",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "d = {'a': 1}\nks = d.keys()\nd['b'] = 2\nbefore = list(ks)\nd.pop('a')\nprint(before, list(ks), len(ks))",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr-default-dict-vs-setdefault",
+      "title": "setdefault evaluates its argument eagerly",
+      "description": "setdefault builds the default even when the key already exists.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 23,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "['existing', 'x'] ['y'] 2",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "calls = []\ndef make():\n    calls.append(1)\n    return []\n\nd = {'k': ['existing']}\nd.setdefault('k', make()).append('x')\nd.setdefault('n', make()).append('y')\nprint(d['k'], d['n'], len(calls))",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr-generator-finally-close",
+      "title": "finally runs when a generator is closed",
+      "description": "Closing a suspended generator runs its finally block, and so does exhausting a fresh one.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 24,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "1 2",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "log = []\ndef g():\n    try:\n        yield 1\n        yield 2\n    finally:\n        log.append('done')\n\nit = g()\nnext(it)\nit.close()\nafter_close = len(log)\nlist(g())\nprint(after_close, len(log))",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr-chained-comparison",
+      "title": "Chained comparisons short-circuit",
+      "description": "a < b < c evaluates b once and stops early, unlike (a<b) and (b<c) written out.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "discriminator"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 4.0,
+      "position": 25,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "True False [1, 5, 3, 9, 2]",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "calls = []\ndef f(v):\n    calls.append(v)\n    return v\n\nr = f(1) < f(5) > f(3)\ns = f(9) < f(2) < f(0)\nprint(r, s, calls)",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr-class-var-shadow",
+      "title": "Instance assignment shadows a mutable class attribute",
+      "description": "Augmented assignment on a class-level list mutates the shared object.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 26,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "['x'] 0 0 True",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "class Box:\n    items = []\n    count = 0\n\na, b = Box(), Box()\na.items.append('x')\na.count += 1\nprint(b.items, b.count, Box.count, 'count' in a.__dict__)",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr-str-partition-chain",
+      "title": "String scanning without regex",
+      "description": "Multi-step string manipulation the model must trace exactly.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 27,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "key|value=extra|key=value|extra",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "s = 'key=value=extra'\nhead, _, tail = s.partition('=')\nr_head, _, r_tail = s.rpartition('=')\nprint('|'.join([head, tail, r_head, r_tail]))",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr-int-float-dict-key",
+      "title": "Numeric keys unify across types",
+      "description": "1, 1.0 and True hash equal, so they collide in a dict.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 28,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "{1: 3, 2: 2} 2",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "d = {}\nfor k in (1, 1.0, True, 2, 2.0):\n    d[k] = d.get(k, 0) + 1\nprint(d, len(d))",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr-list-comp-scope-leak",
+      "title": "Comprehension scope does not leak",
+      "description": "The loop variable is confined to the comprehension in Python 3.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "discriminator"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 4.0,
+      "position": 29,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "outer [0, 1, 2] [10, 10]",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "x = 'outer'\nvals = [x for x in range(3)]\ndef f():\n    y = 10\n    return [y for _ in range(2)]\nprint(x, vals, f())",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr-tuple-mutation-error",
+      "title": "Augmented assignment into a tuple's list",
+      "description": "The mutation succeeds and then the assignment raises -- both happen.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "discriminator"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 4.0,
+      "position": 30,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "TypeError ([1, 3], [2])",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "t = ([1], [2])\ntry:\n    t[0] += [3]\n    out = 'no error'\nexcept TypeError:\n    out = 'TypeError'\nprint(out, t)",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr-zip-strict-uneven",
+      "title": "zip truncates and consumes",
+      "description": "zip stops at the shortest input, but has already pulled from the longer one.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "discriminator"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 4.0,
+      "position": 31,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "[(1, 10), (2, 20)] [4, 5]",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "a = iter([1, 2, 3, 4, 5])\nb = [10, 20]\npaired = list(zip(a, b))\nprint(paired, list(a))",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr3-descriptor-protocol",
+      "title": "Descriptor overrides instance dict",
+      "description": "A data descriptor on the class wins over the instance __dict__; a non-data one does not.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 32,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "data-get y x ['d', 'n']",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "class Data:\n    def __get__(self, obj, cls): return 'data-get'\n    def __set__(self, obj, v): obj.__dict__['d'] = v\n\nclass NonData:\n    def __get__(self, obj, cls): return 'nondata-get'\n\nclass C:\n    d = Data()\n    n = NonData()\n\nc = C()\nc.d = 'x'\nc.n = 'y'\nprint(c.d, c.n, c.__dict__['d'], sorted(c.__dict__))",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr3-context-suppress",
+      "title": "__exit__ returning True swallows the exception",
+      "description": "Control flow through a suppressing context manager plus finally ordering.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 33,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "after-with caught ['enter', 'exit', 'finally', 'enter', 'exit', 'finally']",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "log = []\nclass CM:\n    def __init__(self, swallow): self.swallow = swallow\n    def __enter__(self): log.append('enter'); return self\n    def __exit__(self, *a): log.append('exit'); return self.swallow\n\ndef f(swallow):\n    try:\n        with CM(swallow):\n            raise ValueError('boom')\n        return 'after-with'\n    except ValueError:\n        return 'caught'\n    finally:\n        log.append('finally')\n\na = f(True)\nb = f(False)\nprint(a, b, log)",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr3-reflected-operator",
+      "title": "Reflected operators and subclass priority",
+      "description": "A subclass's reflected method is tried before the base class's forward method.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "discriminator"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 4.0,
+      "position": 34,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "B.radd A.add A.add ['A', 'B']",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "class A:\n    def __add__(self, other): return 'A.add'\n    def __radd__(self, other): return 'A.radd'\n\nclass B(A):\n    def __radd__(self, other): return 'B.radd'\n\na, b = A(), B()\nprint(a + b, b + a, a + a, [type(x).__name__ for x in (a, b)])",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr3-super-kwargs-chain",
+      "title": "Cooperative super() through a diamond with kwargs",
+      "description": "Each __init__ must pass the remaining kwargs along the MRO.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 35,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "['Both', 'L', 'R', ('Base', ['c'])]",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "order = []\nclass Base:\n    def __init__(self, **kw): order.append(('Base', sorted(kw)))\nclass L(Base):\n    def __init__(self, a=None, **kw): order.append('L'); super().__init__(**kw)\nclass R(Base):\n    def __init__(self, b=None, **kw): order.append('R'); super().__init__(**kw)\nclass Both(L, R):\n    def __init__(self, **kw): order.append('Both'); super().__init__(**kw)\n\nBoth(a=1, b=2, c=3)\nprint(order)",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr3-mutable-default-memo",
+      "title": "Memoization through a mutable default across calls",
+      "description": "State persists in the default argument between top-level calls, including recursion.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 36,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "55 144 9 11",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def fib(n, memo={}):\n    if n < 2:\n        return n\n    if n not in memo:\n        memo[n] = fib(n - 1, memo) + fib(n - 2, memo)\n    return memo[n]\n\nfirst = fib(10)\nsizes = len(fib.__defaults__[0])\nsecond = fib(12)\nprint(first, second, sizes, len(fib.__defaults__[0]))",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr3-generator-send",
+      "title": "Two-way generator communication with send()",
+      "description": "send() resumes the generator and supplies the value of the yield expression.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 37,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "0 5 8 8",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def acc():\n    total = 0\n    while True:\n        got = yield total\n        if got is None:\n            got = 0\n        total += got\n\ng = acc()\na = next(g)\nb = g.send(5)\nc = g.send(3)\nd = next(g)\nprint(a, b, c, d)",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr3-shallow-vs-deep",
+      "title": "Shallow copy shares nested structure",
+      "description": "Slicing and copy() are shallow, so nested mutation is visible through both.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 38,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "[1, 2, 3] [1, 2] orig changed orig",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "import copy\norig = {'nums': [1, 2], 'meta': {'k': 'v'}}\nshallow = copy.copy(orig)\ndeep = copy.deepcopy(orig)\nshallow['nums'].append(3)\ndeep['meta']['k'] = 'changed'\norig['meta']['k'] = 'orig'\nprint(orig['nums'], deep['nums'], orig['meta']['k'], deep['meta']['k'], shallow['meta']['k'])",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr3-iter-self-exhaust",
+      "title": "An iterator that returns self is exhausted once",
+      "description": "Reusing an iterable whose __iter__ returns self yields nothing the second time.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 39,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "[2, 1, 0] [] [1, 0] 0",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "class Once:\n    def __init__(self, n): self.n = n\n    def __iter__(self): return self\n    def __next__(self):\n        if self.n <= 0:\n            raise StopIteration\n        self.n -= 1\n        return self.n\n\no = Once(3)\nfirst = list(o)\nsecond = list(o)\nprint(first, second, list(Once(2)), o.n)",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr3-sort-key-sideeffect",
+      "title": "How many times a sort key is called",
+      "description": "sorted() calls the key exactly once per element, before comparing.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 40,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "321 3 123 312",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "calls = []\ndef key(x):\n    calls.append(x)\n    return -x\n\ndata = [3, 1, 2]\nout = sorted(data, key=key)\nprint(''.join(map(str, out)), len(calls), ''.join(map(str, sorted(calls))),\n      ''.join(map(str, data)))",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr3-exception-chaining",
+      "title": "Implicit exception chaining through __context__",
+      "description": "Raising inside an except block links the original as __context__.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 41,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "KeyError ValueError None second",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def f():\n    try:\n        raise ValueError('first')\n    except ValueError:\n        raise KeyError('second')\n\ntry:\n    f()\nexcept KeyError as e:\n    print(type(e).__name__, type(e.__context__).__name__, e.__cause__, e.args[0])",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr3-closure-cell-rebind",
+      "title": "Closures capture the variable, not the value",
+      "description": "Rebinding after the closures are built changes what all of them see.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 42,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "[99, 99, 99] [0, 1, 2]",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def build():\n    fns = []\n    for i in range(3):\n        fns.append(lambda: i)\n    i = 99\n    return fns\n\ndef build_bound():\n    return [lambda i=i: i for i in range(3)]\n\nprint([f() for f in build()], [f() for f in build_bound()])",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr3-dict-mutation-order",
+      "title": "Insertion order survives overwrite but not re-insert",
+      "description": "Overwriting keeps the original position; deleting then re-adding moves it to the end.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 43,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "['a', 'b', 'c'] ['a', 'c', 'b'] [10, 3, 20]",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "d = {'a': 1, 'b': 2, 'c': 3}\nd['a'] = 10\nfirst = list(d)\ndel d['b']\nd['b'] = 20\nprint(first, list(d), list(d.values()))",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr3-slots-inheritance",
+      "title": "__slots__ stops working when a subclass omits it",
+      "description": "A subclass without __slots__ regains a __dict__.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 44,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "AttributeError True False 2",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "class S:\n    __slots__ = ('x',)\n    def __init__(self): self.x = 1\n\nclass T(S):\n    pass\n\nt = T()\nt.y = 2\ns = S()\ntry:\n    s.z = 3\n    err = 'no error'\nexcept AttributeError:\n    err = 'AttributeError'\nprint(err, hasattr(t, '__dict__'), hasattr(s, '__dict__'), t.y)",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr3-string-multiline-fold",
+      "title": "Multi-step string transformation",
+      "description": "A chain of transformations that must be traced in the right order.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 45,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "['hello', 'world'] olleh-dlrow Olleh-Dlrow 11",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "s = '  Hello, World  '\na = s.strip().lower().replace(',', '').split()\nb = '-'.join(w[::-1] for w in a)\nc = b.title()\nprint(a, b, c, len(c))",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr4-stack-machine",
+      "title": "Trace a small stack machine",
+      "description": "Eight instructions over a stack; every step feeds the next.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 46,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "[14, 1]",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "prog = [('push', 3), ('push', 4), ('add',), ('push', 2), ('mul',),\n        ('dup',), ('push', 5), ('sub',), ('push', 10), ('swap',), ('div',)]\nst = []\nfor op in prog:\n    if op[0] == 'push': st.append(op[1])\n    elif op[0] == 'add': b, a = st.pop(), st.pop(); st.append(a + b)\n    elif op[0] == 'mul': b, a = st.pop(), st.pop(); st.append(a * b)\n    elif op[0] == 'sub': b, a = st.pop(), st.pop(); st.append(a - b)\n    elif op[0] == 'dup': st.append(st[-1])\n    elif op[0] == 'swap': st[-1], st[-2] = st[-2], st[-1]\n    elif op[0] == 'div': b, a = st.pop(), st.pop(); st.append(a // b if b else 0)\nprint(st)",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr4-state-machine-transitions",
+      "title": "Multi-class state machine over eight events",
+      "description": "Inheritance and overrides decide each transition; the log accumulates.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 47,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "running,paused,running,running,paused,idle,running,error",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "class State:\n    name = 'base'\n    def on(self, ev):\n        return self if ev == 'noop' else Error()\nclass Idle(State):\n    name = 'idle'\n    def on(self, ev):\n        return Running() if ev == 'start' else super().on(ev)\nclass Running(State):\n    name = 'running'\n    def on(self, ev):\n        if ev == 'pause': return Paused()\n        if ev == 'stop': return Idle()\n        return super().on(ev)\nclass Paused(Running):\n    name = 'paused'\n    def on(self, ev):\n        return Running() if ev == 'start' else super().on(ev)\nclass Error(State):\n    name = 'error'\n\ns = Idle()\nlog = []\nfor ev in ['start', 'pause', 'start', 'noop', 'pause', 'stop', 'start', 'bogus']:\n    s = s.on(ev)\n    log.append(s.name)\nprint(','.join(log))",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr4-grid-walk",
+      "title": "Walk a grid with wrapping and obstacles",
+      "description": "Twelve moves with modular wrapping and blocked cells.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 48,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "1 0 5 8 6",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "grid = [[0, 0, 1, 0],\n        [0, 1, 0, 0],\n        [0, 0, 0, 1],\n        [1, 0, 0, 0]]\nr = c = 0\nmoves = 'RRDDLLUURDDR'\nvisited = [(0, 0)]\nblocked = 0\nfor m in moves:\n    dr, dc = {'R': (0, 1), 'L': (0, -1), 'U': (-1, 0), 'D': (1, 0)}[m]\n    nr, nc = (r + dr) % 4, (c + dc) % 4\n    if grid[nr][nc] == 1:\n        blocked += 1\n        continue\n    r, c = nr, nc\n    visited.append((r, c))\nprint(r, c, blocked, len(visited), len(set(visited)))",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr4-accumulator-dict",
+      "title": "Group and aggregate in one pass",
+      "description": "Bucketing with derived keys, then a second pass that depends on the first.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 49,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "[('a', 3, 9, 5), ('b', 2, 9, 8), ('c', 2, 9, 7)]",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "records = [('a', 3), ('b', 1), ('a', 5), ('c', 2), ('b', 8), ('a', 1), ('c', 7)]\nagg = {}\nfor k, v in records:\n    slot = agg.setdefault(k, {'n': 0, 'sum': 0, 'max': None})\n    slot['n'] += 1\n    slot['sum'] += v\n    slot['max'] = v if slot['max'] is None else max(slot['max'], v)\nranked = sorted(agg.items(), key=lambda kv: (-kv[1]['sum'], kv[0]))\nprint([(k, d['n'], d['sum'], d['max']) for k, d in ranked])",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr4-recursive-memo-order",
+      "title": "Recursion whose call order is observable",
+      "description": "Memoization changes how many times the function body actually runs.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 50,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "20 9 (3, 3) (3, 1)",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "calls = []\ndef paths(r, c, memo={}):\n    if r == 0 or c == 0:\n        return 1\n    if (r, c) in memo:\n        return memo[(r, c)]\n    calls.append((r, c))\n    memo[(r, c)] = paths(r - 1, c, memo) + paths(r, c - 1, memo)\n    return memo[(r, c)]\n\ntotal = paths(3, 3)\nprint(total, len(calls), calls[0], calls[-1])",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr4-string-tokenize",
+      "title": "Hand-rolled tokenizer over a small expression",
+      "description": "Character-by-character scanning with multi-character tokens.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 51,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "['ab', '12', '+', 'cd', '*', '3', '-', 'e', '45'] 9",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "s = 'ab12+cd*3-e45'\ntoks, cur, kind = [], '', None\nfor ch in s:\n    k = 'd' if ch.isdigit() else ('a' if ch.isalpha() else 'o')\n    if k != kind and cur:\n        toks.append(cur); cur = ''\n    kind = k\n    if k == 'o':\n        if cur: toks.append(cur)\n        toks.append(ch); cur = ''; kind = None\n    else:\n        cur += ch\nif cur: toks.append(cur)\nprint(toks, len(toks))",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr4-linked-reversal",
+      "title": "Reverse a linked list built from tuples",
+      "description": "Pointer rewiring simulated with nested tuples over five nodes.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 52,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "54321 12345 6",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "node = None\nfor v in [1, 2, 3, 4, 5]:\n    node = (v, node)          # builds 5 -> 4 -> 3 -> 2 -> 1\ndef to_list(n):\n    out = []\n    while n: out.append(n[0]); n = n[1]\n    return out\nforward = to_list(node)\nrev = None\nwalk = node\nwhile walk:\n    rev = (walk[0], rev)\n    walk = walk[1]\nback = to_list(rev)\nprint(''.join(map(str, forward)), ''.join(map(str, back)), forward[0] + back[0])",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr5-automaton",
+      "title": "Five generations of a cellular automaton",
+      "description": "Rule 110 over a 12-cell wrapping row for five generations, reported as one string.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 53,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "111111011111 11",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "row = [0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0]\nfor _ in range(5):\n    nxt = []\n    for i in range(len(row)):\n        l, c, r = row[(i - 1) % 12], row[i], row[(i + 1) % 12]\n        nxt.append(1 if (l, c, r) in {(1,1,0),(1,0,1),(0,1,1),(0,1,0),(0,0,1)} else 0)\n    row = nxt\nprint(''.join(map(str, row)), sum(row))",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr5-bank-rules",
+      "title": "Fifteen transactions under overdraft rules",
+      "description": "Each transaction depends on the running balance; some are rejected.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 54,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "655 20 2",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "bal, fees, rejected = 100, 0, 0\nfor amt in [-30, -50, 20, -60, -5, 200, -400, 15, -10, -10, -10, 500, -700, 40, -25]:\n    if bal + amt < -50:\n        rejected += 1\n        continue\n    bal += amt\n    if bal < 0:\n        fees += 10\n        bal -= 10\nprint(bal, fees, rejected)",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr5-priority-sim",
+      "title": "Priority queue simulated over fourteen operations",
+      "description": "Pushes and pops against a list kept sorted by priority then insertion order.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 55,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "baecgfd 0",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "q, out, seq = [], [], 0\nops = [('p','a',2),('p','b',1),('p','c',2),('o',),('p','d',3),('o',),\n       ('p','e',1),('o',),('o',),('p','f',2),('p','g',1),('o',),('o',),('o',)]\nfor op in ops:\n    if op[0] == 'p':\n        seq += 1\n        q.append((op[2], seq, op[1]))\n    else:\n        if not q:\n            out.append('-')\n            continue\n        q.sort()\n        out.append(q.pop(0)[2])\nprint(''.join(out), len(q))",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr5-collatz-variant",
+      "title": "A branching numeric trace",
+      "description": "A Collatz-like walk with an extra rule; count steps and the peak reached.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 56,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "1 7 27",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "n, steps, peak = 27, 0, 27\nwhile n != 1 and steps < 40:\n    if n % 3 == 0:\n        n = n // 3 + 1\n    elif n % 2 == 0:\n        n = n // 2\n    else:\n        n = 3 * n + 1\n    peak = max(peak, n)\n    steps += 1\nprint(n, steps, peak)",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr5-run-length",
+      "title": "Round-trip a run-length encoding",
+      "description": "Encode, mutate the encoded form, then decode -- three dependent passes.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 57,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "16 aaaabb 5",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "s = 'aaabbbccccdaa'\nenc = []\nfor ch in s:\n    if enc and enc[-1][0] == ch:\n        enc[-1][1] += 1\n    else:\n        enc.append([ch, 1])\nenc = [[c, n + 1 if n > 2 else n] for c, n in enc]\ndec = ''.join(c * n for c, n in enc)\nprint(len(dec), dec[:6], dec.count('c'))",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "cr5-nested-depth",
+      "title": "Depth and leaf count of a nested structure",
+      "description": "Recursive descent over a mixed nested literal.",
+      "category": "code-reasoning",
+      "tags": [
+        "python",
+        "code-reasoning",
+        "tracing",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 58,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "(4, 10, 55)",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "data = [1, [2, [3, [4, 5]], 6], [[7], 8], 9, [[[10]]]]\ndef walk(x, d=0):\n    if not isinstance(x, list):\n        return d, 1, x\n    if not x:\n        return d, 0, 0\n    results = [walk(i, d + 1) for i in x]\n    return (max(r[0] for r in results),\n            sum(r[1] for r in results),\n            sum(r[2] for r in results))\nprint(walk(data))",
+          "position": 1
+        }
+      ]
+    }
+  ]
+}

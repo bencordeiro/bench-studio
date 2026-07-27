@@ -1,0 +1,118 @@
+# Benchmark Format
+
+The benchmark-set import/export format is a versioned JSON document. Top-level shape:
+
+```json
+{
+  "format": "localbench-benchmark",
+  "format_version": "1.0",
+  "exported_at": "2026-07-16T14:00:00+00:00",
+  "name": "My Benchmark",
+  "description": "...",
+  "version": "1.0.0",
+  "tags": ["math", "reasoning"],
+  "scoring_config": {},
+  "performance_thresholds": {
+    "desired_ttft": 0.5,
+    "max_ttft": 5.0,
+    "desired_tps": 40.0,
+    "min_tps": 5.0,
+    "max_failure_rate": 0.1
+  },
+  "composite_weights": { "quality": 0.85, "reliability": 0.10, "performance": 0.05 },
+  "prompts": [ { ... } ]
+}
+```
+
+## Prompt object
+
+```json
+{
+  "stable_id": "math-area",
+  "title": "Circle area",
+  "description": "Numeric answer with tolerance",
+  "category": "math",
+  "tags": ["numeric"],
+  "difficulty": "medium",
+  "importance_weight": 1.5,
+  "position": 0,
+  "enabled": true,
+  "grading_mode": "deterministic",
+  "generation_overrides": { "temperature": 0.0, "max_tokens": 256 },
+  "grader_config": { ... },
+  "messages": [
+    { "role": "user", "content": "Compute the area of a circle with radius 10.", "position": 0 }
+  ]
+}
+```
+
+`grading_mode` is one of `deterministic`, `judge`, `hybrid`, `manual`.
+
+## Grader configs
+
+### Deterministic (`grading_mode: "deterministic"`)
+
+A single check has a `type`. A prompt may also combine checks under `checks: [...]`.
+
+- **exact** — `{ "type": "exact", "canonical_answer": "Paris", "accepted_aliases": ["..."], "case_sensitive": false, "trim_whitespace": true, "normalize_punctuation": true, "points": 100 }`
+- **numeric** — `{ "type": "numeric", "expected_value": 314.16, "absolute_tolerance": 0.5, "relative_tolerance": 0.0, "required_unit": "cm²", "unit_aliases": ["cm2"], "points": 100 }`
+- **regex** — `{ "type": "regex", "required_patterns": ["\\berror\\b"], "optional_patterns": [], "forbidden_patterns": ["rm -rf"], "case_sensitive": false, "points": 100 }`
+- **concept** — `{ "type": "concept", "required_concepts": ["encryption"], "optional_concepts": [], "forbidden_claims": ["HTTP is secure by default"], "aliases": { "TLS": ["SSL"] }, "points_per_concept": 20.0, "cap": 100.0 }`
+- **json** — `{ "type": "json", "require_valid_json": true, "required_fields": ["name","age"], "expected_field_values": { "age": 34 }, "allow_code_fences": true, "points": 100 }`
+- **multiple_choice** — `{ "type": "multiple_choice", "correct_option": "B", "accepted_formats": ["Option B", "Ottawa"], "points": 100 }`
+- **count** — verifiable-instruction counting (IFEval-style). Counts a `unit` (`words`, `sentences`, `lines`, `characters`) or, by default, regex matches of `pattern`, and checks it against `exact`, `min`, and/or `max`. `{ "type": "count", "unit": "words", "min": 20, "max": 40, "points": 100 }` or `{ "type": "count", "pattern": "(?m)^- ", "exact": 3, "points": 100 }`. Combine several under `checks` to stack constraints in one prompt.
+- **tool_call** — function-calling output, parsed rather than pattern-matched. Each `<tool_call>` block is decoded as JSON and matched against `expected_calls` individually, so a correct tool name with fabricated arguments fails. `{ "type": "tool_call", "expected_calls": [{ "name": "get_weather", "arguments": { "location": "Paris", "unit": "celsius" } }], "strict_args": true, "forbidden_names": ["send_email"], "points": 100 }`. Use `expect_no_calls: true` for relevance items (the model should answer in prose instead), `allow_extra_calls` to tolerate additional calls, and `strict_args` to reject arguments not named in the spec. A malformed `<tool_call>` block counts against the score — real agent harnesses cannot parse it either.
+
+#### Check modifiers
+
+- **`gate: true`** — if this check fails, the whole prompt scores **0** regardless of the other checks.
+
+  Required on any prompt built from prohibitions. "Do not use the letter 'e'", "avoid these words" and "do not use digits" are all satisfied by an empty response, so without a gate an item pays out for saying nothing — the lipogram prompt scored 67 for silence. Make the gate the check that proves the model attempted the task (a word floor, the required section headers, the concept it was asked about).
+
+  Keep gates loose enough that only a non-attempt trips them. A gate is an anti-refusal floor, not a hidden length requirement: gating the exchange-rate prompt at 40 words would zero a correct one-sentence answer.
+
+- **`strip_tool_calls: true`** — evaluate this check against the response with `<tool_call>` blocks removed. Stops a hallucinated call from supplying the very keyword a prose check is looking for.
+
+- **`{ "any_of": [...] }`** as an expected argument value in `tool_call` — accepts several genuinely equivalent forms. `"start": { "any_of": ["2026-03-09T14:00", "2026-03-09T14:00:00"] }`. Use it wherever more than one answer is correct; failing a model for picking the other valid spelling measures luck, not capability.
+
+### Judge (`grading_mode: "judge"`)
+
+```json
+{
+  "reference_answer": "...",
+  "reference_facts": ["..."],
+  "required_elements": ["..."],
+  "rubric_dimensions": [
+    { "name": "correctness", "description": "...", "weight": 2.0, "maximum": 40 }
+  ],
+  "critical_errors": ["recommends disabling all security"],
+  "score_caps": [],
+  "judge_instructions": "...",
+  "strong_example": "...",
+  "weak_example": "..."
+}
+```
+
+The judge returns strict JSON matching the schema in `app/graders/judge_protocol.py` (`JudgeOutput`).
+
+### Hybrid (`grading_mode: "hybrid"`)
+
+```json
+{
+  "deterministic_checks": [ { "type": "regex", "forbidden_patterns": ["rm -rf /"], "points": 100 } ],
+  "deterministic_weight": 40.0,
+  "judge_weight": 60.0,
+  "judge": { ...same shape as a judge config... },
+  "critical_fail_caps": [ { "applies_when": "destructive_command", "cap": 20 } ]
+}
+```
+
+`deterministic_weight + judge_weight` must equal 100.
+
+### Manual (`grading_mode: "manual"`)
+
+`grader_config` is empty; the prompt is captured for human review.
+
+## Validation on import
+
+Imports are validated against these schemas. A corrupt or partially-invalid file is **rejected entirely** with a clear error — it is never partially imported. No file may contain secrets; exports never include API keys.

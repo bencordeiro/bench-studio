@@ -1,0 +1,873 @@
+{
+  "format": "localbench-benchmark",
+  "format_version": "1.0",
+  "exported_at": "",
+  "name": "Agentic Tool-Use & Structured Output (Hermes)",
+  "description": "Function-calling in Hermes <tool_call> format, with categories following the Berkeley Function Calling Leaderboard: simple, tool selection among distractors, parallel and parallel-multiple calls, argument precision, and relevance detection (correctly declining to call when no tool fits or a required argument is missing). Graded by parsing each emitted tool call as JSON and matching its arguments individually, so a correct tool name with wrong arguments fails. Original scenarios; tune the <tools> block to your own schema.",
+  "version": "3.0.0",
+  "tags": [
+    "agentic",
+    "tool-use",
+    "hermes",
+    "deterministic"
+  ],
+  "scoring_config": {},
+  "performance_thresholds": {
+    "desired_ttft": 0.6,
+    "max_ttft": 12.0,
+    "desired_tps": 80.0,
+    "min_tps": 4.0,
+    "max_failure_rate": 0.1
+  },
+  "composite_weights": {
+    "quality": 0.9,
+    "reliability": 0.07,
+    "performance": 0.03
+  },
+  "prompts": [
+    {
+      "stable_id": "ag-simple-weather",
+      "title": "Simple call with required args",
+      "description": "One tool, both required arguments must be correct.",
+      "category": "tool-use/simple",
+      "tags": [
+        "agentic",
+        "tool-use",
+        "hermes",
+        "simple",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "tool_call",
+            "expected_calls": [
+              {
+                "name": "get_weather",
+                "arguments": {
+                  "location": "Paris",
+                  "unit": "celsius"
+                }
+              }
+            ],
+            "strict_args": true,
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a function-calling AI model. You are provided with function signatures within <tools></tools> XML tags. Call the appropriate function(s) to satisfy the user query. For each call, return a JSON object with the function name and arguments within <tool_call></tool_call> tags as: <tool_call>{\"name\": \"<name>\", \"arguments\": <args-dict>}</tool_call>. Use only the arguments defined in the schema, and follow every stated format exactly. If no provided function is relevant to the query, or if a required argument is missing from the query, do NOT call any function — reply in plain text instead.\n<tools>\n[{\"name\": \"get_weather\", \"description\": \"Get the current weather for a location.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"location\": {\"type\": \"string\", \"description\": \"City name\"}, \"unit\": {\"type\": \"string\", \"enum\": [\"celsius\", \"fahrenheit\"]}}, \"required\": [\"location\", \"unit\"]}}]\n</tools>",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "What is the temperature in Paris right now? Use celsius.",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "ag-multiple-select",
+      "title": "Pick the right tool from several",
+      "description": "Must select get_stock_price and avoid the distractors.",
+      "category": "tool-use/multiple",
+      "tags": [
+        "agentic",
+        "tool-use",
+        "hermes",
+        "multiple",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 1,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "tool_call",
+            "expected_calls": [
+              {
+                "name": "get_stock_price",
+                "arguments": {
+                  "symbol": "AAPL"
+                }
+              }
+            ],
+            "forbidden_names": [
+              "get_weather",
+              "send_email"
+            ],
+            "strict_args": true,
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a function-calling AI model. You are provided with function signatures within <tools></tools> XML tags. Call the appropriate function(s) to satisfy the user query. For each call, return a JSON object with the function name and arguments within <tool_call></tool_call> tags as: <tool_call>{\"name\": \"<name>\", \"arguments\": <args-dict>}</tool_call>. Use only the arguments defined in the schema, and follow every stated format exactly. If no provided function is relevant to the query, or if a required argument is missing from the query, do NOT call any function — reply in plain text instead.\n<tools>\n[{\"name\": \"get_weather\", \"description\": \"Get the current weather for a location.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"location\": {\"type\": \"string\", \"description\": \"City name\"}, \"unit\": {\"type\": \"string\", \"enum\": [\"celsius\", \"fahrenheit\"]}}, \"required\": [\"location\", \"unit\"]}}, {\"name\": \"get_stock_price\", \"description\": \"Get the latest stock price by ticker symbol.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"symbol\": {\"type\": \"string\"}}, \"required\": [\"symbol\"]}}, {\"name\": \"send_email\", \"description\": \"Send an email.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"to\": {\"type\": \"string\"}, \"subject\": {\"type\": \"string\"}, \"body\": {\"type\": \"string\"}}, \"required\": [\"to\", \"subject\", \"body\"]}}]\n</tools>",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "What is the current stock price of Apple? Its ticker is AAPL.",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "ag-multiple-hotel",
+      "title": "Tool selection with date normalization",
+      "description": "Hotels not flights; dates must be normalized to the schema's YYYY-MM-DD.",
+      "category": "tool-use/multiple",
+      "tags": [
+        "agentic",
+        "tool-use",
+        "hermes",
+        "multiple",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 2,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "tool_call",
+            "expected_calls": [
+              {
+                "name": "search_hotels",
+                "arguments": {
+                  "city": "Kyoto",
+                  "check_in": "2026-05-03",
+                  "check_out": "2026-05-07"
+                }
+              }
+            ],
+            "forbidden_names": [
+              "search_flights"
+            ],
+            "strict_args": true,
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a function-calling AI model. You are provided with function signatures within <tools></tools> XML tags. Call the appropriate function(s) to satisfy the user query. For each call, return a JSON object with the function name and arguments within <tool_call></tool_call> tags as: <tool_call>{\"name\": \"<name>\", \"arguments\": <args-dict>}</tool_call>. Use only the arguments defined in the schema, and follow every stated format exactly. If no provided function is relevant to the query, or if a required argument is missing from the query, do NOT call any function — reply in plain text instead.\n<tools>\n[{\"name\": \"search_flights\", \"description\": \"Search flights.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"origin\": {\"type\": \"string\"}, \"destination\": {\"type\": \"string\"}, \"date\": {\"type\": \"string\", \"description\": \"YYYY-MM-DD\"}}, \"required\": [\"origin\", \"destination\", \"date\"]}}, {\"name\": \"search_hotels\", \"description\": \"Search hotels in a city.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"city\": {\"type\": \"string\"}, \"check_in\": {\"type\": \"string\", \"description\": \"YYYY-MM-DD\"}, \"check_out\": {\"type\": \"string\", \"description\": \"YYYY-MM-DD\"}}, \"required\": [\"city\", \"check_in\", \"check_out\"]}}]\n</tools>",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "Find me a hotel in Kyoto from May 3 to May 7, 2026.",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "ag-parallel-same",
+      "title": "Parallel calls to one tool",
+      "description": "Two separate calls, one per city, each with the right unit.",
+      "category": "tool-use/parallel",
+      "tags": [
+        "agentic",
+        "tool-use",
+        "hermes",
+        "parallel",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 3,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "tool_call",
+            "expected_calls": [
+              {
+                "name": "get_weather",
+                "arguments": {
+                  "location": "Paris",
+                  "unit": "celsius"
+                }
+              },
+              {
+                "name": "get_weather",
+                "arguments": {
+                  "location": "Tokyo",
+                  "unit": "celsius"
+                }
+              }
+            ],
+            "strict_args": true,
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a function-calling AI model. You are provided with function signatures within <tools></tools> XML tags. Call the appropriate function(s) to satisfy the user query. For each call, return a JSON object with the function name and arguments within <tool_call></tool_call> tags as: <tool_call>{\"name\": \"<name>\", \"arguments\": <args-dict>}</tool_call>. Use only the arguments defined in the schema, and follow every stated format exactly. If no provided function is relevant to the query, or if a required argument is missing from the query, do NOT call any function — reply in plain text instead.\n<tools>\n[{\"name\": \"get_weather\", \"description\": \"Get the current weather for a location.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"location\": {\"type\": \"string\", \"description\": \"City name\"}, \"unit\": {\"type\": \"string\", \"enum\": [\"celsius\", \"fahrenheit\"]}}, \"required\": [\"location\", \"unit\"]}}]\n</tools>",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "Compare the weather in Paris and Tokyo, both in celsius.",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "ag-parallel-multiple",
+      "title": "Parallel calls across two tools",
+      "description": "Two different tools in one turn.",
+      "category": "tool-use/parallel_multiple",
+      "tags": [
+        "agentic",
+        "tool-use",
+        "hermes",
+        "parallel_multiple",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 4,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "tool_call",
+            "expected_calls": [
+              {
+                "name": "get_weather",
+                "arguments": {
+                  "location": "Berlin",
+                  "unit": "celsius"
+                }
+              },
+              {
+                "name": "get_local_time",
+                "arguments": {
+                  "timezone": "Asia/Tokyo"
+                }
+              }
+            ],
+            "strict_args": true,
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a function-calling AI model. You are provided with function signatures within <tools></tools> XML tags. Call the appropriate function(s) to satisfy the user query. For each call, return a JSON object with the function name and arguments within <tool_call></tool_call> tags as: <tool_call>{\"name\": \"<name>\", \"arguments\": <args-dict>}</tool_call>. Use only the arguments defined in the schema, and follow every stated format exactly. If no provided function is relevant to the query, or if a required argument is missing from the query, do NOT call any function — reply in plain text instead.\n<tools>\n[{\"name\": \"get_weather\", \"description\": \"Get the current weather for a location.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"location\": {\"type\": \"string\", \"description\": \"City name\"}, \"unit\": {\"type\": \"string\", \"enum\": [\"celsius\", \"fahrenheit\"]}}, \"required\": [\"location\", \"unit\"]}}, {\"name\": \"get_local_time\", \"description\": \"Get the current local time for an IANA timezone.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"timezone\": {\"type\": \"string\"}}, \"required\": [\"timezone\"]}}]\n</tools>",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "What is the weather in Berlin in celsius, and the current local time in Asia/Tokyo?",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "ag-relevance-haiku",
+      "title": "Refuse when no tool fits (creative)",
+      "description": "No tool applies; must actually write the haiku in plain text.",
+      "category": "tool-use/relevance",
+      "tags": [
+        "agentic",
+        "tool-use",
+        "hermes",
+        "relevance",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 5,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "tool_call",
+            "expect_no_calls": true,
+            "points": 100.0
+          },
+          {
+            "type": "count",
+            "unit": "words",
+            "min": 8,
+            "strip_tool_calls": true,
+            "gate": true,
+            "points": 100.0
+          },
+          {
+            "type": "concept",
+            "required_concepts": [
+              "leaves"
+            ],
+            "aliases": {
+              "leaves": [
+                "leaf",
+                "foliage",
+                "autumn",
+                "fall"
+              ]
+            },
+            "points_per_concept": 100.0,
+            "strip_tool_calls": true,
+            "gate": true,
+            "cap": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a function-calling AI model. You are provided with function signatures within <tools></tools> XML tags. Call the appropriate function(s) to satisfy the user query. For each call, return a JSON object with the function name and arguments within <tool_call></tool_call> tags as: <tool_call>{\"name\": \"<name>\", \"arguments\": <args-dict>}</tool_call>. Use only the arguments defined in the schema, and follow every stated format exactly. If no provided function is relevant to the query, or if a required argument is missing from the query, do NOT call any function — reply in plain text instead.\n<tools>\n[{\"name\": \"get_weather\", \"description\": \"Get the current weather for a location.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"location\": {\"type\": \"string\", \"description\": \"City name\"}, \"unit\": {\"type\": \"string\", \"enum\": [\"celsius\", \"fahrenheit\"]}}, \"required\": [\"location\", \"unit\"]}}, {\"name\": \"get_stock_price\", \"description\": \"Get the latest stock price by ticker symbol.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"symbol\": {\"type\": \"string\"}}, \"required\": [\"symbol\"]}}]\n</tools>",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "Please write a short haiku about autumn leaves.",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "ag-relevance-concept",
+      "title": "Refuse when query is conceptual",
+      "description": "A conceptual question is not a conversion request; must still answer it.",
+      "category": "tool-use/relevance",
+      "tags": [
+        "agentic",
+        "tool-use",
+        "hermes",
+        "relevance",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 6,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "tool_call",
+            "expect_no_calls": true,
+            "points": 100.0
+          },
+          {
+            "type": "count",
+            "unit": "words",
+            "min": 12,
+            "strip_tool_calls": true,
+            "gate": true,
+            "points": 100.0
+          },
+          {
+            "type": "concept",
+            "required_concepts": [
+              "supply",
+              "interest"
+            ],
+            "aliases": {
+              "supply": [
+                "supply and demand",
+                "demand"
+              ],
+              "interest": [
+                "interest rate",
+                "interest rates",
+                "monetary policy"
+              ]
+            },
+            "points_per_concept": 50.0,
+            "strip_tool_calls": true,
+            "cap": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a function-calling AI model. You are provided with function signatures within <tools></tools> XML tags. Call the appropriate function(s) to satisfy the user query. For each call, return a JSON object with the function name and arguments within <tool_call></tool_call> tags as: <tool_call>{\"name\": \"<name>\", \"arguments\": <args-dict>}</tool_call>. Use only the arguments defined in the schema, and follow every stated format exactly. If no provided function is relevant to the query, or if a required argument is missing from the query, do NOT call any function — reply in plain text instead.\n<tools>\n[{\"name\": \"convert_currency\", \"description\": \"Convert an amount between currencies.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"amount\": {\"type\": \"number\"}, \"from_currency\": {\"type\": \"string\", \"description\": \"ISO 4217 code\"}, \"to_currency\": {\"type\": \"string\", \"description\": \"ISO 4217 code\"}}, \"required\": [\"amount\", \"from_currency\", \"to_currency\"]}}]\n</tools>",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "In general, why do currency exchange rates fluctuate over time?",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "ag-arg-precision",
+      "title": "Precise argument extraction and typing",
+      "description": "Party size as an integer and 7:30 PM converted to the schema's 24-hour format.",
+      "category": "tool-use/simple",
+      "tags": [
+        "agentic",
+        "tool-use",
+        "hermes",
+        "simple",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 7,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "tool_call",
+            "expected_calls": [
+              {
+                "name": "book_table",
+                "arguments": {
+                  "restaurant": "Nobu",
+                  "party_size": 4,
+                  "time": "19:30"
+                }
+              }
+            ],
+            "strict_args": true,
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a function-calling AI model. You are provided with function signatures within <tools></tools> XML tags. Call the appropriate function(s) to satisfy the user query. For each call, return a JSON object with the function name and arguments within <tool_call></tool_call> tags as: <tool_call>{\"name\": \"<name>\", \"arguments\": <args-dict>}</tool_call>. Use only the arguments defined in the schema, and follow every stated format exactly. If no provided function is relevant to the query, or if a required argument is missing from the query, do NOT call any function — reply in plain text instead.\n<tools>\n[{\"name\": \"book_table\", \"description\": \"Book a restaurant table.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"restaurant\": {\"type\": \"string\"}, \"party_size\": {\"type\": \"integer\"}, \"time\": {\"type\": \"string\", \"description\": \"24-hour clock, HH:MM\"}}, \"required\": [\"restaurant\", \"party_size\", \"time\"]}}]\n</tools>",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "Book a table for 4 people at Nobu at 7:30 PM.",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "ag-missing-required-arg",
+      "title": "Decline when a required argument is missing",
+      "description": "The tool fits but the query omits the destination; hallucinating one is the failure mode.",
+      "category": "tool-use/relevance",
+      "tags": [
+        "agentic",
+        "tool-use",
+        "hermes",
+        "relevance",
+        "discriminator"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 4.0,
+      "position": 8,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "tool_call",
+            "expect_no_calls": true,
+            "points": 100.0
+          },
+          {
+            "type": "count",
+            "unit": "words",
+            "min": 5,
+            "strip_tool_calls": true,
+            "points": 100.0
+          },
+          {
+            "type": "concept",
+            "required_concepts": [
+              "asks_destination"
+            ],
+            "gate": true,
+            "aliases": {
+              "asks_destination": [
+                "where are you",
+                "where would you",
+                "where do you",
+                "which destination",
+                "what destination",
+                "destination would",
+                "destination do",
+                "destination are",
+                "flying to",
+                "fly to",
+                "travelling to",
+                "traveling to"
+              ]
+            },
+            "points_per_concept": 100.0,
+            "strip_tool_calls": true,
+            "cap": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a function-calling AI model. You are provided with function signatures within <tools></tools> XML tags. Call the appropriate function(s) to satisfy the user query. For each call, return a JSON object with the function name and arguments within <tool_call></tool_call> tags as: <tool_call>{\"name\": \"<name>\", \"arguments\": <args-dict>}</tool_call>. Use only the arguments defined in the schema, and follow every stated format exactly. If no provided function is relevant to the query, or if a required argument is missing from the query, do NOT call any function — reply in plain text instead.\n<tools>\n[{\"name\": \"search_flights\", \"description\": \"Search flights.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"origin\": {\"type\": \"string\"}, \"destination\": {\"type\": \"string\"}, \"date\": {\"type\": \"string\", \"description\": \"YYYY-MM-DD\"}}, \"required\": [\"origin\", \"destination\", \"date\"]}}]\n</tools>",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "Book me a flight leaving from Denver on 2026-04-12.",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "ag-nested-array-args",
+      "title": "Array-typed argument",
+      "description": "attendees must be a JSON array of both addresses; start in ISO 8601.",
+      "category": "tool-use/simple",
+      "tags": [
+        "agentic",
+        "tool-use",
+        "hermes",
+        "simple",
+        "discriminator"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 4.0,
+      "position": 9,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "tool_call",
+            "expected_calls": [
+              {
+                "name": "create_event",
+                "arguments": {
+                  "title": "Roadmap Review",
+                  "start": {
+                    "any_of": [
+                      "2026-03-09T14:00",
+                      "2026-03-09T14:00:00"
+                    ]
+                  },
+                  "duration_minutes": 45,
+                  "attendees": {
+                    "any_of": [
+                      [
+                        "ana@corp.com",
+                        "li@corp.com"
+                      ],
+                      [
+                        "li@corp.com",
+                        "ana@corp.com"
+                      ]
+                    ]
+                  }
+                }
+              }
+            ],
+            "strict_args": true,
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a function-calling AI model. You are provided with function signatures within <tools></tools> XML tags. Call the appropriate function(s) to satisfy the user query. For each call, return a JSON object with the function name and arguments within <tool_call></tool_call> tags as: <tool_call>{\"name\": \"<name>\", \"arguments\": <args-dict>}</tool_call>. Use only the arguments defined in the schema, and follow every stated format exactly. If no provided function is relevant to the query, or if a required argument is missing from the query, do NOT call any function — reply in plain text instead.\n<tools>\n[{\"name\": \"create_event\", \"description\": \"Create a calendar event.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"title\": {\"type\": \"string\"}, \"start\": {\"type\": \"string\", \"description\": \"ISO 8601, e.g. 2026-03-09T14:00\"}, \"duration_minutes\": {\"type\": \"integer\"}, \"attendees\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}, \"description\": \"List of email addresses\"}}, \"required\": [\"title\", \"start\", \"duration_minutes\", \"attendees\"]}}]\n</tools>",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "Schedule a 45-minute meeting called Roadmap Review on 2026-03-09 at 2pm, with ana@corp.com and li@corp.com.",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "ag-enum-adherence",
+      "title": "Map natural phrasing onto schema enums",
+      "description": "'miles' and 'kilometres' must become the enum values mi/km in the right direction.",
+      "category": "tool-use/simple",
+      "tags": [
+        "agentic",
+        "tool-use",
+        "hermes",
+        "simple",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 10,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "tool_call",
+            "expected_calls": [
+              {
+                "name": "convert_units",
+                "arguments": {
+                  "value": 42,
+                  "from_unit": "km",
+                  "to_unit": "mi"
+                }
+              }
+            ],
+            "strict_args": true,
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a function-calling AI model. You are provided with function signatures within <tools></tools> XML tags. Call the appropriate function(s) to satisfy the user query. For each call, return a JSON object with the function name and arguments within <tool_call></tool_call> tags as: <tool_call>{\"name\": \"<name>\", \"arguments\": <args-dict>}</tool_call>. Use only the arguments defined in the schema, and follow every stated format exactly. If no provided function is relevant to the query, or if a required argument is missing from the query, do NOT call any function — reply in plain text instead.\n<tools>\n[{\"name\": \"convert_units\", \"description\": \"Convert a physical quantity between units.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"value\": {\"type\": \"number\"}, \"from_unit\": {\"type\": \"string\", \"enum\": [\"km\", \"mi\", \"kg\", \"lb\", \"c\", \"f\"]}, \"to_unit\": {\"type\": \"string\", \"enum\": [\"km\", \"mi\", \"kg\", \"lb\", \"c\", \"f\"]}}, \"required\": [\"value\", \"from_unit\", \"to_unit\"]}}]\n</tools>",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "How many miles is 42 kilometres?",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "ag-parallel-three",
+      "title": "Three parallel calls, distinct arguments",
+      "description": "Three tickers, three calls, no duplicates and no extras.",
+      "category": "tool-use/parallel",
+      "tags": [
+        "agentic",
+        "tool-use",
+        "hermes",
+        "parallel",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 11,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "tool_call",
+            "expected_calls": [
+              {
+                "name": "get_stock_price",
+                "arguments": {
+                  "symbol": "NVDA"
+                }
+              },
+              {
+                "name": "get_stock_price",
+                "arguments": {
+                  "symbol": "AMD"
+                }
+              },
+              {
+                "name": "get_stock_price",
+                "arguments": {
+                  "symbol": "INTC"
+                }
+              }
+            ],
+            "forbidden_names": [
+              "get_weather"
+            ],
+            "strict_args": true,
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a function-calling AI model. You are provided with function signatures within <tools></tools> XML tags. Call the appropriate function(s) to satisfy the user query. For each call, return a JSON object with the function name and arguments within <tool_call></tool_call> tags as: <tool_call>{\"name\": \"<name>\", \"arguments\": <args-dict>}</tool_call>. Use only the arguments defined in the schema, and follow every stated format exactly. If no provided function is relevant to the query, or if a required argument is missing from the query, do NOT call any function — reply in plain text instead.\n<tools>\n[{\"name\": \"get_stock_price\", \"description\": \"Get the latest stock price by ticker symbol.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"symbol\": {\"type\": \"string\"}}, \"required\": [\"symbol\"]}}, {\"name\": \"get_weather\", \"description\": \"Get the current weather for a location.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"location\": {\"type\": \"string\", \"description\": \"City name\"}, \"unit\": {\"type\": \"string\", \"enum\": [\"celsius\", \"fahrenheit\"]}}, \"required\": [\"location\", \"unit\"]}}]\n</tools>",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "Get me the current prices for NVDA, AMD, and INTC.",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "ag-iso-code-mapping",
+      "title": "Normalize names to ISO codes",
+      "description": "Currency names and a language name must be converted to their ISO codes.",
+      "category": "tool-use/parallel_multiple",
+      "tags": [
+        "agentic",
+        "tool-use",
+        "hermes",
+        "parallel_multiple",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 12,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "tool_call",
+            "expected_calls": [
+              {
+                "name": "convert_currency",
+                "arguments": {
+                  "amount": 250,
+                  "from_currency": "GBP",
+                  "to_currency": "JPY"
+                }
+              },
+              {
+                "name": "translate_text",
+                "arguments": {
+                  "text": "thank you very much",
+                  "source_lang": "en",
+                  "target_lang": "de"
+                }
+              }
+            ],
+            "strict_args": true,
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a function-calling AI model. You are provided with function signatures within <tools></tools> XML tags. Call the appropriate function(s) to satisfy the user query. For each call, return a JSON object with the function name and arguments within <tool_call></tool_call> tags as: <tool_call>{\"name\": \"<name>\", \"arguments\": <args-dict>}</tool_call>. Use only the arguments defined in the schema, and follow every stated format exactly. If no provided function is relevant to the query, or if a required argument is missing from the query, do NOT call any function — reply in plain text instead.\n<tools>\n[{\"name\": \"convert_currency\", \"description\": \"Convert an amount between currencies.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"amount\": {\"type\": \"number\"}, \"from_currency\": {\"type\": \"string\", \"description\": \"ISO 4217 code\"}, \"to_currency\": {\"type\": \"string\", \"description\": \"ISO 4217 code\"}}, \"required\": [\"amount\", \"from_currency\", \"to_currency\"]}}, {\"name\": \"translate_text\", \"description\": \"Translate text between languages.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"text\": {\"type\": \"string\"}, \"source_lang\": {\"type\": \"string\", \"description\": \"ISO 639-1 code\"}, \"target_lang\": {\"type\": \"string\", \"description\": \"ISO 639-1 code\"}}, \"required\": [\"text\", \"source_lang\", \"target_lang\"]}}]\n</tools>",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "Convert 250 British pounds to Japanese yen, and translate the phrase \"thank you very much\" from English into German.",
+          "position": 1
+        }
+      ]
+    },
+    {
+      "stable_id": "ag-optional-arg-enum",
+      "title": "Optional argument plus enum selection",
+      "description": "staging database, and the optional timeout must be set because the user asked for it.",
+      "category": "tool-use/simple",
+      "tags": [
+        "agentic",
+        "tool-use",
+        "hermes",
+        "simple",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 13,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "tool_call",
+            "expected_calls": [
+              {
+                "name": "run_query",
+                "arguments": {
+                  "sql": {
+                    "any_of": [
+                      "SELECT count(*) FROM orders",
+                      "SELECT count(*) FROM orders;"
+                    ]
+                  },
+                  "database": "staging",
+                  "timeout_seconds": 30
+                }
+              }
+            ],
+            "strict_args": true,
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a function-calling AI model. You are provided with function signatures within <tools></tools> XML tags. Call the appropriate function(s) to satisfy the user query. For each call, return a JSON object with the function name and arguments within <tool_call></tool_call> tags as: <tool_call>{\"name\": \"<name>\", \"arguments\": <args-dict>}</tool_call>. Use only the arguments defined in the schema, and follow every stated format exactly. If no provided function is relevant to the query, or if a required argument is missing from the query, do NOT call any function — reply in plain text instead.\n<tools>\n[{\"name\": \"run_query\", \"description\": \"Run a read-only SQL query against the analytics warehouse.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"sql\": {\"type\": \"string\"}, \"database\": {\"type\": \"string\", \"enum\": [\"analytics\", \"staging\"]}, \"timeout_seconds\": {\"type\": \"integer\"}}, \"required\": [\"sql\", \"database\"]}}]\n</tools>",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "Run `SELECT count(*) FROM orders` against the staging database, and cap it at 30 seconds.",
+          "position": 1
+        }
+      ]
+    }
+  ]
+}

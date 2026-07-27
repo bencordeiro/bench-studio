@@ -1,0 +1,735 @@
+{
+  "format": "localbench-benchmark",
+  "format_version": "1.0",
+  "exported_at": "",
+  "name": "Instruction-Following & Format Adherence",
+  "description": "Verifiable instruction-following in the style of IFEval: each prompt stacks multiple machine-checkable constraints (length bounds, exact counts, forbidden characters/words, strict JSON, custom markup, positional rules). Graded on constraint compliance rather than content, so no judge is needed. Every item is gated on a loose check proving the task was attempted, so a prohibition can never be satisfied by an empty answer. The gate is never the constraint under measurement -- a near-miss keeps partial credit, only a non-attempt scores zero. Original items; difficulty comes from stacking individually-clear constraints, never from ambiguous wording.",
+  "version": "5.0.0",
+  "tags": [
+    "instruction-following",
+    "format",
+    "deterministic"
+  ],
+  "scoring_config": {},
+  "performance_thresholds": {
+    "desired_ttft": 0.6,
+    "max_ttft": 12.0,
+    "desired_tps": 80.0,
+    "min_tps": 4.0,
+    "max_failure_rate": 0.1
+  },
+  "composite_weights": {
+    "quality": 0.9,
+    "reliability": 0.07,
+    "performance": 0.03
+  },
+  "prompts": [
+    {
+      "stable_id": "if-lipogram-bounded",
+      "title": "Lipogram + word bound + no commas",
+      "description": "Lipogram under a length bound with a punctuation ban. Gated on actually writing a hash-map explanation of the right length.",
+      "category": "instruction-following",
+      "tags": [
+        "ifeval",
+        "constraints",
+        "format",
+        "discriminator"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 4.0,
+      "position": 0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "count",
+            "unit": "words",
+            "min": 8,
+            "gate": true,
+            "points": 100.0
+          },
+          {
+            "type": "concept",
+            "required_concepts": [
+              "hash_or_map"
+            ],
+            "aliases": {
+              "hash_or_map": [
+                "hash",
+                "map",
+                "dict",
+                "look up",
+                "lookup",
+                "slot",
+                "bucket",
+                "key",
+                "index",
+                "array",
+                "pair"
+              ]
+            },
+            "points_per_concept": 100.0,
+            "cap": 100.0,
+            "gate": true
+          },
+          {
+            "type": "count",
+            "unit": "words",
+            "min": 20,
+            "max": 40,
+            "points": 100.0
+          },
+          {
+            "type": "count",
+            "pattern": "[eE]",
+            "exact": 0,
+            "points": 100.0
+          },
+          {
+            "type": "count",
+            "pattern": ",",
+            "exact": 0,
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "Explain what a hash map is. Constraints: (1) do NOT use the letter 'e' anywhere; (2) use between 20 and 40 words; (3) do not use any commas.",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "stable_id": "if-strict-json-schema",
+      "title": "Strict JSON schema, exact values",
+      "description": "Emit only JSON with exact keys and typed values.",
+      "category": "instruction-following",
+      "tags": [
+        "ifeval",
+        "constraints",
+        "format",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 1,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "json",
+            "require_valid_json": true,
+            "required_fields": [
+              "name",
+              "average_complexity",
+              "stable",
+              "in_place"
+            ],
+            "expected_field_values": {
+              "name": "quicksort",
+              "average_complexity": "n log n",
+              "stable": false,
+              "in_place": true
+            },
+            "allow_code_fences": true,
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "Output ONLY a JSON object (no surrounding prose) describing the quicksort algorithm, with exactly these keys: name (string \"quicksort\"), average_complexity (string \"n log n\"), stable (boolean false), in_place (boolean true).",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "stable_id": "if-bullets-keyword-end",
+      "title": "Exact bullets + keyword count + end phrase",
+      "description": "Three bullets, an exact keyword count, and a required closing sentence.",
+      "category": "instruction-following",
+      "tags": [
+        "ifeval",
+        "constraints",
+        "format",
+        "discriminator"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 4.0,
+      "position": 2,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "count",
+            "pattern": "(?m)^- ",
+            "min": 1,
+            "gate": true,
+            "points": 100.0
+          },
+          {
+            "type": "count",
+            "unit": "words",
+            "min": 15,
+            "gate": true,
+            "points": 100.0
+          },
+          {
+            "type": "count",
+            "pattern": "(?m)^- ",
+            "exact": 3,
+            "points": 100.0
+          },
+          {
+            "type": "count",
+            "pattern": "\\btests\\b",
+            "exact": 2,
+            "points": 100.0
+          },
+          {
+            "type": "regex",
+            "required_patterns": [
+              "Ship with confidence\\.?\\s*$"
+            ],
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "List exactly three benefits of writing tests, as three bullet points each starting with '- '. Use the word 'tests' exactly twice in the whole response. End with the exact sentence: Ship with confidence.",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "stable_id": "if-title-sections-nodigits",
+      "title": "Title markup + section count + no digits",
+      "description": "Custom markup, an exact section count, and a character ban.",
+      "category": "instruction-following",
+      "tags": [
+        "ifeval",
+        "constraints",
+        "format",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 3,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "count",
+            "pattern": "(?m)^SECTION:",
+            "min": 1,
+            "gate": true,
+            "points": 100.0
+          },
+          {
+            "type": "count",
+            "pattern": "(?m)^SECTION:",
+            "exact": 2,
+            "points": 100.0
+          },
+          {
+            "type": "regex",
+            "required_patterns": [
+              "<<[^>]+>>"
+            ],
+            "points": 100.0
+          },
+          {
+            "type": "count",
+            "pattern": "[0-9]",
+            "exact": 0,
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "Write a short backup policy note. Begin with a title wrapped in double angle brackets, like <<Backup Policy>>. Include exactly two section headers, each a line starting with 'SECTION:'. Do not use any digit characters (0-9).",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "stable_id": "if-oneword-quoted",
+      "title": "Knowledge under a one-word quoted format",
+      "description": "A factual answer squeezed into a rigid output shape.",
+      "category": "instruction-following",
+      "tags": [
+        "ifeval",
+        "constraints",
+        "format",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 4,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "regex",
+            "required_patterns": [
+              "^\\s*\"No\"\\s*$"
+            ],
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "Is Python a statically typed language? Reply with exactly one word — either Yes or No — wrapped in double quotes, and output nothing else.",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "stable_id": "if-exact-words-forbidden",
+      "title": "Exact word count + forbidden vocabulary",
+      "description": "An exact length target with a banned vocabulary. Gated on hitting the count.",
+      "category": "instruction-following",
+      "tags": [
+        "ifeval",
+        "constraints",
+        "format",
+        "discriminator"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 4.0,
+      "position": 5,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "count",
+            "unit": "words",
+            "min": 10,
+            "gate": true,
+            "points": 100.0
+          },
+          {
+            "type": "concept",
+            "required_concepts": [
+              "ocean_topic"
+            ],
+            "aliases": {
+              "ocean_topic": [
+                "ocean",
+                "tide",
+                "salt",
+                "deep",
+                "depth",
+                "marine",
+                "current",
+                "abyss",
+                "shore",
+                "coast",
+                "horizon",
+                "vast",
+                "expanse",
+                "fish",
+                "whale",
+                "reef",
+                "brine",
+                "swell",
+                "surf",
+                "aquatic",
+                "creature",
+                "life"
+              ]
+            },
+            "points_per_concept": 100.0,
+            "cap": 100.0,
+            "gate": true
+          },
+          {
+            "type": "count",
+            "unit": "words",
+            "exact": 15,
+            "points": 100.0
+          },
+          {
+            "type": "count",
+            "pattern": "\\b(water|wave|blue|sea|wet)\\b",
+            "exact": 0,
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "Describe the ocean in exactly 15 words. Do not use any of these words: water, wave, blue, sea, wet.",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "stable_id": "if-json-computed",
+      "title": "Structured output with computed fields",
+      "description": "JSON whose values must be derived from the input, not copied.",
+      "category": "instruction-following",
+      "tags": [
+        "ifeval",
+        "constraints",
+        "format",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 6,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "json",
+            "require_valid_json": true,
+            "required_fields": [
+              "word_count",
+              "last_word",
+              "reversed"
+            ],
+            "expected_field_values": {
+              "word_count": 4,
+              "last_word": "fox",
+              "reversed": "fox brown quick the"
+            },
+            "allow_code_fences": true,
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "For the sentence: the quick brown fox — output ONLY JSON with keys word_count (integer), last_word (string), and reversed (the four words in reverse order, space-separated).",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "stable_id": "if-placeholders-postscript",
+      "title": "Placeholders + postscript + length",
+      "description": "Bracketed placeholders and a required postscript line.",
+      "category": "instruction-following",
+      "tags": [
+        "ifeval",
+        "constraints",
+        "format",
+        "discriminator"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 4.0,
+      "position": 7,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "count",
+            "pattern": "\\[[^\\]]+\\]",
+            "min": 1,
+            "gate": true,
+            "points": 100.0
+          },
+          {
+            "type": "count",
+            "unit": "sentences",
+            "min": 2,
+            "points": 100.0
+          },
+          {
+            "type": "count",
+            "pattern": "\\[[^\\]]+\\]",
+            "min": 2,
+            "points": 100.0
+          },
+          {
+            "type": "regex",
+            "required_patterns": [
+              "P\\.S\\."
+            ],
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "Write a two-sentence reminder to submit a status report. Include at least two placeholders in square brackets, like [date]. End with a postscript line beginning with 'P.S.'",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "stable_id": "if-alphabetical-acrostic",
+      "title": "Acrostic under a line-count constraint",
+      "description": "Four lines whose first letters spell a given word -- positional control that cannot be satisfied by generic prose.",
+      "category": "instruction-following",
+      "tags": [
+        "ifeval",
+        "constraints",
+        "format",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 8,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "count",
+            "unit": "lines",
+            "min": 3,
+            "gate": true,
+            "points": 100.0
+          },
+          {
+            "type": "count",
+            "unit": "lines",
+            "exact": 4,
+            "points": 100.0
+          },
+          {
+            "type": "regex",
+            "required_patterns": [
+              "\\A\\s*T[^\\n]*\\.\\s*\\n\\s*E[^\\n]*\\.\\s*\\n\\s*A[^\\n]*\\.\\s*\\n\\s*M[^\\n]*\\.\\s*\\Z"
+            ],
+            "case_sensitive": true,
+            "points": 100.0
+          },
+          {
+            "type": "count",
+            "pattern": "(?m)^\\s*[-*\\d]",
+            "exact": 0,
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "Write exactly four lines about teamwork. The first letters of the four lines, read top to bottom, must spell TEAM. Each line must be a complete sentence ending in a period. Do not use any bullet points, numbering, or blank lines.",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "stable_id": "if-nested-json-array",
+      "title": "Nested JSON with a computed, ordered array",
+      "description": "Nested structure plus ordering the model must derive itself.",
+      "category": "instruction-following",
+      "tags": [
+        "ifeval",
+        "constraints",
+        "format",
+        "discriminator"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 4.0,
+      "position": 9,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "json",
+            "require_valid_json": true,
+            "required_fields": [
+              "count",
+              "items"
+            ],
+            "expected_field_values": {
+              "count": 3,
+              "items": [
+                "apple",
+                "banana",
+                "cherry"
+              ]
+            },
+            "allow_code_fences": true,
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "Output ONLY a JSON object with two keys: \"count\" (integer) and \"items\" (array). The array must contain exactly the words from this list that have more than four letters: apple, fig, banana, kiwi, cherry, plum. Sort them by length ascending, and for equal lengths sort alphabetically. \"count\" must equal the number of items.",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "stable_id": "if-case-and-repetition",
+      "title": "Casing rule plus an exact repetition target",
+      "description": "Two interacting constraints: a per-word casing rule and an exact repeat count.",
+      "category": "instruction-following",
+      "tags": [
+        "ifeval",
+        "constraints",
+        "format",
+        "discriminator"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 4.0,
+      "position": 10,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "count",
+            "pattern": "ROUTINE",
+            "min": 1,
+            "case_sensitive": true,
+            "gate": true,
+            "points": 100.0
+          },
+          {
+            "type": "count",
+            "unit": "sentences",
+            "exact": 3,
+            "points": 100.0
+          },
+          {
+            "type": "count",
+            "pattern": "ROUTINE",
+            "exact": 3,
+            "case_sensitive": true,
+            "points": 100.0
+          },
+          {
+            "type": "count",
+            "pattern": "[zZ]",
+            "exact": 0,
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "Write exactly three sentences about morning routines. Every sentence must contain the word ROUTINE in all capital letters, and the word must appear exactly three times in total across the whole response. Do not use the letter 'z' anywhere.",
+          "position": 0
+        }
+      ]
+    },
+    {
+      "stable_id": "if-delimiter-sections",
+      "title": "Machine-parseable delimited sections",
+      "description": "A strict wire format of the kind a pipeline would actually parse.",
+      "category": "instruction-following",
+      "tags": [
+        "ifeval",
+        "constraints",
+        "format",
+        "anchor"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 1.0,
+      "position": 11,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "checks": [
+          {
+            "type": "regex",
+            "required_patterns": [
+              "###"
+            ],
+            "gate": true,
+            "points": 100.0
+          },
+          {
+            "type": "regex",
+            "required_patterns": [
+              "###SUMMARY###",
+              "###KEYWORDS###",
+              "###END###"
+            ],
+            "case_sensitive": true,
+            "points": 100.0
+          },
+          {
+            "type": "regex",
+            "required_patterns": [
+              "###KEYWORDS###\\s*\\n[a-z]+,[a-z]+,[a-z]+\\s*\\n###END###"
+            ],
+            "case_sensitive": true,
+            "points": 100.0
+          },
+          {
+            "type": "regex",
+            "required_patterns": [
+              "###END###\\s*\\Z"
+            ],
+            "points": 100.0
+          }
+        ]
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "Summarize why version control matters, using exactly this format and nothing else:\n###SUMMARY###\n<one sentence>\n###KEYWORDS###\n<exactly three comma-separated lowercase keywords, no spaces around the commas>\n###END###",
+          "position": 0
+        }
+      ]
+    }
+  ]
+}
