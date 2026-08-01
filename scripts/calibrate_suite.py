@@ -53,12 +53,25 @@ ANCHOR_WEIGHT = 1.5
 CEILING_WEIGHT = 1.0  # items every model passes: keep, but stop them dominating
 
 
-def load_prompts() -> list[tuple[str, dict]]:
+def load_prompts(suite_filter: str | None = None) -> list[tuple[str, dict]]:
+    """Every bundled prompt, or only those from suites matching ``suite_filter``.
+
+    The filter is a substring of the file name. Sweeping all five suites is a
+    long round trip against a local model, and a calibration usually targets one
+    suite at a time.
+    """
     out = []
     for path in sorted(SUITES_DIR.glob("*.json")):
+        if suite_filter and suite_filter not in path.name:
+            continue
         data = json.loads(path.read_text(encoding="utf-8"))
         for prompt in data["prompts"]:
             out.append((path.name, prompt))
+    if not out:
+        raise SystemExit(
+            f"no prompts matched --suite {suite_filter!r}; available: "
+            + ", ".join(p.name for p in sorted(SUITES_DIR.glob("*.json")))
+        )
     return out
 
 
@@ -78,7 +91,7 @@ def ask(base_url: str, api_key: str | None, model: str, messages: list[dict],
 
 
 def cmd_measure(args: argparse.Namespace) -> int:
-    prompts = load_prompts()
+    prompts = load_prompts(getattr(args, "suite", None))
     print(f"measuring {len(prompts)} prompts against {args.model}", file=sys.stderr)
 
     def one(pair):
@@ -164,12 +177,25 @@ def cmd_compare(args: argparse.Namespace) -> int:
         touched = False
         for prompt in data["prompts"]:
             new = plan.get(prompt["stable_id"])
-            if new is None or prompt["importance_weight"] == new:
+            if new is None:
+                continue
+            # An item whose measurement happens to match its predicted weight is
+            # still measured. Skipping it here left it tagged "unmeasured"
+            # forever, which is the one thing that tag must never say wrongly.
+            if prompt["importance_weight"] == new and "unmeasured" not in prompt.get("tags", []):
                 continue
             prompt["importance_weight"] = new
-            tags = [t for t in prompt.get("tags", []) if t not in ("discriminator", "anchor")]
+            tags = [t for t in prompt.get("tags", [])
+                    if t not in ("discriminator", "anchor", "unmeasured")]
             prompt["tags"] = tags + (
                 ["discriminator"] if new >= DISCRIMINATOR_WEIGHT else ["anchor"])
+            # Re-label difficulty from the measurement too. Leaving the authored
+            # label alone lets a "medium" item that turned out to discriminate
+            # outweigh a "hard" one that everybody passes, which is exactly what
+            # test_declared_difficulty_matches_weight_ordering forbids -- so
+            # applying a calibration would leave the suite failing its own tests.
+            # The label now means what the weight means: observed difficulty.
+            prompt["difficulty"] = "hard" if new >= DISCRIMINATOR_WEIGHT else "medium"
             touched = True
             changed += 1
         if touched:
@@ -195,6 +221,9 @@ def main() -> int:
     m.add_argument("--max-tokens", type=int, default=16384)
     m.add_argument("--timeout", type=float, default=900.0)
     m.add_argument("--concurrency", type=int, default=4)
+    m.add_argument("--suite", default=None,
+                   help="only measure suites whose file name contains this "
+                        "substring, e.g. --suite master")
     m.set_defaults(func=cmd_measure)
 
     c = sub.add_parser("compare", help="find which items separate two or more models")

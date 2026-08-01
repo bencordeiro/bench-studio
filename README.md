@@ -17,7 +17,7 @@ LocalBench Studio is a **desktop-hosted web application for benchmarking one LLM
 
 ## Bundled benchmark suites
 
-Four suites ship with the app and load on first run (135 prompts). They are **original items, never published anywhere**, so they cannot be present in any model's training data — the usual problem with scoring local models against public leaderboards.
+Five suites ship with the app and load on first run (194 prompts). They are **original items, never published anywhere**, so they cannot be present in any model's training data — the usual problem with scoring local models against public leaderboards.
 
 | Suite | Prompts | What it measures |
 |---|---|---|
@@ -25,6 +25,7 @@ Four suites ship with the app and load on first run (135 prompts). They are **or
 | Web Dev Correctness (JS) | 50 | Coercion, the event loop and microtask ordering, prototypes, async semantics, JSON edge cases |
 | Agentic Tool-Use (Hermes) | 14 | Function calling in BFCL categories: simple, tool selection, parallel, argument precision, relevance |
 | Instruction-Following | 12 | IFEval-style stacked constraints: exact counts, forbidden vocabulary, strict JSON, custom markup |
+| **Master Suite** | 59 | Cross-domain and deliberately brutal — see below |
 
 Design rules every item follows:
 
@@ -34,6 +35,32 @@ Design rules every item follows:
 - **Difficulty comes from depth, not obscurity.** Items chain several inferences rather than testing trivia, and answers are kept short so the score measures reasoning rather than transcription.
 
 `backend/tests/test_suite_quality.py` enforces these as executable invariants, so a new or edited item cannot quietly break them.
+
+### The Master Suite
+
+The four base suites measure one competence each, and a strong model saturates them. The Master Suite exists for the other question: **given two models that both look good, which is actually better?** It is cross-domain, deterministically graded, and built to stay unsaturated.
+
+| Domain | Items | Sample of what it covers |
+|---|---|---|
+| Code reasoning (Python / JS) | 20 | Class-creation hook ordering, `ExitStack` unwinding, `Symbol.toPrimitive` hints, field initialization vs `super()`, thenable microtask cost |
+| Quantitative reasoning | 7 | Self-overlapping pattern waiting times, base-12 factorial zeros, GCD-matrix determinants |
+| Algorithms & distributed systems | 5 | Segmented-LRU simulation, vector-clock concurrency, minimal DFA size |
+| Physics & chemistry | 4 | Rolling-transition dynamics, buffer pH, relativistic proper time |
+| Automotive engineering | 3 | Injector sizing, CAN bit timing, intercooler charge temperature |
+| Abstention & false premises | 5 | Planted falsehoods the model must refuse rather than elaborate |
+| Multi-turn stateful tool use | 5 | Id propagation past a decoy, error recovery, withholding an unsafe action |
+| Long-context synthesis | 4 | 3.5k–6.4k token corpora with conflicting facts and precedence rules |
+| Anchors from the base suites | 6 | Lowest-weighted, so a run still says something about a model that scores near zero |
+
+Three properties make it different from the base suites:
+
+- **Nothing is hand-written — including the answer key.** `scripts/build_master_suite.py` re-executes every snippet, recomputes every quantity (several against a second independent method), and generates each long-context corpus together with its ground truth. Rebuild and the JSON regenerates byte-identically, or an item was wrong. `python scripts/build_master_suite.py --check` verifies the committed file is current.
+- **Every item is proven winnable.** The base suites verify that a non-answer scores zero. That is half a guarantee: a required pattern with a typo produces an item that scores zero for *everyone*, which is invisible because it looks like difficulty. The builder grades each item against a model answer that must earn 100.
+- **The items built to catch a mistake are proven to catch it.** Each false-premise and agentic item is also graded against the confident wrong answer — swallowing the premise, reusing the decoy id, acting despite a failed precondition — which must stay below 35.
+
+A four-tier ladder does the separating: **anchor** (weight 1.5) from the base suites, **hard** (2.0), **extreme** (3.0), and **frontier** (4.0) for items expected to break current frontier models, leaving headroom as models improve.
+
+> **The weights are predictions, not measurements.** Every item is tagged `unmeasured`. Guessed difficulty is unreliable — that lesson is what produced `calibrate_suite.py` in the first place. Run the calibration below against two models of different capability before trusting any ranking this suite produces.
 
 ### Calibrating difficulty to your own models
 
