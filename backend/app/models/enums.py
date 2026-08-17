@@ -9,6 +9,7 @@ class GradingMode(str, enum.Enum):
     JUDGE = "judge"
     HYBRID = "hybrid"
     MANUAL = "manual"
+    EXECUTION = "execution"
 
 
 class DeterministicGraderType(str, enum.Enum):

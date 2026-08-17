@@ -21,7 +21,8 @@ class RunConfig(ORMModel):
     judge_verification_enabled: bool = False
     temperature: float = 0.0
     top_p: float = 1.0
-    max_tokens: int = 1024
+    max_tokens: int = 0
+    reasoning_effort: str | None = None
     timeout: float = 60.0
     retry_max_attempts: int = 3
     retry_backoff_base: float = 0.5

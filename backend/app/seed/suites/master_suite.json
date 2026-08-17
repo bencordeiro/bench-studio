@@ -43,8 +43,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -80,8 +79,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -118,8 +116,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -156,8 +153,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -194,8 +190,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -232,8 +227,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -269,8 +263,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -307,8 +300,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -345,8 +337,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -383,8 +374,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -421,8 +411,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -458,8 +447,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -495,8 +483,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -533,8 +520,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -571,8 +557,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -609,8 +594,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -647,8 +631,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -684,8 +667,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -721,8 +703,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -758,8 +739,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -794,8 +774,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -828,8 +807,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -862,8 +840,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -896,8 +873,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -930,8 +906,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -964,8 +939,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -998,8 +972,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -1032,8 +1005,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 8192
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -1066,8 +1038,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 8192
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -1106,8 +1077,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 8192
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -1140,8 +1110,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 8192
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -1174,8 +1143,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 8192
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -1208,8 +1176,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 8192
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -1242,8 +1209,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 8192
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -1276,8 +1242,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 8192
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -1310,8 +1275,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 8192
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -1344,8 +1308,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -1378,8 +1341,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -1412,8 +1374,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -1447,8 +1408,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "checks": [
@@ -1513,8 +1473,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "checks": [
@@ -1570,8 +1529,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "checks": [
@@ -1627,8 +1585,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "checks": [
@@ -1688,8 +1645,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "checks": [
@@ -1746,8 +1702,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "checks": [
@@ -1808,8 +1763,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "checks": [
@@ -1886,8 +1840,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "checks": [
@@ -1953,8 +1906,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "checks": [
@@ -2024,8 +1976,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "checks": [
@@ -2098,8 +2049,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -2133,8 +2083,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 8192
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -2168,8 +2117,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 4096
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -2203,8 +2151,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 8192
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "numeric",
@@ -2237,8 +2184,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 2048
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -2278,8 +2224,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 2048
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -2319,8 +2264,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 2048
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -2360,8 +2304,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 2048
+        "temperature": 0.0
       },
       "grader_config": {
         "type": "exact",
@@ -2401,8 +2344,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 2048
+        "temperature": 0.0
       },
       "grader_config": {
         "checks": [
@@ -2469,8 +2411,7 @@
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
-        "temperature": 0.0,
-        "max_tokens": 2048
+        "temperature": 0.0
       },
       "grader_config": {
         "checks": [

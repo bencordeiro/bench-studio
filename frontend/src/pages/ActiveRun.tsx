@@ -80,8 +80,14 @@ export default function ActiveRun() {
   // Take the max of the two: the SSE stream closes when the run ends, so its last
   // value can lag behind the final count and leave a finished run stuck at e.g. 90%.
   const runDerived = total > 0 ? done / total : 0;
-  const displayProgress = isTerminal(run.status) ? runDerived : Math.max(progress, runDerived);
-  const eta = displayProgress > 0 && displayProgress < 1 ? (elapsed / displayProgress) * (1 - displayProgress) : null;
+  const rawProgress = isTerminal(run.status) ? runDerived : Math.max(progress, runDerived);
+  // Guard against glitchy counters that push progress past 100% (or NaN), which
+  // would otherwise flip the ETA negative.
+  const displayProgress = Number.isFinite(rawProgress) ? Math.min(Math.max(rawProgress, 0), 1) : 0;
+  const eta =
+    displayProgress > 0 && displayProgress < 1
+      ? (elapsed / displayProgress) * (1 - displayProgress)
+      : null;
 
   return (
     <div>
@@ -166,8 +172,10 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 function fmtElapsed(s: number): string {
-  if (s < 60) return `${s.toFixed(0)}s`;
-  const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60);
-  return `${m}m ${sec}s`;
+  const v = Math.max(s, 0);
+  if (v < 60) return `${v.toFixed(0)}s`;
+  const m = Math.floor(v / 60);
+  if (m < 60) return `${m}m ${Math.floor(v % 60)}s`;
+  const h = Math.floor(m / 60);
+  return `${h}h ${m % 60}m`;
 }

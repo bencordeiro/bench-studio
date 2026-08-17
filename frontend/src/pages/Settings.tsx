@@ -49,7 +49,7 @@ export default function SettingsPage() {
             <NumField label="Retry backoff max (s)" value={form.default_retry_backoff_max} onChange={(v) => set({ default_retry_backoff_max: v })} />
             <NumField label="Default temperature" value={form.default_temperature} onChange={(v) => set({ default_temperature: v })} step={0.1} />
             <NumField label="Default top-p" value={form.default_top_p} onChange={(v) => set({ default_top_p: v })} step={0.05} />
-            <NumField label="Default max tokens" value={form.default_max_tokens} onChange={(v) => set({ default_max_tokens: v })} />
+            <NumField label="Default max tokens (0 = server default)" value={form.default_max_tokens} onChange={(v) => set({ default_max_tokens: v })} />
             <div>
               <label className="label">Log level</label>
               <select className="input" value={form.log_level} onChange={(e) => set({ log_level: e.target.value })}>

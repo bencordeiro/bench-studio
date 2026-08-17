@@ -1,4 +1,4 @@
-export type GradingMode = "deterministic" | "judge" | "hybrid" | "manual";
+export type GradingMode = "deterministic" | "judge" | "hybrid" | "manual" | "execution";
 
 export type RunStatus =
   | "queued"
@@ -188,6 +188,7 @@ export interface RunConfig {
   temperature: number;
   top_p: number;
   max_tokens: number;
+  reasoning_effort?: string;
   timeout: number;
   retry_max_attempts?: number;
   retry_backoff_base?: number;

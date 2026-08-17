@@ -60,6 +60,94 @@ async def _fake_target_chat(base_url, **kw):
     )
 
 
+@pytest.mark.asyncio
+async def test_reasoning_effort_reaches_chat_completion_extra_body(temp_data_dir, monkeypatch):
+    """Run-level reasoning_effort must be merged into chat_template_kwargs."""
+    captured: dict = {"extra_body": None}
+    async def fake_chat(base_url, **kw):
+        captured["extra_body"] = kw.get("extra_body")
+        return ChatResult(
+            content="yes", finish_reason="stop", truncated=False,
+            usage={"total_tokens": 10}, http_status=200,
+            time_to_first_token=0.1, total_response_time=0.5, retry_count=0,
+            raw={"streamed": True},
+        )
+    monkeypatch.setattr(engine, "chat_completion", fake_chat)
+    from app.models import EndpointProfile as EP
+    profile = EP(
+        id=str(uuid.uuid4()), name="t", base_url="http://x/v1", default_model="m",
+        request_timeout=30.0, verify_tls=True, custom_headers={},
+        extra_body_params={}, enabled=True, has_api_key=False,
+        api_key_storage="none", api_key_env_var="",
+    )
+    await engine._execute_target_prompt(
+        profile, "m", None, {"max_tokens": 0},
+        {"max_tokens": 0, "reasoning_effort": "xhigh"},
+        {"stable_id": "p", "messages": [{"role": "user", "content": "hi"}],
+         "generation_overrides": {}},
+    )
+    assert captured["extra_body"] == {"chat_template_kwargs": {"reasoning_effort": "xhigh"}}
+
+
+@pytest.mark.asyncio
+async def test_reasoning_effort_in_prompt_override_wins(temp_data_dir, monkeypatch):
+    """A per-prompt generation_overrides.reasoning_effort beats the run config."""
+    captured: dict = {"extra_body": None}
+    async def fake_chat(base_url, **kw):
+        captured["extra_body"] = kw.get("extra_body")
+        return ChatResult(
+            content="yes", finish_reason="stop", truncated=False,
+            usage={"total_tokens": 10}, http_status=200,
+            time_to_first_token=0.1, total_response_time=0.5, retry_count=0,
+            raw={"streamed": True},
+        )
+    monkeypatch.setattr(engine, "chat_completion", fake_chat)
+    from app.models import EndpointProfile as EP
+    profile = EP(
+        id=str(uuid.uuid4()), name="t", base_url="http://x/v1", default_model="m",
+        request_timeout=30.0, verify_tls=True, custom_headers={},
+        extra_body_params={}, enabled=True, has_api_key=False,
+        api_key_storage="none", api_key_env_var="",
+    )
+    await engine._execute_target_prompt(
+        profile, "m", None, {}, {"max_tokens": 0, "reasoning_effort": "low"},
+        {"stable_id": "p", "messages": [{"role": "user", "content": "hi"}],
+         "generation_overrides": {"reasoning_effort": "high"}},
+    )
+    assert captured["extra_body"] == {"chat_template_kwargs": {"reasoning_effort": "high"}}
+
+
+def test_update_progress_counts_generation_complete_during_target_phase(session):
+    """Progress must advance once generation stored a response, before grading."""
+    from app.jobs.engine import create_run_executions, _update_progress
+    from app.models import BenchmarkRun, BenchmarkSet, TargetResponse
+    bench = _make_benchmark(session)
+    run = BenchmarkRun(
+        id=str(uuid.uuid4()), name="r", status=RunStatus.RUNNING_TARGET.value,
+        benchmark_id=bench.id, benchmark_snapshot={},
+        target_endpoint_id=None, target_endpoint_name="", target_model="m",
+        target_settings={}, judge_settings={}, run_config={},
+    )
+    session.add(run)
+    session.flush()
+    snapshot = {
+        "prompts": [
+            {"stable_id": "p1", "enabled": True, "messages": [], "grading_mode": "deterministic",
+             "grader_config": {"type": "exact", "canonical_answer": "yes"}, "importance_weight": 1.0},
+            {"stable_id": "p2", "enabled": True, "messages": [], "grading_mode": "deterministic",
+             "grader_config": {"type": "exact", "canonical_answer": "no"}, "importance_weight": 1.0},
+        ]
+    }
+    create_run_executions(session, run, snapshot, 1, False)
+    session.flush()
+    execs = session.query(PromptExecution).filter(PromptExecution.run_id == run.id).all()
+    # One execution has generated (TargetResponse stored) but not been graded.
+    session.add(TargetResponse(id=str(uuid.uuid4()), execution_id=execs[0].id, content="yes"))
+    session.flush()
+    _update_progress(session, run.id)
+    assert run.completed_prompts == 1
+
+
 def test_executions_created_in_order(session):
     bench = _make_benchmark(session)
     ep = _make_endpoint(session)

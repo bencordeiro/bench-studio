@@ -95,7 +95,6 @@ def add_prompt(
     grader_config: dict,
     messages: list[dict],
     tags: list[str] | None = None,
-    max_tokens: int = 4096,
 ) -> None:
     difficulty, weight = TIERS[tier]
     PROMPTS.append(
@@ -110,7 +109,10 @@ def add_prompt(
             "position": len(PROMPTS),
             "enabled": True,
             "grading_mode": "deterministic",
-            "generation_overrides": {"temperature": 0.0, "max_tokens": max_tokens},
+            # max_tokens is intentionally NOT capped here: suites must not force
+            # a token budget (a chain-of-thought model would be truncated before
+            # its answer lands). The run config owns the budget; 0 = server default.
+            "generation_overrides": {"temperature": 0.0},
             "grader_config": grader_config,
             "messages": [
                 {"role": m["role"], "content": m["content"], "position": i}
@@ -196,7 +198,7 @@ def code_item(
 
 def numeric_item(
     stable_id, title, description, category, tier, question, value,
-    *, decimals=None, rel_tol=0.0, abs_tol=0.0, tags=None, max_tokens=4096,
+    *, decimals=None, rel_tol=0.0, abs_tol=0.0, tags=None,
 ):
     rounding = ""
     if decimals is not None:
@@ -221,7 +223,6 @@ def numeric_item(
         },
         [{"role": "user", "content": body}],
         tags=(tags or []) + ["computed-answer"],
-        max_tokens=max_tokens,
     )
 
 
@@ -1122,7 +1123,6 @@ def build_cs_items() -> None:
         hits,
         decimals=0,
         abs_tol=0,
-        max_tokens=8192,
     )
 
     # -- C2: vector clocks over 24 events and 4 processes; report the final stamp
@@ -1196,7 +1196,6 @@ def build_cs_items() -> None:
             }
         ],
         tags=["computed-answer"],
-        max_tokens=8192,
     )
 
     # -- C3: natural (run-detecting) mergesort comparison count
@@ -1256,7 +1255,6 @@ def build_cs_items() -> None:
         comparisons,
         decimals=0,
         abs_tol=0,
-        max_tokens=8192,
     )
 
     # -- C4: minimal complete DFA, two forbidden factors and a mod-7 counter
@@ -1335,7 +1333,6 @@ def build_cs_items() -> None:
         min_states,
         decimals=0,
         abs_tol=0,
-        max_tokens=8192,
     )
 
     # -- C5: dynamic array under an interleaved push/pop workload
@@ -1378,7 +1375,6 @@ def build_cs_items() -> None:
         copies,
         decimals=0,
         abs_tol=0,
-        max_tokens=8192,
     )
 
 
@@ -1440,7 +1436,6 @@ def build_science_items() -> None:
         d_flat,
         decimals=2,
         rel_tol=0.004,
-        max_tokens=8192,
     )
 
     # -- S2: two weak acids sharing one solution -> coupled proton balance
@@ -1478,7 +1473,6 @@ def build_science_items() -> None:
         ph_two,
         decimals=3,
         abs_tol=0.02,
-        max_tokens=8192,
     )
 
     # -- S3: four-stage cycle, entropy change of the gas over the whole cycle
@@ -1522,7 +1516,6 @@ def build_science_items() -> None:
         total_three,
         decimals=3,
         rel_tol=0.004,
-        max_tokens=8192,
     )
 
     # -- S4: three successive velocity compositions, then two timed legs
@@ -1559,7 +1552,6 @@ def build_science_items() -> None:
         tau_total,
         decimals=3,
         rel_tol=0.003,
-        max_tokens=8192,
     )
 
 
@@ -2527,7 +2519,6 @@ def build_long_context_items() -> None:
             }
         ],
         tags=["long-context", "generated-corpus"],
-        max_tokens=4096,
     )
 
     # ---- LC2: ledger with retractions and amendments -----------------------
@@ -2619,7 +2610,6 @@ def build_long_context_items() -> None:
             }
         ],
         tags=["long-context", "generated-corpus"],
-        max_tokens=8192,
     )
 
     # ---- LC3: conflicting specifications under an authority order ----------
@@ -2735,7 +2725,6 @@ def build_long_context_items() -> None:
             }
         ],
         tags=["long-context", "generated-corpus"],
-        max_tokens=4096,
     )
 
     # ---- LC4: conjunctive needle with a tie-break --------------------------
@@ -2809,7 +2798,6 @@ def build_long_context_items() -> None:
             }
         ],
         tags=["long-context", "generated-corpus"],
-        max_tokens=8192,
     )
 
     return {
@@ -2860,7 +2848,6 @@ def build_anchor_items() -> None:
             pick["grader_config"],
             [{"role": m["role"], "content": m["content"]} for m in pick["messages"]],
             tags=["anchor-from-base-suite"],
-            max_tokens=2048,
         )
 
 

@@ -15,7 +15,7 @@ class AppSettings(BaseModel):
     default_retry_backoff_max: float = 30.0
     default_temperature: float = 0.0
     default_top_p: float = 1.0
-    default_max_tokens: int = 4096
+    default_max_tokens: int = 0
     composite_weights: dict[str, float] = Field(default_factory=lambda: dict(DEFAULT_COMPOSITE_WEIGHTS))
     automatic_backup: bool = True
     launch_browser: bool = True

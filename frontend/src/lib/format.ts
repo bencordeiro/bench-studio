@@ -63,6 +63,7 @@ export const GRADING_MODE_LABELS: Record<string, string> = {
   judge: "LLM Judge",
   hybrid: "Hybrid",
   manual: "Manual review",
+  execution: "Execution (code tests)",
 };
 
 export function statusColor(status: string): string {

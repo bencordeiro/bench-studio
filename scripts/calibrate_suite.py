@@ -56,9 +56,10 @@ CEILING_WEIGHT = 1.0  # items every model passes: keep, but stop them dominating
 def load_prompts(suite_filter: str | None = None) -> list[tuple[str, dict]]:
     """Every bundled prompt, or only those from suites matching ``suite_filter``.
 
-    The filter is a substring of the file name. Sweeping all five suites is a
+    The filter is a substring of the file name. Sweeping all six suites is a
     long round trip against a local model, and a calibration usually targets one
-    suite at a time.
+    suite at a time. Do not calibrate humaneval.json: its uniform weights are
+    deliberate, keeping the Quality score exactly the published pass@1.
     """
     out = []
     for path in sorted(SUITES_DIR.glob("*.json")):

@@ -111,7 +111,7 @@ def _build_body(
         body["temperature"] = temperature
     if top_p is not None:
         body["top_p"] = top_p
-    if max_tokens is not None:
+    if max_tokens is not None and max_tokens > 0:
         body["max_tokens"] = max_tokens
     if stop:
         body["stop"] = stop
@@ -140,18 +140,28 @@ def _extract_stream_chunk(line: str) -> dict[str, Any] | None:
         return None
 
 
-def _delta_text(chunk: dict[str, Any]) -> tuple[str, str | None]:
-    """Return (delta_text, finish_reason) from a parsed chunk."""
+def _delta_text(chunk: dict[str, Any]) -> tuple[str, str, str | None]:
+    """Return (content_delta, reasoning_delta, finish_reason) from a parsed chunk.
+
+    Reasoning models (llama.cpp / LM Studio streaming) emit their chain of
+    thought in ``delta.reasoning_content`` and the final answer in
+    ``delta.content``. Some responses put *everything* in reasoning_content and
+    never populate content, so callers fall back to reasoning content when the
+    visible content is empty.
+    """
     choices = chunk.get("choices") or []
     if not choices:
-        return "", None
+        return "", "", None
     choice = choices[0]
     delta = choice.get("delta") or {}
-    text = delta.get("content") or ""
-    if not isinstance(text, str):
-        text = str(text)
+    content = delta.get("content") or ""
+    if not isinstance(content, str):
+        content = str(content)
+    reasoning = delta.get("reasoning_content") or ""
+    if not isinstance(reasoning, str):
+        reasoning = str(reasoning)
     finish = choice.get("finish_reason")
-    return text, finish
+    return content, reasoning, finish
 
 
 def _extract_usage(chunk: dict[str, Any]) -> dict[str, Any] | None:
@@ -178,8 +188,8 @@ async def stream_chat(
     url: str,
     headers: dict[str, str],
     body: dict[str, Any],
-) -> AsyncIterator[tuple[str, str | None, dict[str, Any] | None, dict[str, Any] | None]]:
-    """Yield (delta_text, finish_reason_or_None, usage_or_None, timings_or_None)."""
+) -> AsyncIterator[tuple[str, str, str | None, dict[str, Any] | None, dict[str, Any] | None]]:
+    """Yield (content_delta, reasoning_delta, finish_reason_or_None, usage_or_None, timings_or_None)."""
     async with client.stream("POST", url, headers=headers, json=body) as response:
         if response.status_code >= 400:
             text = await _read_response_text(response)
@@ -194,10 +204,10 @@ async def stream_chat(
                 continue
             if chunk.get("__done__"):
                 return
-            text, finish = _delta_text(chunk)
+            content, reasoning, finish = _delta_text(chunk)
             usage = _extract_usage(chunk)
             timings = chunk.get("timings")
-            yield text, finish, usage, (timings if isinstance(timings, dict) else None)
+            yield content, reasoning, finish, usage, (timings if isinstance(timings, dict) else None)
 
 
 async def _read_response_text(response: httpx.Response) -> str:
@@ -378,18 +388,21 @@ async def _do_stream(
     start: float,
 ) -> ChatResult:
     content_parts: list[str] = []
+    reasoning_parts: list[str] = []
     finish_reason = "unknown"
     ttft: float | None = None
     first_chunk_at: float | None = None
     usage: dict[str, Any] = {}
     timings: dict[str, Any] | None = None
     raw_chunks: list[dict[str, Any]] = []
-    async for text, finish, chunk_usage, chunk_timings in stream_chat(client, url, headers, body):
+    async for content, reasoning, finish, chunk_usage, chunk_timings in stream_chat(client, url, headers, body):
         if first_chunk_at is None:
             first_chunk_at = time.monotonic()
             ttft = first_chunk_at - start
-        if text:
-            content_parts.append(text)
+        if content:
+            content_parts.append(content)
+        if reasoning:
+            reasoning_parts.append(reasoning)
         if finish:
             finish_reason = finish
         if chunk_usage:
@@ -401,6 +414,11 @@ async def _do_stream(
             raw_chunks.append({"finish_reason": finish, "has_usage": bool(chunk_usage)})
     total = time.monotonic() - start
     content = "".join(content_parts)
+    # Reasoning models can stream the entire reply into reasoning_content and
+    # never populate content. Fall back so the candidate is never lost.
+    fell_back_to_reasoning = bool(content_parts) is False and bool(reasoning_parts)
+    if fell_back_to_reasoning:
+        content = "".join(reasoning_parts)
     truncated = finish_reason == "length"
     return ChatResult(
         content=content,
@@ -411,7 +429,7 @@ async def _do_stream(
         time_to_first_token=ttft,
         total_response_time=total,
         retry_count=retry_count,
-        raw={"streamed": True, "chunk_sample": raw_chunks},
+        raw={"streamed": True, "chunk_sample": raw_chunks, "fell_back_to_reasoning": fell_back_to_reasoning},
         server_timings=timings,
     )
 

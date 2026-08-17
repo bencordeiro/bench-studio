@@ -17,4 +17,4 @@ def test_settings_default_max_tokens_matches_schema(temp_data_dir):
     assert r.status_code == 200
     body = r.json()
     assert body["default_max_tokens"] == AppSettings().default_max_tokens
-    assert body["default_max_tokens"] >= 4096  # generous enough for chain-of-thought
+    assert body["default_max_tokens"] == 0  # 0 = server default (no cap)

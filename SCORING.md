@@ -9,6 +9,7 @@ Every automatically graded prompt receives a **0–100** score.
 - **Deterministic** — each check produces `score`/`max_score`; the prompt's normalized score is the average of `(score / max_score)` across all its checks, × 100.
 - **LLM Judge** — the judge's `final_score` (0–100), already reflecting any score cap it applied.
 - **Hybrid** — `100 × (det_fraction × det_weight + judge_fraction × judge_weight) / (det_weight + judge_weight)`, where each fraction is 0–1. Weights must total 100%. Critical deterministic failures may cap the result (e.g. "invalid JSON caps at 40").
+- **Execution** — the model's code completion is executed against the problem's unit tests (HumanEval reference-harness semantics, 3-second timeout, no partial credit): **100** if every test passes, **0** otherwise (passed / timed out / failed).
 - **Manual** — no automatic score. Shown as "Awaiting manual review," **not** zero.
 
 ## Quality Score
@@ -22,6 +23,8 @@ Overall Quality = Σ(prompt_score × prompt_weight) / Σ(prompt_weight)
 over all **auto-scored** prompts. Manual and pending-judge prompts are **excluded from the denominator** until a human scores them (or they are judged later). The UI shows coverage, e.g. `Automatic scoring coverage: 18 of 22 prompts`. Unscored prompts are **never treated as zero** unless the user explicitly chooses that policy.
 
 Category scores use the same weighted formula scoped to prompts in a category.
+
+**Execution suites are weighted uniformly, on purpose.** The HumanEval suite gives every problem the same weight, so its Quality score is exactly the unweighted pass rate — standard **pass@1** — and stays directly comparable to published HumanEval numbers. Re-weighting a canonical benchmark would drift the headline from the number the literature reports.
 
 ### Choosing `importance_weight` — calibrate, don't guess
 

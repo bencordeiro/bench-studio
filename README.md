@@ -7,8 +7,8 @@ LocalBench Studio is a **desktop-hosted web application for benchmarking one LLM
 ## What it does
 
 - Save one or more OpenAI-compatible endpoint profiles (with optional API keys stored in the OS credential store).
-- Start from four bundled, execution-verified suites (135 original prompts), or author your own.
-- Grade each prompt one of four ways: **deterministic**, **LLM judge**, **hybrid**, or **manual review**. Deterministic graders cover exact/numeric/regex/concept/JSON/multiple-choice/count and parsed **tool calls**.
+- Start from six bundled suites (358 prompts): five original, execution-verified suites plus the public **HumanEval** benchmark, or author your own.
+- Grade each prompt one of five ways: **deterministic**, **LLM judge**, **hybrid**, **manual review**, or **execution** (run the generated code against unit tests). Deterministic graders cover exact/numeric/regex/concept/JSON/multiple-choice/count and parsed **tool calls**.
 - Run a benchmark against one target model; close/refresh the browser without stopping the run.
 - Reopen later and see live progress, resume interrupted runs.
 - View detailed analytics: quality, reliability, performance, per-prompt scores, latency distributions.
@@ -17,7 +17,7 @@ LocalBench Studio is a **desktop-hosted web application for benchmarking one LLM
 
 ## Bundled benchmark suites
 
-Five suites ship with the app and load on first run (194 prompts). They are **original items, never published anywhere**, so they cannot be present in any model's training data — the usual problem with scoring local models against public leaderboards.
+Six suites ship with the app and load on first run (358 prompts). Five are **original items, never published anywhere**, so they cannot be present in any model's training data — the usual problem with scoring local models against public leaderboards. The sixth is the public **HumanEval** benchmark, included for numbers that stay comparable to the published literature.
 
 | Suite | Prompts | What it measures |
 |---|---|---|
@@ -26,11 +26,12 @@ Five suites ship with the app and load on first run (194 prompts). They are **or
 | Agentic Tool-Use (Hermes) | 14 | Function calling in BFCL categories: simple, tool selection, parallel, argument precision, relevance |
 | Instruction-Following | 12 | IFEval-style stacked constraints: exact counts, forbidden vocabulary, strict JSON, custom markup |
 | **Master Suite** | 59 | Cross-domain and deliberately brutal — see below |
+| **HumanEval (OpenAI)** | 164 | Code generation: complete the function, executed against its unit tests — see below |
 
-Design rules every item follows:
+Design rules the original items follow (HumanEval keeps the upstream problems as-is):
 
 - **Answers are produced by execution, never written by hand.** Each code prompt's expected output comes from actually running the snippet under CPython 3 / Node.
-- **Graded deterministically.** No judge is required for any bundled suite, so results are reproducible.
+- **Graded without a judge.** No judge is required for any bundled suite — the deterministic graders or test execution decide — so results are reproducible.
 - **No item pays out for a non-answer.** Prohibitions ("do not use the letter 'e'") are trivially satisfied by silence, so every such item is gated on a separate check proving the task was attempted.
 - **Difficulty comes from depth, not obscurity.** Items chain several inferences rather than testing trivia, and answers are kept short so the score measures reasoning rather than transcription.
 
@@ -61,6 +62,30 @@ Three properties make it different from the base suites:
 A four-tier ladder does the separating: **anchor** (weight 1.5) from the base suites, **hard** (2.0), **extreme** (3.0), and **frontier** (4.0) for items expected to break current frontier models, leaving headroom as models improve.
 
 > **The weights are predictions, not measurements.** Every item is tagged `unmeasured`. Guessed difficulty is unreliable — that lesson is what produced `calibrate_suite.py` in the first place. Run the calibration below against two models of different capability before trusting any ranking this suite produces.
+
+### HumanEval (OpenAI)
+
+The 164 hand-written Python function-completion problems from OpenAI's Codex paper (Chen et al., 2021, ["Evaluating Large Language Models Trained on Code"](https://arxiv.org/abs/2107.03374)). The dataset is **MIT-licensed** and vendored under `data/humaneval/` (source: [openai/human-eval](https://github.com/openai/human-eval); see `data/humaneval/ATTRIBUTION.md`).
+
+It is the one bundled suite that is *not* original — deliberately. The original suites keep training-data contamination out; HumanEval is included so your scores stay **comparable to the published literature**, and it is wrapped for strict parity with the reference harness:
+
+- Each prompt is the dataset's problem text, **byte-for-byte** (verified by `backend/tests/test_humaneval_suite.py`).
+- The model's completion is executed as `prompt + completion + test + check(entry_point)` in a fresh `python -I` subprocess with the reference harness's **3.0-second timeout**, its reliability guard, and its `passed / timed out / failed` classification — no partial credit, no markdown-fence stripping.
+- Every item carries the **same weight**, so the suite's Quality score is exactly the unweighted pass rate — standard **pass@1**.
+- `scripts/build_humaneval_suite.py` regenerates the suite and re-executes all 164 canonical solutions before writing; `--check` verifies the committed file is current.
+
+> **Security note.** This suite's grader executes untrusted model-generated code. The child process is isolated (throwaway cwd, stdin closed, isolated Python mode) and runs under a reliability guard that removes destructive builtins — but that is a guard, not a sandbox, and the reference harness says the same. Run execution-graded suites on a machine you can afford to have poked at.
+
+```bibtex
+@article{chen2021codex,
+  title={Evaluating Large Language Models Trained on Code},
+  author={Mark Chen and Jerry Tworek and Heewoo Jun and Qiming Yuan and Henrique Ponde de Oliveira Pinto and Jared Kaplan and Harri Edwards and Yuri Burda and Nicholas Joseph and Greg Brockman and Alex Ray and Raul Puri and Gretchen Krueger and Michael Petrov and Heidy Khlaaf and Girish Sastry and Pamela Mishkin and Brooke Chan and Scott Gray and Nick Ryder and Mikhail Pavlov and Alethea Power and Lukasz Kaiser and Mohammad Bavarian and Clemens Winter and Philippe Tillet and Felipe Petroski Such and Dave Cummings and Matthias Plappert and Fotios Chantzis and Elizabeth Barnes and Ariel Herbert-Voss and William Hebgen Guss and Alex Nichol and Alex Paino and Nikolas Tezak and Jie Tang and Igor Babuschkin and Suchir Balaji and Shantanu Jain and William Saunders and Christopher Hesse and Andrew N. Carr and Jan Leike and Josh Achiam and Vedant Misra and Evan Morikawa and Alec Radford and Matthew Knight and Miles Brundage and Mira Murati and Katie Mayer and Peter Welinder and Bob McGrew and Dario Amodei and Sam McCandlish and Ilya Sutskever and Wojciech Zaremba},
+  year={2021},
+  eprint={2107.03374},
+  archivePrefix={arXiv},
+  primaryClass={cs.LG}
+}
+```
 
 ### Calibrating difficulty to your own models
 

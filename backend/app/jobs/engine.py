@@ -6,6 +6,7 @@ resumes interrupted jobs from the first incomplete prompt.
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 import random
 import uuid
@@ -18,6 +19,7 @@ from app.core.tokens import estimate_tokens
 from app.db.session import session_scope
 from app.graders import scoring
 from app.graders.deterministic import run_deterministic
+from app.graders.execution import run_execution
 from app.graders.judge_protocol import (
     build_judge_messages,
     build_repair_message,
@@ -272,8 +274,17 @@ async def _execute_target_prompt(profile, model, session_key, settings, run_conf
     temperature = _pick(overrides, settings, run_config, "temperature")
     top_p = _pick(overrides, settings, run_config, "top_p")
     max_tokens = _pick(overrides, settings, run_config, "max_tokens")
+    reasoning_effort = _pick(overrides, settings, run_config, "reasoning_effort")
     stop = overrides.get("stop")
     seed = overrides.get("seed")
+    # llama.cpp/LM Studio accept a reasoning budget via the chat-template kwargs
+    # (see the opencode provider config for the same servers). Surface it as a
+    # run-level "reasoning level" option: low/medium/high/xhigh.
+    extra_body = dict(profile.extra_body_params or {})
+    if reasoning_effort:
+        chat_template_kwargs = dict(extra_body.get("chat_template_kwargs") or {})
+        chat_template_kwargs["reasoning_effort"] = reasoning_effort
+        extra_body["chat_template_kwargs"] = chat_template_kwargs
     return await chat_completion(
         profile.base_url,
         api_key=_resolve_key(profile, session_key),
@@ -286,7 +297,7 @@ async def _execute_target_prompt(profile, model, session_key, settings, run_conf
         seed=seed,
         stream=run_config.get("streaming_enabled", True),
         custom_headers=profile.custom_headers,
-        extra_body=profile.extra_body_params,
+        extra_body=extra_body,
         timeout=run_config.get("timeout", profile.request_timeout),
         verify_tls=profile.verify_tls,
         max_retries=int(run_config.get("retry_max_attempts", 3)),
@@ -423,10 +434,25 @@ def _update_progress(session: Session, run_id: str) -> None:
         .filter(PromptExecution.run_id == run_id)
         .all()
     )
-    completed = sum(1 for e in execs if e.status in {PromptStatus.COMPLETED.value,
-                                                       PromptStatus.AWAITING_MANUAL.value,
-                                                       PromptStatus.AWAITING_JUDGE.value,
-                                                       PromptStatus.FAILED.value})
+    # An execution counts as "done" once generation produced a stored target
+    # response, even though it still holds status RUNNING until the grading
+    # phase picks it up. Without this the progress bar is frozen at 0 for the
+    # entire target phase. Graded prompts are also counted by their terminal
+    # status below.
+    done_ids = {
+        r.execution_id
+        for r in session.query(TargetResponse)
+        .filter(TargetResponse.execution_id.in_([e.id for e in execs]))
+    }
+    completed = sum(
+        1 for e in execs
+        if e.id in done_ids or e.status in {
+            PromptStatus.COMPLETED.value,
+            PromptStatus.AWAITING_MANUAL.value,
+            PromptStatus.AWAITING_JUDGE.value,
+            PromptStatus.FAILED.value,
+        }
+    )
     failed = sum(1 for e in execs if e.status == PromptStatus.FAILED.value)
     run.completed_prompts = completed
     run.failed_prompts = failed
@@ -464,7 +490,14 @@ async def _run_grading_phase(
                 continue
             if await _is_cancelled(session, run_id):
                 raise JobCancelled()
-            _grade_deterministic(session, execution, content)
+            mode = execution.prompt_snapshot.get("grading_mode")
+            if mode == "execution":
+                # The execution grader shells out with a per-problem timeout;
+                # it must not block the event loop, and the worker thread needs
+                # its own session (SQLAlchemy sessions are not thread-safe).
+                await asyncio.to_thread(_grade_execution, exec_id, content)
+            else:
+                _grade_deterministic(session, execution, content)
 
     # Judge + verifier.
     if judge_enabled and judge_profile is not None:
@@ -554,6 +587,45 @@ def _grade_deterministic(session: Session, execution: PromptExecution, response:
             session.add(grade)
             execution.final_score = float(result["score"])  # provisional; judge merges
         execution.status = PromptStatus.RUNNING.value  # still needs judge
+
+
+def _prompt_text_from_snapshot(snapshot: dict) -> str:
+    """The code prefix a completion prompt was written against.
+
+    Execution prompts are completion tasks: the model continues the text of
+    the user message(s). Joining the user messages in position order is the
+    exact prompt for the single-message prompts (HumanEval) the mode targets.
+    """
+    msgs = sorted(snapshot.get("messages", []) or [], key=lambda m: m.get("position", 0))
+    return "\n".join(m.get("content", "") for m in msgs if m.get("role") == "user")
+
+
+def _grade_execution(exec_id: str, content: str) -> None:
+    """Grade an execution-mode prompt. Runs in a worker thread, own session."""
+    with session_scope() as session:
+        execution = session.get(PromptExecution, exec_id)
+        if execution is None:
+            return
+        snapshot = execution.prompt_snapshot or {}
+        result = run_execution(
+            snapshot.get("grader_config", {}) or {},
+            content,
+            _prompt_text_from_snapshot(snapshot),
+        )
+        grade = DeterministicGrade(
+            id=str(uuid.uuid4()),
+            execution_id=execution.id,
+            grader_type="execution",
+            passed=result["passed"],
+            score=result["score"],
+            max_score=result["max_score"],
+            details=result.get("details", {}),
+        )
+        session.add(grade)
+        execution.final_score = float(result["score"])
+        execution.max_score = float(result["max_score"])
+        execution.status = PromptStatus.COMPLETED.value
+        execution.completed_at = _now()
 
 
 async def _judge_phase(

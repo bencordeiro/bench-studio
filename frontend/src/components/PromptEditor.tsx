@@ -32,6 +32,7 @@ const GRADING_MODE_HELP: Record<GradingMode, string> = {
   judge: "Open-ended answers an LLM evaluates against a rubric: troubleshooting, architecture, explanations, writing quality.",
   hybrid: "Combine deterministic checks with an LLM judge. You choose the weighting (must total 100%). Critical failures can cap the final score.",
   manual: "No automatic score. The candidate answer is captured for a human to review and score 0–100 later.",
+  execution: "Executes the generated code against the problem's unit tests (HumanEval semantics). Used by the bundled HumanEval suite.",
 };
 
 export default function PromptEditor({ initial, onClose, onSave, submitting }: Props) {
@@ -236,7 +237,7 @@ function GenerationOverridesEditor({ overrides, onChange }: { overrides: Generat
         <Field label="Top-p (blank = inherit)">
           <input className="input" value={num(overrides.top_p)} onChange={(e) => set({ top_p: e.target.value === "" ? null : parseFloat(e.target.value) })} />
         </Field>
-        <Field label="Max tokens (blank = inherit)">
+        <Field label="Max tokens (blank or 0 = inherit/server default)">
           <input className="input" value={num(overrides.max_tokens)} onChange={(e) => set({ max_tokens: e.target.value === "" ? null : parseInt(e.target.value) })} />
         </Field>
         <Field label="Seed (blank = inherit)">

@@ -38,7 +38,7 @@ The benchmark-set import/export format is a versioned JSON document. Top-level s
   "position": 0,
   "enabled": true,
   "grading_mode": "deterministic",
-  "generation_overrides": { "temperature": 0.0, "max_tokens": 256 },
+  "generation_overrides": { "temperature": 0.0 },
   "grader_config": { ... },
   "messages": [
     { "role": "user", "content": "Compute the area of a circle with radius 10.", "position": 0 }
@@ -46,7 +46,15 @@ The benchmark-set import/export format is a versioned JSON document. Top-level s
 }
 ```
 
-`grading_mode` is one of `deterministic`, `judge`, `hybrid`, `manual`.
+`grading_mode` is one of `deterministic`, `judge`, `hybrid`, `manual`, `execution`.
+
+`generation_overrides` may include `temperature`, `top_p`, `stop`, `seed`, and
+`reasoning_effort` (`low`/`medium`/`high`/`xhigh`, sent as
+`chat_template_kwargs.reasoning_effort` for llama.cpp / LM Studio). **Never set
+`max_tokens` here** — a per-prompt cap truncates a chain-of-thought model before
+its answer lands. The run config owns the token budget: `max_tokens: 0` (the
+default) means "server default / no cap", and only a positive run-level value
+caps output.
 
 ## Grader configs
 
@@ -112,6 +120,26 @@ The judge returns strict JSON matching the schema in `app/graders/judge_protocol
 ### Manual (`grading_mode: "manual"`)
 
 `grader_config` is empty; the prompt is captured for human review.
+
+### Execution (`grading_mode: "execution"`)
+
+Functional correctness for code-completion prompts, graded the way the
+HumanEval reference harness (openai/human-eval, MIT) does it:
+
+```json
+{
+  "language": "python",
+  "test_code": "def check(candidate):\n    assert candidate(1) == 2",
+  "entry_point": "add_one",
+  "timeout_seconds": 3.0
+}
+```
+
+- The program `prompt + completion + "\n" + test_code + "\n" + check(entry_point)` is executed in a fresh `python -I` subprocess (throwaway cwd, stdin closed) with a wall-clock `timeout_seconds` (default 3.0, the reference harness's default).
+- The **prompt text is not stored in `grader_config`** — it is the prompt's user message(s), which keeps `grader_config` ASCII-clean for prompts whose docstrings contain unicode.
+- The completion is used exactly as produced: no markdown-fence stripping, no repair. A fenced reply is a SyntaxError, exactly as under the reference harness.
+- The child applies a reliability guard (adapted from the reference harness, MIT) that removes destructive builtins before the program runs. It is a guard, not a sandbox.
+- Result: **100** if the program completes cleanly, **0** otherwise. `details.status` is `passed`, `timed out`, or `failed: ...` — the reference harness's three classifications. No partial credit, so a suite's unweighted pass rate is standard pass@1.
 
 ## Validation on import
 

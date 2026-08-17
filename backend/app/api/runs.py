@@ -434,7 +434,7 @@ def _build_charts(execs_details: list[dict], run: BenchmarkRun) -> dict:
             totals.append(t["total_response_time"])
         if e["final_score"] is not None and t.get("total_response_time") is not None:
             latency_scatter.append({"x": t["total_response_time"], "y": e["final_score"]})
-        if e["grading_mode"] == "deterministic" and e["final_score"] is not None:
+        if e["grading_mode"] in {"deterministic", "execution"} and e["final_score"] is not None:
             det_vs_judge["deterministic"].append(e["final_score"])
         elif e["grading_mode"] in {"judge", "hybrid"} and e["final_score"] is not None:
             det_vs_judge["judge"].append(e["final_score"])

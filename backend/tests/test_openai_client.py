@@ -12,9 +12,41 @@ from app.services.openai_client import (
     OpenAIClientError,
     RETRYABLE_STATUS,
     chat_completion,
+    _build_body,
     _extract_stream_chunk,
     _delta_text,
 )
+
+
+def test_build_body_omits_zero_max_tokens():
+    """max_tokens=0 means 'server default' — it must not be sent to the model."""
+    body = _build_body(
+        messages=[{"role": "user", "content": "hi"}],
+        model="m",
+        temperature=0.0,
+        top_p=None,
+        max_tokens=0,
+        stop=None,
+        seed=None,
+        stream=False,
+        extra_body={},
+    )
+    assert "max_tokens" not in body
+
+
+def test_build_body_sends_positive_max_tokens():
+    body = _build_body(
+        messages=[{"role": "user", "content": "hi"}],
+        model="m",
+        temperature=None,
+        top_p=None,
+        max_tokens=4096,
+        stop=None,
+        seed=None,
+        stream=False,
+        extra_body={},
+    )
+    assert body["max_tokens"] == 4096
 
 
 def test_extract_stream_chunk_data_done():
@@ -36,19 +68,30 @@ def test_extract_stream_chunk_malformed_returns_none():
 
 
 def test_delta_text_and_finish():
-    text, finish = _delta_text({"choices": [{"delta": {"content": " world"}, "finish_reason": None}]})
-    assert text == " world"
+    content, reasoning, finish = _delta_text({"choices": [{"delta": {"content": " world"}, "finish_reason": None}]})
+    assert content == " world"
+    assert reasoning == ""
     assert finish is None
 
 
 def test_delta_text_finish_reason():
-    _, finish = _delta_text({"choices": [{"delta": {}, "finish_reason": "stop"}]})
+    _, _, finish = _delta_text({"choices": [{"delta": {}, "finish_reason": "stop"}]})
     assert finish == "stop"
 
 
 def test_delta_text_empty_choices():
-    text, finish = _delta_text({})
-    assert text == ""
+    content, reasoning, finish = _delta_text({})
+    assert content == ""
+    assert reasoning == ""
+    assert finish is None
+
+
+def test_delta_text_reasoning_content():
+    content, reasoning, finish = _delta_text(
+        {"choices": [{"delta": {"reasoning_content": " think think"}, "finish_reason": None}]}
+    )
+    assert content == ""
+    assert reasoning == " think think"
     assert finish is None
 
 
@@ -75,6 +118,51 @@ async def test_streaming_parse_and_ttft():
     assert result.http_status == 200
     assert result.time_to_first_token is not None
     assert result.usage["total_tokens"] == 7
+
+
+@pytest.mark.asyncio
+async def test_streaming_falls_back_to_reasoning_content_when_content_empty():
+    lines = [
+        'data: {"choices": [{"delta": {"reasoning_content": "The ocean spans vast"}}]}',
+        'data: {"choices": [{"delta": {"reasoning_content": " distances and depths."}}]}',
+        'data: {"choices": [{"delta": {}, "finish_reason": "stop"}], "usage": {"prompt_tokens": 5, "completion_tokens": 8, "total_tokens": 13}}',
+        "data: [DONE]",
+    ]
+    body = "\n".join(lines)
+    with respx.mock(base_url="http://test") as mock:
+        mock.post("/v1/chat/completions").respond(
+            200, text=body, headers={"content-type": "text/event-stream"}
+        )
+        result = await chat_completion(
+            "http://test", api_key=None, model="m",
+            messages=[{"role": "user", "content": "hi"}],
+            stream=True, max_retries=0,
+        )
+    assert result.content == "The ocean spans vast distances and depths."
+    assert result.finish_reason == "stop"
+    assert result.raw["fell_back_to_reasoning"] is True
+
+
+@pytest.mark.asyncio
+async def test_streaming_prefers_content_over_reasoning():
+    lines = [
+        'data: {"choices": [{"delta": {"reasoning_content": "hidden thought"}}]}',
+        'data: {"choices": [{"delta": {"content": "visible answer"}}]}',
+        'data: {"choices": [{"delta": {}, "finish_reason": "stop"}]}',
+        "data: [DONE]",
+    ]
+    body = "\n".join(lines)
+    with respx.mock(base_url="http://test") as mock:
+        mock.post("/v1/chat/completions").respond(
+            200, text=body, headers={"content-type": "text/event-stream"}
+        )
+        result = await chat_completion(
+            "http://test", api_key=None, model="m",
+            messages=[{"role": "user", "content": "hi"}],
+            stream=True, max_retries=0,
+        )
+    assert result.content == "visible answer"
+    assert result.raw["fell_back_to_reasoning"] is False
 
 
 @pytest.mark.asyncio

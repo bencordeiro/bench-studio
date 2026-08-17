@@ -166,8 +166,10 @@ class BenchmarkPromptBase(ORMModel):
 
     @model_validator(mode="after")
     def _validate_grading_mode(self):
-        if self.grading_mode not in {"deterministic", "judge", "hybrid", "manual"}:
-            raise ValueError("grading_mode must be deterministic, judge, hybrid, or manual")
+        if self.grading_mode not in {"deterministic", "judge", "hybrid", "manual", "execution"}:
+            raise ValueError(
+                "grading_mode must be deterministic, judge, hybrid, manual, or execution"
+            )
         return self
 
 

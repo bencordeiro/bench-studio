@@ -19,14 +19,15 @@ export default function NewRun() {
   const [judgeModel, setJudgeModel] = useState("");
   const [temperature, setTemperature] = useState(0);
   const [topP, setTopP] = useState(1);
-  const [maxTokens, setMaxTokens] = useState(4096);
+  const [maxTokens, setMaxTokens] = useState(0);
   const [maxTokensEdited, setMaxTokensEdited] = useState(false);
   // Default the token budget from Settings (default_max_tokens) unless the user
-  // has typed their own value for this run. Keeps runs from truncating a
-  // chain-of-thought model before its answer lands.
+  // has typed their own value for this run. 0 = the server's default (no cap) —
+  // a reasoning model then runs until its own stop token lands.
   useEffect(() => {
     if (settings && !maxTokensEdited) setMaxTokens(settings.default_max_tokens);
   }, [settings, maxTokensEdited]);
+  const [reasoningEffort, setReasoningEffort] = useState("");
   const [timeout, setTimeout_] = useState(60);
   const [repetitions, setRepetitions] = useState(1);
   const [shuffle, setShuffle] = useState(false);
@@ -76,6 +77,7 @@ export default function NewRun() {
           temperature,
           top_p: topP,
           max_tokens: maxTokens,
+          reasoning_effort: reasoningEffort || undefined,
           timeout,
         },
         notes,
@@ -146,7 +148,8 @@ export default function NewRun() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div><label className="label">Temperature</label><input type="number" step="0.1" className="input" value={temperature} onChange={(e) => setTemperature(parseFloat(e.target.value))} /></div>
             <div><label className="label">Top-p</label><input type="number" step="0.05" className="input" value={topP} onChange={(e) => setTopP(parseFloat(e.target.value))} /></div>
-            <div><label className="label">Max output tokens</label><input type="number" min="256" step="256" className="input" value={maxTokens} onChange={(e) => { setMaxTokens(parseInt(e.target.value)); setMaxTokensEdited(true); }} /><div className="text-xs text-gray-500 mt-1">Reasoning models need headroom — keep ≥ 4096.</div></div>
+            <div><label className="label">Max output tokens</label><input type="number" min="0" step="256" className="input" value={maxTokens} onChange={(e) => { setMaxTokens(parseInt(e.target.value)); setMaxTokensEdited(true); }} /><div className="text-xs text-gray-500 mt-1">0 = server default (no cap) — reasoning models stop at their own stop token.</div></div>
+            <div><label className="label">Reasoning level</label><select className="input" value={reasoningEffort} onChange={(e) => setReasoningEffort(e.target.value)}><option value="">server default</option><option value="low">low</option><option value="medium">medium</option><option value="high">high</option><option value="xhigh">xhigh</option></select><div className="text-xs text-gray-500 mt-1">Sent as chat_template_kwargs.reasoning_effort (llama.cpp / LM Studio).</div></div>
             <div><label className="label">Timeout (s)</label><input type="number" className="input" value={timeout} onChange={(e) => setTimeout_(parseInt(e.target.value))} /></div>
             <div><label className="label">Repetitions</label><input type="number" min="1" max="20" className="input" value={repetitions} onChange={(e) => setRepetitions(parseInt(e.target.value))} /></div>
             <label className="flex items-end gap-2 text-sm pb-2"><input type="checkbox" checked={shuffle} onChange={(e) => setShuffle(e.target.checked)} /> Shuffle prompt order</label>
