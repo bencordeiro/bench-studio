@@ -43,6 +43,51 @@ export default function NewRun() {
   const targetEndpoint = endpoints?.find((e) => e.id === targetEndpointId);
   const sameModel = targetModel && judgeModel && targetEndpointId === judgeEndpointId && targetModel === judgeModel;
 
+  // When an endpoint is selected, ask it for its /v1/models list so the model
+  // field can be prefilled with the real alias. On success: use the profile
+  // default if it's a real alias, else the single discovered model, else leave
+  // blank (don't guess). On failure: leave blank — the user types the name.
+  const { data: targetModels } = useQuery({
+    queryKey: ["endpoint-models", targetEndpointId],
+    queryFn: () => api.fetchModels(targetEndpointId!),
+    enabled: !!targetEndpointId,
+    retry: false,
+  });
+  const { data: judgeModels } = useQuery({
+    queryKey: ["endpoint-models", judgeEndpointId],
+    queryFn: () => api.fetchModels(judgeEndpointId!),
+    enabled: !!judgeEndpointId,
+    retry: false,
+  });
+  const modelList = (targetModels?.success && targetModels.models) || [];
+  const judgeModelList = (judgeModels?.success && judgeModels.models) || [];
+
+  useEffect(() => {
+    if (!targetEndpointId) return;
+    if (targetModels?.success) {
+      const list = targetModels.models;
+      const preferred = targetEndpoint?.default_model;
+      if (preferred && list.includes(preferred)) setTargetModel(preferred);
+      else if (list.length === 1) setTargetModel(list[0]);
+      else setTargetModel("");
+    } else {
+      setTargetModel("");
+    }
+  }, [targetEndpointId, targetModels, targetEndpoint?.default_model]);
+
+  useEffect(() => {
+    if (!judgeEndpointId) return;
+    if (judgeModels?.success) {
+      const list = judgeModels.models;
+      const preferred = endpoints?.find((e) => e.id === judgeEndpointId)?.default_model;
+      if (preferred && list.includes(preferred)) setJudgeModel(preferred);
+      else if (list.length === 1) setJudgeModel(list[0]);
+      else setJudgeModel("");
+    } else {
+      setJudgeModel("");
+    }
+  }, [judgeEndpointId, judgeModels, endpoints]);
+
   const validate = (): string | null => {
     if (!benchmarkId) return "Select a benchmark.";
     if (!targetEndpointId) return "Select a target endpoint.";
@@ -123,22 +168,34 @@ export default function NewRun() {
         <Card>
           <h3 className="font-medium text-white mb-2">Target</h3>
           <label className="label">Endpoint</label>
-          <select className="input mb-2" value={targetEndpointId} onChange={(e) => { setTargetEndpointId(e.target.value); const ep = endpoints?.find((x) => x.id === e.target.value); if (ep) setTargetModel(ep.default_model); }}>
+          <select className="input mb-2" value={targetEndpointId} onChange={(e) => { setTargetEndpointId(e.target.value); setTargetModel(""); }}>
             <option value="">— select —</option>
             {enabledEndpoints.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
           </select>
           <label className="label">Model</label>
-          <input className="input mono" value={targetModel} onChange={(e) => setTargetModel(e.target.value)} placeholder="model name" />
+          <input className="input mono" list="target-model-list" value={targetModel} onChange={(e) => setTargetModel(e.target.value)} placeholder="model name" />
+          <datalist id="target-model-list">
+            {modelList.map((m) => <option key={m} value={m} />)}
+          </datalist>
+          {modelList.length > 0 && (
+            <p className="text-xs text-gray-500 mt-1">{modelList.length} model(s) discovered via /v1/models</p>
+          )}
         </Card>
         <Card>
           <h3 className="font-medium text-white mb-2">Judge (optional)</h3>
           <label className="label">Endpoint</label>
-          <select className="input mb-2" value={judgeEndpointId} onChange={(e) => { setJudgeEndpointId(e.target.value); const ep = endpoints?.find((x) => x.id === e.target.value); if (ep) setJudgeModel(ep.default_model); }}>
+          <select className="input mb-2" value={judgeEndpointId} onChange={(e) => { setJudgeEndpointId(e.target.value); setJudgeModel(""); }}>
             <option value="">— none (defer judging) —</option>
             {enabledEndpoints.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
           </select>
           <label className="label">Model</label>
-          <input className="input mono" value={judgeModel} onChange={(e) => setJudgeModel(e.target.value)} placeholder="judge model name" />
+          <input className="input mono" list="judge-model-list" value={judgeModel} onChange={(e) => setJudgeModel(e.target.value)} placeholder="judge model name" />
+          <datalist id="judge-model-list">
+            {judgeModelList.map((m) => <option key={m} value={m} />)}
+          </datalist>
+          {judgeModelList.length > 0 && (
+            <p className="text-xs text-gray-500 mt-1">{judgeModelList.length} model(s) discovered via /v1/models</p>
+          )}
           {sameModel && (
             <p className="text-xs text-warn mt-2">⚠ The target and judge are the same model — self-judging can bias the score.</p>
           )}

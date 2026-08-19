@@ -39,6 +39,25 @@ from app.services import crud
 router = APIRouter(prefix="/api/runs", tags=["runs"])
 
 
+def _current_prompt_title(session: Session, run_id: str, status: str) -> str | None:
+    """Title of the prompt currently being processed (RUNNING execution)."""
+    if status in {"completed", "completed_with_errors", "cancelled", "failed"}:
+        return None
+    from app.models import PromptExecution, PromptStatus
+    execs = (
+        session.query(PromptExecution)
+        .filter(PromptExecution.run_id == run_id)
+        .filter(PromptExecution.status == PromptStatus.RUNNING.value)
+        .order_by(PromptExecution.position)
+        .all()
+    )
+    for e in execs:
+        title = (e.prompt_snapshot or {}).get("title")
+        if title:
+            return str(title)
+    return None
+
+
 def _run_to_response(run: BenchmarkRun, session: Session) -> RunResponse:
     return RunResponse(
         id=run.id,
@@ -262,6 +281,7 @@ async def run_progress(run_id: str, session: Session = Depends(get_db)):
                     status_now = run.status if run else "unknown"
                     completed = run.completed_prompts if run else 0
                     total = run.total_prompts if run else 0
+                    current = _current_prompt_title(s, run_id, status_now)
                 snapshot = {
                     "event": "snapshot",
                     "run_id": run_id,
@@ -269,6 +289,7 @@ async def run_progress(run_id: str, session: Session = Depends(get_db)):
                     "completed": completed,
                     "total": total,
                     "progress": round(completed / total, 4) if total else 0.0,
+                    "current_prompt": current,
                 }
                 yield f"data: {json.dumps(snapshot)}\n\n"
                 # Drain queued events.

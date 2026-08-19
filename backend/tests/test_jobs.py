@@ -81,7 +81,7 @@ async def test_reasoning_effort_reaches_chat_completion_extra_body(temp_data_dir
         api_key_storage="none", api_key_env_var="",
     )
     await engine._execute_target_prompt(
-        profile, "m", None, {"max_tokens": 0},
+        "run-1", profile, "m", None, {"max_tokens": 0},
         {"max_tokens": 0, "reasoning_effort": "xhigh"},
         {"stable_id": "p", "messages": [{"role": "user", "content": "hi"}],
          "generation_overrides": {}},
@@ -110,11 +110,43 @@ async def test_reasoning_effort_in_prompt_override_wins(temp_data_dir, monkeypat
         api_key_storage="none", api_key_env_var="",
     )
     await engine._execute_target_prompt(
-        profile, "m", None, {}, {"max_tokens": 0, "reasoning_effort": "low"},
+        "run-1", profile, "m", None, {}, {"max_tokens": 0, "reasoning_effort": "low"},
         {"stable_id": "p", "messages": [{"role": "user", "content": "hi"}],
          "generation_overrides": {"reasoning_effort": "high"}},
     )
     assert captured["extra_body"] == {"chat_template_kwargs": {"reasoning_effort": "high"}}
+
+
+
+@pytest.mark.asyncio
+async def test_cancel_aborts_in_flight_request_immediately(temp_data_dir):
+    """A cancel requested during a slow request must abort it, not wait for it."""
+    from app.jobs.engine import _await_abortable, JobCancelled, clear_cancel, signal_cancel
+
+    started = asyncio.Event()
+    released = asyncio.Event()
+
+    async def slow_request():
+        started.set()
+        await released.wait()  # never released before abort -> hangs if not cancelled
+        return "done"
+
+    async def do_cancel():
+        await started.wait()
+        signal_cancel("run-cancel-test")
+        return None
+
+    cancel_task = asyncio.create_task(do_cancel())
+    try:
+        await _await_abortable(slow_request(), "run-cancel-test")
+    except JobCancelled:
+        pass
+    else:
+        raise AssertionError("expected JobCancelled from aborted in-flight request")
+    finally:
+        clear_cancel("run-cancel-test")
+        released.set()
+        await cancel_task
 
 
 def test_update_progress_counts_generation_complete_during_target_phase(session):

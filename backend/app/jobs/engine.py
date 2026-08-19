@@ -133,6 +133,67 @@ class JobCancelled(Exception):
     pass
 
 
+# Immediate cancellation: a per-run asyncio.Event that request_cancel sets the
+# moment a cancel is requested. In-flight HTTP requests race against it and are
+# aborted on the spot instead of running to completion.
+_cancel_events: dict[str, asyncio.Event] = {}
+_cancel_event_loops: dict[str, asyncio.AbstractEventLoop] = {}
+
+
+def get_cancel_event(run_id: str) -> asyncio.Event:
+    """Return (creating if needed) the cancel event for a run.
+
+    asyncio.Event objects are bound to the loop they were created on, so if the
+    stored event belongs to a different loop (e.g. a fresh loop after an app or
+    test restart) it is recreated rather than reused across loops.
+    """
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+    ev = _cancel_events.get(run_id)
+    if ev is None or (loop is not None and _cancel_event_loops.get(run_id) is not loop):
+        ev = asyncio.Event()
+        _cancel_events[run_id] = ev
+        _cancel_event_loops[run_id] = loop
+    return ev
+
+
+def signal_cancel(run_id: str) -> None:
+    """Set the cancel event. Runs on the asyncio loop thread."""
+    get_cancel_event(run_id).set()
+
+
+def clear_cancel(run_id: str) -> None:
+    _cancel_events.pop(run_id, None)
+    _cancel_event_loops.pop(run_id, None)
+
+
+async def _await_abortable(awaitable, run_id):
+    """Await a coroutine, aborting it immediately if a cancel is signaled.
+
+    Cancelling the in-flight task closes the httpx stream/connection at once, so
+    a run stops right away even if the current request is hung or very slow.
+    """
+    task = asyncio.create_task(awaitable)
+    cancel_waiter = asyncio.create_task(get_cancel_event(run_id).wait())
+    try:
+        done, _ = await asyncio.wait(
+            {task, cancel_waiter}, return_when=asyncio.FIRST_COMPLETED
+        )
+        if cancel_waiter in done:
+            task.cancel()
+            try:
+                await task
+            except (asyncio.CancelledError, Exception):
+                pass
+            raise JobCancelled()
+        return task.result()
+    finally:
+        if not cancel_waiter.done():
+            cancel_waiter.cancel()
+
+
 async def _is_cancelled(session: Session, run_id: str) -> bool:
     run = session.get(BenchmarkRun, run_id)
     return run is not None and run.status in {
@@ -207,12 +268,13 @@ async def run_job(
         await _emit(run_id, "failed", status=RunStatus.FAILED.value, message=str(exc)[:500])
     finally:
         bus.clear(run_id)
+        clear_cancel(run_id)
 
 
 async def _warmup(run_id, profile, model, session_key, settings, run_config):
     await _emit(run_id, "phase", phase="warming_up")
     try:
-        await chat_completion(
+        await _await_abortable(chat_completion(
             profile.base_url,
             api_key=_resolve_key(profile, session_key),
             model=model,
@@ -224,7 +286,7 @@ async def _warmup(run_id, profile, model, session_key, settings, run_config):
             timeout=min(profile.request_timeout, 30.0),
             verify_tls=profile.verify_tls,
             max_retries=1,
-        )
+        ), run_id)
     except Exception as exc:
         log.warning("warm-up request failed for run %s: %s", run_id, exc)
 
@@ -255,7 +317,7 @@ async def _run_target_phase(
 
         # Run the target request outside the session lock.
         result = await _execute_target_prompt(
-            profile, model, session_key, settings, run_config, prompt_snapshot
+            run_id, profile, model, session_key, settings, run_config, prompt_snapshot
         )
         with session_scope() as session:
             execution = session.get(PromptExecution, exec_id)
@@ -264,7 +326,7 @@ async def _run_target_phase(
         await _emit_progress(run_id, execution_snapshot=prompt_snapshot, result=result)
 
 
-async def _execute_target_prompt(profile, model, session_key, settings, run_config, prompt_snapshot):
+async def _execute_target_prompt(run_id, profile, model, session_key, settings, run_config, prompt_snapshot):
     messages = [
         {"role": m["role"], "content": m["content"]}
         for m in prompt_snapshot.get("messages", [])
@@ -285,7 +347,7 @@ async def _execute_target_prompt(profile, model, session_key, settings, run_conf
         chat_template_kwargs = dict(extra_body.get("chat_template_kwargs") or {})
         chat_template_kwargs["reasoning_effort"] = reasoning_effort
         extra_body["chat_template_kwargs"] = chat_template_kwargs
-    return await chat_completion(
+    return await _await_abortable(chat_completion(
         profile.base_url,
         api_key=_resolve_key(profile, session_key),
         model=model,
@@ -303,7 +365,7 @@ async def _execute_target_prompt(profile, model, session_key, settings, run_conf
         max_retries=int(run_config.get("retry_max_attempts", 3)),
         backoff_base=float(run_config.get("retry_backoff_base", 0.5)),
         backoff_max=float(run_config.get("retry_backoff_max", 30.0)),
-    )
+    ), run_id)
 
 
 def _pick(overrides, settings, run_config, key):
@@ -666,7 +728,7 @@ async def _judge_phase(
             config=judge_config,
             extra_instructions=judge_config.get("judge_instructions", ""),
         )
-        result = await chat_completion(
+        result = await _await_abortable(chat_completion(
             judge_profile.base_url,
             api_key=_resolve_key(judge_profile, judge_session_key),
             model=judge_model,
@@ -679,7 +741,7 @@ async def _judge_phase(
             timeout=run_config.get("timeout", judge_profile.request_timeout),
             verify_tls=judge_profile.verify_tls,
             max_retries=int(run_config.get("retry_max_attempts", 3)),
-        )
+        ), run_id)
         await _store_judge_result(
             run_id, exec_id, prompt_snapshot, result, judge_config,
             candidate=candidate,
@@ -716,7 +778,7 @@ async def _store_judge_result(
             {"role": "assistant", "content": raw_text[:5000]},
             build_repair_message(err),
         ]
-        repair_result = await chat_completion(
+        repair_result = await _await_abortable(chat_completion(
             judge_profile.base_url,
             api_key=_resolve_key(judge_profile, judge_session_key),
             model=judge_model,
@@ -729,7 +791,7 @@ async def _store_judge_result(
             timeout=run_config.get("timeout", judge_profile.request_timeout),
             verify_tls=judge_profile.verify_tls,
             max_retries=0,
-        )
+        ), run_id)
         parsed, err = parse_judge_output(repair_result.content or "")
         raw_text = repair_result.content or raw_text
 
@@ -835,7 +897,7 @@ async def _verifier_phase(run_id, judge_profile, judge_model, judge_session_key,
                 "critical_error": judge_grade.critical_error,
             },
         )
-        result = await chat_completion(
+        result = await _await_abortable(chat_completion(
             judge_profile.base_url,
             api_key=_resolve_key(judge_profile, judge_session_key),
             model=judge_model,
@@ -848,7 +910,7 @@ async def _verifier_phase(run_id, judge_profile, judge_model, judge_session_key,
             timeout=run_config.get("timeout", judge_profile.request_timeout),
             verify_tls=judge_profile.verify_tls,
             max_retries=int(run_config.get("retry_max_attempts", 3)),
-        )
+        ), run_id)
         parsed, err = parse_verifier_output(result.content or "")
         with session_scope() as session:
             execution = session.get(PromptExecution, exec_id)

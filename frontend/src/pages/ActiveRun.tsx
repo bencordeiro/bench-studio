@@ -24,6 +24,7 @@ export default function ActiveRun() {
 
   const [progress, setProgress] = useState(0);
   const [phase, setPhase] = useState<string>("");
+  const [currentPrompt, setCurrentPrompt] = useState<string>("");
   const [elapsed, setElapsed] = useState(0);
 
   // SSE subscription while running.
@@ -36,6 +37,7 @@ export default function ActiveRun() {
         if (data.event === "snapshot" || data.event === "prompt") {
           if (typeof data.progress === "number") setProgress(data.progress);
           if (data.phase) setPhase(data.phase);
+          if (data.current_prompt) setCurrentPrompt(data.current_prompt);
         }
       } catch {
         // ignore
@@ -57,7 +59,7 @@ export default function ActiveRun() {
 
   const cancelMut = useMutation({
     mutationFn: () => api.cancelRun(id!),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["run", id] }); toast("Cancel requested — finishes current request safely", "info"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["run", id] }); toast("Cancel requested — aborting current request", "info"); },
     onError: (e: Error) => toast(e.message, "error"),
   });
   const resumeMut = useMutation({
@@ -101,7 +103,7 @@ export default function ActiveRun() {
               <Link to={`/runs/${id}/results`} className="btn btn-primary">View results</Link>
             )}
             {!isTerminal(run.status) && (
-              <ConfirmButton message="Cancel this run? It stops safely after the current request." onConfirm={() => cancelMut.mutate()} confirmLabel="Cancel run">
+              <ConfirmButton message="Cancel this run? The current request is aborted immediately." onConfirm={() => cancelMut.mutate()} confirmLabel="Cancel run">
                 Cancel
               </ConfirmButton>
             )}
@@ -130,6 +132,11 @@ export default function ActiveRun() {
           <Badge className={statusColor(run.status)}>{STATUS_LABELS[run.status] || run.status}</Badge>
           {phase && !isTerminal(run.status) && <span className="text-sm text-accent">{phase.replace(/_/g, " ")}</span>}
         </div>
+        {currentPrompt && !isTerminal(run.status) && (
+          <p className="text-sm text-gray-400 mt-2 truncate">
+            Now: <span className="text-white">{currentPrompt}</span>
+          </p>
+        )}
         <div className="mt-4">
           <div className="flex justify-between text-sm text-gray-400 mb-1">
             <span>{done} / {total} prompts</span>

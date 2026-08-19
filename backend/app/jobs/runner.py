@@ -10,7 +10,7 @@ import asyncio
 import logging
 
 from app.db.session import session_scope
-from app.jobs.engine import run_job
+from app.jobs.engine import run_job, signal_cancel
 from app.models import BenchmarkRun, EndpointProfile, PromptExecution, PromptStatus, RunStatus
 
 log = logging.getLogger(__name__)
@@ -175,7 +175,7 @@ def enqueue_run(run_id: str | None = None) -> None:
 
 
 def request_cancel(run_id: str) -> bool:
-    """Request safe cancellation (finishes current in-flight request)."""
+    """Request immediate cancellation (aborts the current in-flight request)."""
     with session_scope() as session:
         run = session.get(BenchmarkRun, run_id)
         if run is None:
@@ -188,6 +188,10 @@ def request_cancel(run_id: str) -> bool:
         }:
             return False
         run.status = RunStatus.CANCEL_REQUESTED.value
+    if runner._loop and runner._loop.is_running():
+        runner._loop.call_soon_threadsafe(signal_cancel, run_id)
+    else:
+        signal_cancel(run_id)
     runner.notify()
     return True
 
