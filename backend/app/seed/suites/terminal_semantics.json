@@ -4,7 +4,7 @@
   "exported_at": "",
   "name": "Terminal Semantics & System Gotchas",
   "description": "Expert Linux shell and systems reasoning, inspired by hard Terminal-Bench task themes (permissions/ACLs, tar determinism, git forensics, date normalization, log aggregation, HTML/text processing, SQLite WAL, cron semantics, bash pipefail, packaging conflicts, locale sorting, filesystem edge cases). Every canonical answer was produced by executing the scenario on Ubuntu 24.04 (bash 5.x, GNU coreutils/findutils/sed/tar/git, mawk, sqlite3 3.45, Python 3.12 zoneinfo) — never written by hand. Graded exactly on the final ANSWER line.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "tags": [
     "terminal",
     "shell",
@@ -61,44 +61,6 @@
         {
           "role": "user",
           "content": "You run exactly these commands in order on Ubuntu 24.04 (GNU coreutils, getfacl 2.3):\nmkdir data && chmod 0754 data\ntouch data/report.csv && chmod 640 data/report.csv\nsetfacl -m u:1042:rwx,g:2088:rx,other::--- data/\nsetfacl -d -m u:1042:rX,g:2088:rX data/\n# state 1\nstat -c %a data\n# then\nchmod 0754 data\n# state 2\nstat -c %a data\ngetfacl data | grep \"user:1042\"\n\nWhat are: stat %a after state 1, stat %a after state 2, and the effective permission bits for user 1042 on data after state 2?\nGive them as comma-separated: <stat1>,<stat2>,<effective>\nExample: 777,755,rwx"
-        }
-      ]
-    },
-    {
-      "stable_id": "ts-tar-determinism",
-      "title": "Deterministic tar archive member order and symlink size field",
-      "description": "GNU tar 1.35, TZ=UTC, LC_ALL=C. Predict tar -tf order and tar -tvf size column for symlink.",
-      "category": "terminal/archive",
-      "tags": [
-        "terminal",
-        "shell",
-        "linux"
-      ],
-      "difficulty": "hard",
-      "importance_weight": 2.0,
-      "position": 1,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "build/,build/a.txt,build/b.txt,build/link_to_a,build/sub/,build/sub/c.txt",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are a Linux systems expert. Determine the exact output/behavior described. You may reason as long as you need, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is asked for (no quotes, no code fences)."
-        },
-        {
-          "role": "user",
-          "content": "You run exactly:\nmkdir -p build/sub\nprintf 'alpha\\n' > build/a.txt\nprintf 'beta\\n' > build/b.txt\nprintf 'gamma\\n' > build/sub/c.txt\nln -s a.txt build/link_to_a\nTZ=UTC LC_ALL=C tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner --pax-option='exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime' -cf out.tar build\nTZ=UTC LC_ALL=C tar -tf out.tar\n\nWhat is the comma-separated list of archive members in order as printed by tar -tf (include trailing slash for directories)?\nExample: dir/,dir/a,dir/b"
         }
       ]
     },
