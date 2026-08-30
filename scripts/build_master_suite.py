@@ -71,7 +71,7 @@ def _load_grader():
 GRADER = _load_grader()
 
 SUITE_NAME = "Master Suite"
-SUITE_VERSION = "1.0.0"
+SUITE_VERSION = "1.1.0"
 
 # Tier -> (difficulty label, importance weight). The declared difficulty and the
 # weight must stay ordered together: test_declared_difficulty_matches_weight_ordering
@@ -660,27 +660,6 @@ def build_js_items() -> None:
         ''',
         "frontier",
         tags=["classes", "initialization"],
-    )
-
-    code_item(
-        "ms-js-async-generator-order",
-        "Async generator interleaving with a microtask chain",
-        "for await yields control between iterations, letting an independent promise "
-        "chain advance one link at a time.",
-        "JavaScript (Node)",
-        '''
-        const log = [];
-        async function* src() { log.push('y1'); yield 1; log.push('y2'); yield 2; }
-        (async () => {
-          for await (const v of src()) log.push('got' + v);
-          for await (const v of [Promise.resolve('p'), 'raw']) log.push('arr' + v);
-          log.push('done');
-          console.log(log.join(','));
-        })();
-        Promise.resolve().then(() => log.push('m1')).then(() => log.push('m2'));
-        ''',
-        "extreme",
-        tags=["async-iteration", "event-loop"],
     )
 
     code_item(
@@ -2813,9 +2792,7 @@ def build_long_context_items() -> None:
 # 9. Anchors -- hardest items lifted from the four base suites
 # =========================================================================== #
 ANCHOR_IDS = [
-    ("code_reasoning_python.json", "cr5-automaton"),
     ("code_reasoning_python.json", "cr3-generator-send"),
-    ("web_dev_js.json", "wd5-event-loop-deep"),
     ("web_dev_js.json", "wd3-number-precision-chain"),
     ("agentic_tool_use.json", "ag-nested-array-args"),
     ("instruction_following.json", "if-nested-json-array"),

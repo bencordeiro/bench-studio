@@ -4,7 +4,7 @@
   "exported_at": "",
   "name": "Code Reasoning & Correctness (Python)",
   "description": "Output-prediction over original Python snippets, in the CRUXEval output-prediction format. Covers closures and scoping, mutation and aliasing, the data model (MRO, descriptors, dict key identity), generator lifecycle, and evaluation order. Every canonical answer is produced by executing the snippet on CPython 3, never written by hand. Deliberately excludes interpreter implementation details such as small-integer caching, which reward trivia about one runtime rather than reasoning about the language.",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "tags": [
     "coding",
     "python",
@@ -108,46 +108,6 @@
         }
       ],
       "position": 1
-    },
-    {
-      "stable_id": "cr-generator-exhaustion",
-      "title": "Generator exhaustion",
-      "description": "A generator can only be consumed once.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "output-prediction",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "0",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "g = (x * 2 for x in range(3))\nlist(g)\nprint(len(list(g)))",
-          "position": 1
-        }
-      ],
-      "position": 2
     },
     {
       "stable_id": "cr-dict-key-collapse",
@@ -274,86 +234,6 @@
       "position": 5
     },
     {
-      "stable_id": "cr-or-short-circuit",
-      "title": "or returns the first truthy operand",
-      "description": "or yields the operand, not a boolean.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "output-prediction",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "x",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "print(0 or [] or 'x' or 3)",
-          "position": 1
-        }
-      ],
-      "position": 6
-    },
-    {
-      "stable_id": "cr-pow-right-assoc",
-      "title": "Exponent operator is right-associative",
-      "description": "2 ** (3 ** 2) = 2 ** 9.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "output-prediction",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "512",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "print(2 ** 3 ** 2)",
-          "position": 1
-        }
-      ],
-      "position": 7
-    },
-    {
       "stable_id": "cr-running-max-sum",
       "title": "Simulate a running-maximum accumulation",
       "description": "Tracks state across a loop; one slip cascades.",
@@ -392,46 +272,6 @@
         }
       ],
       "position": 8
-    },
-    {
-      "stable_id": "cr-sum-bools",
-      "title": "Booleans are integers under sum",
-      "description": "True is 1 and False is 0.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "output-prediction",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "5",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "print(sum([True, True, False, 2, True]))",
-          "position": 1
-        }
-      ],
-      "position": 9
     },
     {
       "stable_id": "cr-decorator-attr-target",

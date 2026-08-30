@@ -4,7 +4,7 @@
   "exported_at": "",
   "name": "Web Dev Correctness & Debugging (JS)",
   "description": "Output-prediction and debugging over original JavaScript snippets, in the CRUXEval output-prediction format. Covers coercion, the event loop and microtask ordering, closures and scope, prototypes, async/promise semantics, and JSON serialization. Every canonical answer is produced by executing the snippet under Node.js, never written by hand. Graded exactly on the final ANSWER line.",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "tags": [
     "web",
     "javascript",
@@ -642,47 +642,6 @@
       "position": 14
     },
     {
-      "stable_id": "wd-sparse-array-map",
-      "title": "Holes in a sparse array survive map",
-      "description": "map preserves holes rather than visiting them, they stringify as empty, and flat() drops them.",
-      "category": "web-js",
-      "tags": [
-        "javascript",
-        "arrays",
-        "web",
-        "discriminator"
-      ],
-      "difficulty": "hard",
-      "importance_weight": 4.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "3|false|2,,6|2",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are a JavaScript engine (Node.js). Given a snippet, determine exactly what it writes to the console. You may reason briefly, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is printed (no quotes, no code fences).",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "const s = [1, , 3];\nconst mapped = s.map(x => x * 2);\nconsole.log([mapped.length, 1 in mapped, String(mapped), s.flat().length].join('|'));",
-          "position": 1
-        }
-      ],
-      "position": 15
-    },
-    {
       "stable_id": "wd-spread-getter",
       "title": "Spread invokes getters and produces a plain data property",
       "description": "Spread invokes the getter once and copies the resulting value as a plain data property.",
@@ -887,47 +846,6 @@
         }
       ],
       "position": 20
-    },
-    {
-      "stable_id": "wd-tostring-precedence",
-      "title": "Symbol.toPrimitive beats valueOf and toString",
-      "description": "Symbol.toPrimitive takes precedence over valueOf and toString, and the hint differs per operator.",
-      "category": "web-js",
-      "tags": [
-        "javascript",
-        "coercion",
-        "web",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "10,S,S1,20",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are a JavaScript engine (Node.js). Given a snippet, determine exactly what it writes to the console. You may reason briefly, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is printed (no quotes, no code fences).",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "const o = {\n  [Symbol.toPrimitive](hint) { return hint === 'number' ? 10 : 'S'; },\n  valueOf() { return 20; },\n  toString() { return 'T'; },\n};\nconsole.log((+o) + ',' + `${o}` + ',' + (o + 1) + ',' + (o * 2));",
-          "position": 1
-        }
-      ],
-      "position": 21
     },
     {
       "stable_id": "wd-finally-overrides-return",
@@ -1670,47 +1588,6 @@
       ]
     },
     {
-      "stable_id": "wd4-async-generator-order",
-      "title": "for await over an async generator with timers",
-      "description": "Async iteration interleaves with the microtask queue and a timer.",
-      "category": "web-js",
-      "tags": [
-        "javascript",
-        "code-reasoning",
-        "web",
-        "discriminator"
-      ],
-      "difficulty": "hard",
-      "importance_weight": 4.0,
-      "position": 40,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "start,g1,sync,p,v1,g2,v2,g3,done",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are a JavaScript engine (Node.js). Given a snippet, determine exactly what it writes to the console. You may reason briefly, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is printed (no quotes, no code fences).",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "const out = [];\nasync function* gen() {\n  out.push('g1'); yield 1;\n  out.push('g2'); yield 2;\n  out.push('g3');\n}\n(async () => {\n  out.push('start');\n  for await (const v of gen()) out.push('v' + v);\n  out.push('done');\n})();\nPromise.resolve().then(() => out.push('p'));\nout.push('sync');\nsetTimeout(() => console.log(out.join(',')), 20);",
-          "position": 1
-        }
-      ]
-    },
-    {
       "stable_id": "wd4-promise-race-allsettled",
       "title": "race, allSettled and rejection timing",
       "description": "Which settles first, and what shape allSettled reports.",
@@ -1911,47 +1788,6 @@
         {
           "role": "user",
           "content": "const people = [\n  { n: 'ana', a: 30, c: 'x' }, { n: 'bob', a: 25, c: 'y' },\n  { n: 'cid', a: 30, c: 'x' }, { n: 'dee', a: 25, c: 'x' },\n  { n: 'eve', a: 30, c: 'y' },\n];\nconst sorted = [...people].sort((p, q) => p.a - q.a || p.c.localeCompare(q.c));\nconsole.log(sorted.map(p => p.n).join(',') + '|' + people[0].n);",
-          "position": 1
-        }
-      ]
-    },
-    {
-      "stable_id": "wd5-event-loop-deep",
-      "title": "Twelve interleaved async operations",
-      "description": "await points, chained thens, queueMicrotask and two timers in one ordering.",
-      "category": "web-js",
-      "tags": [
-        "javascript",
-        "code-reasoning",
-        "web",
-        "discriminator"
-      ],
-      "difficulty": "hard",
-      "importance_weight": 4.0,
-      "position": 46,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "A1B1SA2P1B2QA3P2P3T1",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are a JavaScript engine (Node.js). Given a snippet, determine exactly what it writes to the console. You may reason briefly, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is printed (no quotes, no code fences).",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "const o = [];\nasync function A() { o.push('A1'); await 0; o.push('A2'); await 0; o.push('A3'); }\nasync function B() { o.push('B1'); await Promise.resolve(); o.push('B2'); }\nsetTimeout(() => o.push('T1'), 0);\nA();\nPromise.resolve().then(() => o.push('P1')).then(() => o.push('P2')).then(() => o.push('P3'));\nB();\nqueueMicrotask(() => o.push('Q'));\no.push('S');\nsetTimeout(() => console.log(o.join('')), 25);",
           "position": 1
         }
       ]
