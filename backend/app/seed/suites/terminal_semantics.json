@@ -1,0 +1,526 @@
+{
+  "format": "localbench-benchmark",
+  "format_version": "1.0",
+  "exported_at": "",
+  "name": "Terminal Semantics & System Gotchas",
+  "description": "Expert Linux shell and systems reasoning, inspired by hard Terminal-Bench task themes (permissions/ACLs, tar determinism, git forensics, date normalization, log aggregation, HTML/text processing, SQLite WAL, cron semantics, bash pipefail, packaging conflicts, locale sorting, filesystem edge cases). Every canonical answer was produced by executing the scenario on Ubuntu 24.04 (bash 5.x, GNU coreutils/findutils/sed/tar/git, mawk, sqlite3 3.45, Python 3.12 zoneinfo) — never written by hand. Graded exactly on the final ANSWER line.",
+  "version": "1.0.0",
+  "tags": [
+    "terminal",
+    "shell",
+    "linux",
+    "systems",
+    "deterministic"
+  ],
+  "scoring_config": {},
+  "performance_thresholds": {
+    "desired_ttft": 0.6,
+    "max_ttft": 12.0,
+    "desired_tps": 40.0,
+    "min_tps": 5.0,
+    "max_failure_rate": 0.1
+  },
+  "composite_weights": {
+    "quality": 0.9,
+    "reliability": 0.07,
+    "performance": 0.03
+  },
+  "prompts": [
+    {
+      "stable_id": "ts-perm-mask",
+      "title": "Effective permissions after setfacl + chmod mask recalc",
+      "description": "Predict stat mode and effective ACL permissions after mask recalculation. Use numeric IDs u:1042/g:2088 (no passwd entry, shown as 1042/2088).",
+      "category": "terminal/permissions",
+      "tags": [
+        "terminal",
+        "shell",
+        "linux"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 2.0,
+      "position": 0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "770,754,r-x",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a Linux systems expert. Determine the exact output/behavior described. You may reason as long as you need, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is asked for (no quotes, no code fences)."
+        },
+        {
+          "role": "user",
+          "content": "You run exactly these commands in order on Ubuntu 24.04 (GNU coreutils, getfacl 2.3):\nmkdir data && chmod 0754 data\ntouch data/report.csv && chmod 640 data/report.csv\nsetfacl -m u:1042:rwx,g:2088:rx,other::--- data/\nsetfacl -d -m u:1042:rX,g:2088:rX data/\n# state 1\nstat -c %a data\n# then\nchmod 0754 data\n# state 2\nstat -c %a data\ngetfacl data | grep \"user:1042\"\n\nWhat are: stat %a after state 1, stat %a after state 2, and the effective permission bits for user 1042 on data after state 2?\nGive them as comma-separated: <stat1>,<stat2>,<effective>\nExample: 777,755,rwx"
+        }
+      ]
+    },
+    {
+      "stable_id": "ts-tar-determinism",
+      "title": "Deterministic tar archive member order and symlink size field",
+      "description": "GNU tar 1.35, TZ=UTC, LC_ALL=C. Predict tar -tf order and tar -tvf size column for symlink.",
+      "category": "terminal/archive",
+      "tags": [
+        "terminal",
+        "shell",
+        "linux"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 2.0,
+      "position": 1,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "build/,build/a.txt,build/b.txt,build/link_to_a,build/sub/,build/sub/c.txt",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a Linux systems expert. Determine the exact output/behavior described. You may reason as long as you need, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is asked for (no quotes, no code fences)."
+        },
+        {
+          "role": "user",
+          "content": "You run exactly:\nmkdir -p build/sub\nprintf 'alpha\\n' > build/a.txt\nprintf 'beta\\n' > build/b.txt\nprintf 'gamma\\n' > build/sub/c.txt\nln -s a.txt build/link_to_a\nTZ=UTC LC_ALL=C tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner --pax-option='exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime' -cf out.tar build\nTZ=UTC LC_ALL=C tar -tf out.tar\n\nWhat is the comma-separated list of archive members in order as printed by tar -tf (include trailing slash for directories)?\nExample: dir/,dir/a,dir/b"
+        }
+      ]
+    },
+    {
+      "stable_id": "ts-git-forensics",
+      "title": "Git log reachability after two commits",
+      "description": "Deterministic git SHA-1 with fixed author dates.",
+      "category": "terminal/git",
+      "tags": [
+        "terminal",
+        "shell",
+        "linux"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 2.0,
+      "position": 2,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "2,init",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a Linux systems expert. Determine the exact output/behavior described. You may reason as long as you need, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is asked for (no quotes, no code fences)."
+        },
+        {
+          "role": "user",
+          "content": "You run exactly in an empty directory (git 2.43, Linux):\ngit init -q\ngit config user.email \"t@test\"\ngit config user.name \"T\"\nGIT_AUTHOR_DATE=\"2026-01-01T00:00:00Z\" GIT_COMMITTER_DATE=\"2026-01-01T00:00:00Z\" git commit --allow-empty -m \"init\" -q\nGIT_AUTHOR_DATE=\"2026-01-02T00:00:00Z\" GIT_COMMITTER_DATE=\"2026-01-02T00:00:00Z\" git commit --allow-empty -m \"feat A\" -q\ngit rev-list --count HEAD\ngit log --oneline --reverse | head -1 | cut -d' ' -f2\n\nWhat are: commit count from HEAD, and subject of the oldest commit?\nGive as: <count>,<subject>\nExample: 5,initial"
+        }
+      ]
+    },
+    {
+      "stable_id": "ts-date-normalization",
+      "title": "Mixed-format event ordering across DST boundaries",
+      "description": "Normalize 7 events to UTC and order them. DST rules: US Eastern DST starts 2026-03-08 02:00 local, Europe/Berlin DST starts 2026-03-29.",
+      "category": "terminal/dates",
+      "tags": [
+        "terminal",
+        "shell",
+        "linux"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 2.0,
+      "position": 3,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "D,E,A,B,F,G,C",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a Linux systems expert. Determine the exact output/behavior described. You may reason as long as you need, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is asked for (no quotes, no code fences)."
+        },
+        {
+          "role": "user",
+          "content": "Normalize these 7 events to UTC (all times are as written, assume America/New_York for Eastern, Europe/Berlin for CET):\nA: 2026-03-08T01:45Z\nB: March 7, 2026 at 9:30 PM Eastern Time (America/New_York)\nC: March 8, 2026 at 7:00 AM Eastern Time (America/New_York)\nD: 2026-03-07T23:45Z\nE: March 8, 2026 at 1:30 AM Central European Time (Europe/Berlin)\nF: Unix epoch 1772938800\nG: March 7, 2026 at 10:25 PM Eastern Time (America/New_York)\n\nList the event IDs in chronological order (earliest first, comma-separated, no spaces).\nExample: A,B,C,D"
+        }
+      ]
+    },
+    {
+      "stable_id": "ts-log-aggregation",
+      "title": "Top client IP after IPv4-mapped and leading-zero normalization",
+      "description": "Normalize client IPs: lowercase IPv6, ::ffff:a.b.c.d -> dotted quad, dotted quads with leading zeros -> decimal without leading zeros.",
+      "category": "terminal/log-analysis",
+      "tags": [
+        "terminal",
+        "shell",
+        "linux"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 2.0,
+      "position": 4,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "203.0.113.4 11",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a Linux systems expert. Determine the exact output/behavior described. You may reason as long as you need, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is asked for (no quotes, no code fences)."
+        },
+        {
+          "role": "user",
+          "content": "You are given this 32-line Apache combined-format access.log (client IP is first field). Normalize client IPs as:\n- lower-case any IPv6\n- ::ffff:a.b.c.d (full form) -> a.b.c.d (dotted quad, each octet decimal without leading zeros)\n- dotted quads: interpret each octet as base-10 integer, rewrite without leading zeros\nTwo requests are from same client iff normalized forms are identical.\n\nLog (first field is client IP):\n203.0.113.4 - - [09/Mar/2026:09:33:55 +0000] \"GET /index.html HTTP/1.1\" 200 512 \"-\"\n203.0.113.4 - - [09/Mar/2026:09:30:35 +0000] \"GET /index.html HTTP/1.1\" 200 512 \"-\"\n203.0.113.4 - - [09/Mar/2026:09:30:37 +0000] \"GET /index.html HTTP/1.1\" 200 512 \"-\"\n203.0.113.4 - - [09/Mar/2026:10:05:18 +0000] \"GET /index.html HTTP/1.1\" 200 512 \"-\"\n203.0.113.4 - - [09/Mar/2026:09:48:41 +0000] \"GET /index.html HTTP/1.1\" 200 512 \"-\"\n203.0.113.4 - - [09/Mar/2026:09:58:57 +0000] \"GET /index.html HTTP/1.1\" 200 512 \"-\"\n::ffff:203.0.113.4 - - [09/Mar/2026:10:36:09 +0000] \"GET /api/v1/status HTTP/1.1\" 200 512 \"-\"\n::ffff:203.0.113.4 - - [09/Mar/2026:09:31:03 +0000] \"GET /api/v1/status HTTP/1.1\" 200 512 \"-\"\n::ffff:203.0.113.4 - - [09/Mar/2026:09:14:01 +0000] \"GET /api/v1/status HTTP/1.1\" 200 512 \"-\"\n::ffff:203.0.113.4 - - [09/Mar/2026:09:26:50 +0000] \"GET /api/v1/status HTTP/1.1\" 200 512 \"-\"\n::ffff:203.0.113.4 - - [09/Mar/2026:10:38:29 +0000] \"GET /api/v1/status HTTP/1.1\" 200 512 \"-\"\n198.51.100.7 - - [09/Mar/2026:10:27:16 +0000] \"GET /login HTTP/1.1\" 200 512 \"-\"\n198.51.100.7 - - [09/Mar/2026:10:59:50 +0000] \"GET /login HTTP/1.1\" 200 512 \"-\"\n198.51.100.7 - - [09/Mar/2026:10:18:13 +0000] \"GET /login HTTP/1.1\" 200 512 \"-\"\n198.51.100.7 - - [09/Mar/2026:09:04:45 +0000] \"GET /login HTTP/1.1\" 200 512 \"-\"\n198.51.100.7 - - [09/Mar/2026:09:50:23 +0000] \"GET /login HTTP/1.1\" 200 512 \"-\"\n198.51.100.7 - - [09/Mar/2026:10:50:00 +0000] \"GET /login HTTP/1.1\" 200 512 \"-\"\n198.51.100.007 - - [09/Mar/2026:09:54:28 +0000] \"GET /login?next=home HTTP/1.1\" 200 512 \"-\"\n198.51.100.007 - - [09/Mar/2026:10:23:04 +0000] \"GET /login?next=home HTTP/1.1\" 200 512 \"-\"\n198.51.100.007 - - [09/Mar/2026:10:46:16 +0000] \"GET /login?next=home HTTP/1.1\" 200 512 \"-\"\n198.51.100.007 - - [09/Mar/2026:09:19:57 +0000] \"GET /login?next=home HTTP/1.1\" 200 512 \"-\"\n2001:db8::9 - - [09/Mar/2026:10:07:14 +0000] \"GET /assets/app.js HTTP/1.1\" 200 512 \"-\"\n2001:db8::9 - - [09/Mar/2026:09:03:47 +0000] \"GET /assets/app.js HTTP/1.1\" 200 512 \"-\"\n2001:db8::9 - - [09/Mar/2026:09:33:26 +0000] \"GET /assets/app.js HTTP/1.1\" 200 512 \"-\"\n2001:DB8::9 - - [09/Mar/2026:09:43:07 +0000] \"GET /assets/style.css HTTP/1.1\" 200 512 \"-\"\n2001:DB8::9 - - [09/Mar/2026:10:06:25 +0000] \"GET /assets/style.css HTTP/1.1\" 200 512 \"-\"\n192.0.2.1 - - [09/Mar/2026:09:16:58 +0000] \"GET /index.html HTTP/1.1\" 200 512 \"-\"\n192.0.2.3 - - [09/Mar/2026:10:18:53 +0000] \"GET /about HTTP/1.1\" 200 512 \"-\"\n198.51.100.23 - - [09/Mar/2026:09:23:51 +0000] \"GET /docs HTTP/1.1\" 200 512 \"-\"\n::ffff:192.0.2.7 - - [09/Mar/2026:10:06:59 +0000] \"GET /health HTTP/1.1\" 200 512 \"-\"\n192.0.2.1 - - [09/Mar/2026:09:15:46 +0000] \"GET /index.html?v=2 HTTP/1.1\" 200 512 \"-\"\n198.51.100.23 - - [09/Mar/2026:09:17:04 +0000] \"GET /docs/api HTTP/1.1\" 200 512 \"-\"\n\nAfter normalization, which normalized client address has the most requests and how many?\nGive as: <address> <count>\nExample: 1.2.3.4 9"
+        }
+      ]
+    },
+    {
+      "stable_id": "ts-html-sed",
+      "title": "sed range over mixed script blocks",
+      "description": "GNU sed 4.9 range /<script/,/<\\/script>/p over the given HTML file.",
+      "category": "terminal/text-processing",
+      "tags": [
+        "terminal",
+        "shell",
+        "linux"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 2.0,
+      "position": 5,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "13",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a Linux systems expert. Determine the exact output/behavior described. You may reason as long as you need, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is asked for (no quotes, no code fences)."
+        },
+        {
+          "role": "user",
+          "content": "Given this exact file page.html:\n<!DOCTYPE html>\n<html>\n<head><title>t</title></head>\n<body>\n<noscript>You need JS enabled. var x = 1;</noscript>\n<script src=\"/legacy.js\"></script>\n<script>\nvar tag = \"</scr\" + \"ipt>\";\ndocument.write(\"hi\");\nif (x) { console.log(42); }\n</script>\n<p>text between blocks</p>\n<script type=\"module\">\nlet s = \"<!-- fake open\"; let t = \"</scr\" + \"ipt>\";\nexport default 7;\nvar closer = \"</script>\";\nmore module code that never prints? no wait it does: console.log(9);\n</script>\n<script id=\"tail\">console.log(\"end\");</script>\n</body>\n</html>\n\nYou run: sed -n '/<script/,/<\\/script>/p' page.html | wc -l\n\nWhat number is printed?\nGive just the integer."
+        }
+      ]
+    },
+    {
+      "stable_id": "ts-sqlite-wal",
+      "title": "SQLite WAL visibility after commit",
+      "description": "sqlite3 3.45, journal_mode WAL, simple transaction visibility.",
+      "category": "terminal/sqlite",
+      "tags": [
+        "terminal",
+        "shell",
+        "linux"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 2.0,
+      "position": 6,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "a,b,c",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a Linux systems expert. Determine the exact output/behavior described. You may reason as long as you need, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is asked for (no quotes, no code fences)."
+        },
+        {
+          "role": "user",
+          "content": "You run exactly:\nrm -f app.db app.db-wal app.db-shm\nsqlite3 app.db \"PRAGMA journal_mode=WAL;\"\nsqlite3 app.db \"CREATE TABLE t(id INTEGER PRIMARY KEY, v TEXT); INSERT INTO t(v) VALUES ('a'),('b'),('c');\"\nsqlite3 app.db \"SELECT group_concat(v,',') FROM (SELECT v FROM t ORDER BY id);\"\n\nWhat is the output of the final SELECT?\nGive just the comma-separated values."
+        }
+      ]
+    },
+    {
+      "stable_id": "ts-cron-firing",
+      "title": "Vixie cron weekday firing count",
+      "description": "Standard Vixie/cronie 5-field cron, UTC, March 2026.",
+      "category": "terminal/cron",
+      "tags": [
+        "terminal",
+        "shell",
+        "linux"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 2.0,
+      "position": 7,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "22",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a Linux systems expert. Determine the exact output/behavior described. You may reason as long as you need, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is asked for (no quotes, no code fences)."
+        },
+        {
+          "role": "user",
+          "content": "Standard Vixie/cronie 5-field cron, all times UTC, March 2026 (March 1 is Sunday).\n\nCrontab line: 30 6 * * 1-5\nCommand: /usr/bin/backup.sh\n\nHow many times does this job fire in March 2026?\nGive just the integer count."
+        }
+      ]
+    },
+    {
+      "stable_id": "ts-bash-pipefail",
+      "title": "Bash pipefail exit codes",
+      "description": "bash 5.x pipefail semantics.",
+      "category": "terminal/bash",
+      "tags": [
+        "terminal",
+        "shell",
+        "linux"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 2.0,
+      "position": 8,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "1,1,0",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a Linux systems expert. Determine the exact output/behavior described. You may reason as long as you need, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is asked for (no quotes, no code fences)."
+        },
+        {
+          "role": "user",
+          "content": "You run exactly in bash 5.x:\nset -o pipefail; false | true; echo $?\ntrue | false; echo $?\nset +o pipefail; false | true; echo $?\n\nThe three echo lines produce three integers. What are they in order, comma-separated?\nExample: 0,1,0"
+        }
+      ]
+    },
+    {
+      "stable_id": "ts-conda-conflict",
+      "title": "Conda dependency conflict minimal relaxation",
+      "description": "Packaging conflict puzzle, MCQ.",
+      "category": "terminal/packaging",
+      "tags": [
+        "terminal",
+        "shell",
+        "linux"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 2.0,
+      "position": 9,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "multiple_choice",
+        "correct_option": "B",
+        "accepted_formats": [
+          "B",
+          "b",
+          "B) dataforge",
+          "dataforge"
+        ],
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a packaging expert. Choose the correct option. You MUST end your reply with a single final line in exactly this form:\nANSWER: <letter>\nwhere <letter> is the option letter (A-D)."
+        },
+        {
+          "role": "user",
+          "content": "You have these available versions and dependencies (only relevant edges shown):\n- dataforge 2.4.0 requires pandas>=2.0 and scipy<1.12\n- dataforge 2.3.0 requires pandas>=1.5,<2\n- scipy 1.11.0 requires numpy<1.27\n- scipy 1.12.0 requires numpy>=1.26\n- pandas 2.0.0 requires numpy>=1.26\n- Environment pins: numpy==1.26.4, scipy==1.12.0, pandas==2.0.0, dataforge==2.4.0\n\n`conda install` fails to solve.\n\nWhich single package pin, if relaxed to allow a nearby version, would make the environment solvable with minimal change?\nA) Relax numpy to <1.27\nB) Relax dataforge to 2.3.0\nC) Relax scipy to 1.11.0\nD) Relax pandas to <2\n\nChoose one letter."
+        }
+      ]
+    },
+    {
+      "stable_id": "ts-sort-locale",
+      "title": "LC_ALL=C sort order",
+      "description": "GNU coreutils sort, LC_ALL=C byte order.",
+      "category": "terminal/sort",
+      "tags": [
+        "terminal",
+        "shell",
+        "linux"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 2.0,
+      "position": 10,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "!bang.txt,10.txt,2.txt,Apple.txt,Zebra.txt,apple.txt,café.txt",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a Linux systems expert. Determine the exact output/behavior described. You may reason as long as you need, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is asked for (no quotes, no code fences)."
+        },
+        {
+          "role": "user",
+          "content": "You have a directory containing exactly these files (no others, dotfiles hidden from plain ls):\n!bang.txt\n10.txt\n2.txt\nApple.txt\nZebra.txt\napple.txt\ncafé.txt\n.hidden\n\nYou run: LC_ALL=C ls -1\n\nWhat is the comma-separated list of names printed, in order?\nExample: a.txt,b.txt"
+        }
+      ]
+    },
+    {
+      "stable_id": "ts-find-xargs",
+      "title": "find name pattern with weird filenames",
+      "description": "GNU findutils, LC_ALL=C sort.",
+      "category": "terminal/filesystem",
+      "tags": [
+        "terminal",
+        "shell",
+        "linux"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 2.0,
+      "position": 11,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "3",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a Linux systems expert. Determine the exact output/behavior described. You may reason as long as you need, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is asked for (no quotes, no code fences)."
+        },
+        {
+          "role": "user",
+          "content": "You have a directory containing exactly these regular files:\na.txt\nb.log\nc.txt\nd data.txt\n -e.txt\n\nYou run:\nfind . -type f -name '*.txt' | LC_ALL=C sort | wc -l\n\nWhat integer is printed?"
+        }
+      ]
+    },
+    {
+      "stable_id": "ts-iptables-filter",
+      "title": "iptables first-match filtering",
+      "description": "iptables 1.x, INPUT chain, first-match wins.",
+      "category": "terminal/networking",
+      "tags": [
+        "terminal",
+        "shell",
+        "linux"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 2.0,
+      "position": 12,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "2,4,6",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a Linux systems expert. Determine the exact output/behavior described. You may reason as long as you need, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is asked for (no quotes, no code fences)."
+        },
+        {
+          "role": "user",
+          "content": "iptables 1.x, INPUT chain policy DROP, rules added in order:\n1: iptables -A INPUT -p tcp --dport 22 -j ACCEPT\n2: iptables -A INPUT -s 10.0.0.0/8 -j ACCEPT\n3: iptables -I INPUT 1 -p tcp --dport 80 -j ACCEPT\n4: iptables -A INPUT -p tcp --dport 443 -j ACCEPT\n\nPackets (id, proto, dport, src):\n1: tcp 22 192.0.2.1\n2: tcp 80 192.0.2.1\n3: tcp 22 10.1.2.3\n4: tcp 443 192.0.2.1\n5: udp 53 10.1.2.3\n6: tcp 443 10.1.2.3\n\nAfter all rules are in place (note -I inserts at top), which packet IDs are ACCEPTed?\nList accepted IDs comma-separated in increasing order.\nExample: 1,3,5"
+        }
+      ]
+    }
+  ]
+}
