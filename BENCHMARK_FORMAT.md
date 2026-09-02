@@ -1,6 +1,6 @@
 # Benchmark Format
 
-The benchmark-set import/export format is a versioned JSON document. Top-level shape:
+The benchmark-set import/export format is a versioned JSON document — the same format used for every bundled suite, including **Terminal Semantics & System Gotchas**. Top-level shape:
 
 ```json
 {

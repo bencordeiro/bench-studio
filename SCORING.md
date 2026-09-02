@@ -1,6 +1,6 @@
 # Scoring
 
-This document explains exactly how LocalBench Studio computes every score. All formulas are also visible in the application UI.
+This document explains exactly how LocalBench Studio computes every score. All formulas are also visible in the application UI. They apply uniformly to all bundled suites — including **Terminal Semantics & System Gotchas** — and to any custom benchmark you author.
 
 ## Prompt scores
 

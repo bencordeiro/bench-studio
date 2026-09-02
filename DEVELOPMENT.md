@@ -26,7 +26,7 @@ frontend/
     types/          TypeScript domain types
     lib/            formatting helpers
     store/          toast context
-scripts?            (root) setup/run scripts + docs
+scripts/           (root) setup/run scripts + docs
 ```
 
 ## Backend dev

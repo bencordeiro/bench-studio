@@ -7,7 +7,7 @@ LocalBench Studio is a **desktop-hosted web application for benchmarking one LLM
 ## What it does
 
 - Save one or more OpenAI-compatible endpoint profiles (with optional API keys stored in the OS credential store).
-- Start from six bundled suites (358 prompts): five original, execution-verified suites plus the public **HumanEval** benchmark, or author your own.
+- Start from seven bundled suites (359 prompts): six original, execution-verified suites plus the public **HumanEval** benchmark, or author your own.
 - Grade each prompt one of five ways: **deterministic**, **LLM judge**, **hybrid**, **manual review**, or **execution** (run the generated code against unit tests). Deterministic graders cover exact/numeric/regex/concept/JSON/multiple-choice/count and parsed **tool calls**.
 - Run a benchmark against one target model; close/refresh the browser without stopping the run.
 - Reopen later and see live progress, resume interrupted runs.
@@ -17,15 +17,16 @@ LocalBench Studio is a **desktop-hosted web application for benchmarking one LLM
 
 ## Bundled benchmark suites
 
-Six suites ship with the app and load on first run (358 prompts). Five are **original items, never published anywhere**, so they cannot be present in any model's training data — the usual problem with scoring local models against public leaderboards. The sixth is the public **HumanEval** benchmark, included for numbers that stay comparable to the published literature.
+Seven suites ship with the app and load on first run (359 prompts). Six are **original items, never published anywhere**, so they cannot be present in any model's training data — the usual problem with scoring local models against public leaderboards. The seventh is the public **HumanEval** benchmark, included for numbers that stay comparable to the published literature.
 
 | Suite | Prompts | What it measures |
 |---|---|---|
-| Code Reasoning (Python) | 59 | Output prediction over closures, mutation/aliasing, the data model, generator lifecycle, evaluation order |
-| Web Dev Correctness (JS) | 50 | Coercion, the event loop and microtask ordering, prototypes, async semantics, JSON edge cases |
+| Code Reasoning (Python) | 55 | Output prediction over closures, mutation/aliasing, the data model, generator lifecycle, evaluation order |
+| Web Dev Correctness (JS) | 46 | Coercion, the event loop and microtask ordering, prototypes, async semantics, JSON edge cases |
 | Agentic Tool-Use (Hermes) | 14 | Function calling in BFCL categories: simple, tool selection, parallel, argument precision, relevance |
 | Instruction-Following | 12 | IFEval-style stacked constraints: exact counts, forbidden vocabulary, strict JSON, custom markup |
-| **Master Suite** | 59 | Cross-domain and deliberately brutal — see below |
+| **Master Suite** | 56 | Cross-domain and deliberately brutal — see below |
+| Terminal Semantics & System Gotchas | 12 | Linux shell/permissions, tar determinism, git forensics, date normalization, log aggregation, text processing, SQLite WAL, cron, bash pipefail, packaging, locale sort, filesystem, iptables |
 | **HumanEval (OpenAI)** | 164 | Code generation: complete the function, executed against its unit tests — see below |
 
 Design rules the original items follow (HumanEval keeps the upstream problems as-is):
@@ -51,7 +52,7 @@ The four base suites measure one competence each, and a strong model saturates t
 | Abstention & false premises | 5 | Planted falsehoods the model must refuse rather than elaborate |
 | Multi-turn stateful tool use | 5 | Id propagation past a decoy, error recovery, withholding an unsafe action |
 | Long-context synthesis | 4 | 3.5k–6.4k token corpora with conflicting facts and precedence rules |
-| Anchors from the base suites | 6 | Lowest-weighted, so a run still says something about a model that scores near zero |
+| Anchors from the base suites | 4 | Lowest-weighted, so a run still says something about a model that scores near zero |
 
 Three properties make it different from the base suites:
 

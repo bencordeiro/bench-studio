@@ -4,7 +4,7 @@
   "exported_at": "",
   "name": "Terminal Semantics & System Gotchas",
   "description": "Expert Linux shell and systems reasoning, inspired by hard Terminal-Bench task themes (permissions/ACLs, tar determinism, git forensics, date normalization, log aggregation, HTML/text processing, SQLite WAL, cron semantics, bash pipefail, packaging conflicts, locale sorting, filesystem edge cases). Every canonical answer was produced by executing the scenario on Ubuntu 24.04 (bash 5.x, GNU coreutils/findutils/sed/tar/git, mawk, sqlite3 3.45, Python 3.12 zoneinfo) — never written by hand. Graded exactly on the final ANSWER line.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "tags": [
     "terminal",
     "shell",
@@ -390,7 +390,7 @@
       },
       "grader_config": {
         "type": "exact",
-        "canonical_answer": "!bang.txt,10.txt,2.txt,Apple.txt,Zebra.txt,apple.txt,café.txt",
+        "canonical_answer": "!bang.txt,10.txt,2.txt,Apple.txt,Zebra.txt,apple.txt,zzz.txt",
         "accepted_aliases": [],
         "case_sensitive": true,
         "trim_whitespace": true,
@@ -404,7 +404,7 @@
         },
         {
           "role": "user",
-          "content": "You have a directory containing exactly these files (no others, dotfiles hidden from plain ls):\n!bang.txt\n10.txt\n2.txt\nApple.txt\nZebra.txt\napple.txt\ncafé.txt\n.hidden\n\nYou run: LC_ALL=C ls -1\n\nWhat is the comma-separated list of names printed, in order?\nExample: a.txt,b.txt"
+          "content": "You have a directory containing exactly these files (no others, dotfiles hidden from plain ls):\n!bang.txt\n10.txt\n2.txt\nApple.txt\nZebra.txt\napple.txt\nzzz.txt\n.hidden\n\nYou run: LC_ALL=C ls -1\n\nWhat is the comma-separated list of names printed, in order?\nExample: a.txt,b.txt"
         }
       ]
     },
