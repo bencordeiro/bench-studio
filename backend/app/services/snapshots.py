@@ -22,6 +22,8 @@ def snapshot_endpoint(profile: EndpointProfile, include_connection: bool = True)
         "has_api_key": profile.has_api_key,
         "api_key_storage": profile.api_key_storage,
         "api_key_env_var": profile.api_key_env_var,
+        "input_price_per_1m": profile.input_price_per_1m,
+        "output_price_per_1m": profile.output_price_per_1m,
         # No key value is ever snapshotted.
     }
 

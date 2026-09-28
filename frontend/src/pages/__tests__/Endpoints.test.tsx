@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
@@ -67,4 +67,65 @@ describe("Endpoints form validation", () => {
     await waitFor(() => expect(modalSave).toBeDisabled());
     expect(mockCreate).not.toHaveBeenCalled();
   });
+
+  it.each(["Custom headers (JSON)", "Extra body parameters (JSON)"])(
+    "rejects invalid %s through the form submission handler",
+    async (label) => {
+      mockCreate.mockClear();
+      renderPage();
+      await userEvent.click(await screen.findByText("+ New Endpoint"));
+      await userEvent.selectOptions(screen.getByLabelText("Provider preset"), "deepseek");
+      const field = screen.getByLabelText(label);
+      await userEvent.clear(field);
+      await userEvent.type(field, "not valid json");
+
+      await act(async () => {
+        fireEvent.submit(field.closest("form")!);
+      });
+
+      expect(mockCreate).not.toHaveBeenCalled();
+      expect(field).toHaveValue("not valid json");
+      expect(screen.getByText("Save")).toBeDisabled();
+    },
+  );
+});
+
+it("creates a Z.ai profile using its versioned provider URL", async () => {
+  mockList.mockResolvedValue([]);
+  mockCreate.mockClear();
+  renderPage();
+  await userEvent.click(await screen.findByText("+ New Endpoint"));
+  await userEvent.selectOptions(screen.getByLabelText("Provider preset"), "zai");
+  expect(screen.getByLabelText("Base URL")).toHaveValue("https://api.z.ai/api/paas/v4");
+  await userEvent.type(screen.getByLabelText("Default model"), "my-model-id");
+  await userEvent.click(screen.getByText("Save"));
+  await waitFor(() => expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({
+    name: "Z.ai", base_url: "https://api.z.ai/api/paas/v4", default_model: "my-model-id", api_key_env_var: "ZAI_API_KEY", verify_tls: true,
+  })));
+});
+
+it("requires an Alibaba workspace ID and rejects non-object JSON", async () => {
+  mockList.mockResolvedValue([]);
+  mockCreate.mockClear();
+  renderPage();
+  await userEvent.click(await screen.findByText("+ New Endpoint"));
+  await userEvent.selectOptions(screen.getByLabelText("Provider preset"), "qwen");
+  await userEvent.click(screen.getByText("Save"));
+  expect(await screen.findByText("Replace the workspace placeholder with your workspace ID")).toBeInTheDocument();
+  expect(mockCreate).not.toHaveBeenCalled();
+  const headers = screen.getByLabelText("Custom headers (JSON)");
+  await userEvent.clear(headers);
+  await userEvent.type(headers, "null");
+  expect(screen.getByText("Save")).toBeDisabled();
+});
+
+it("clears provider credentials when switching presets", async () => {
+  mockList.mockResolvedValue([]);
+  renderPage();
+  await userEvent.click(await screen.findByText("+ New Endpoint"));
+  await userEvent.selectOptions(screen.getByLabelText("Provider preset"), "openai");
+  await userEvent.type(screen.getByLabelText("API key (write-only; never returned)"), "test-secret");
+  await userEvent.selectOptions(screen.getByLabelText("Provider preset"), "deepseek");
+  expect(screen.getByLabelText("API key (write-only; never returned)")).toHaveValue("");
+  expect(screen.getByLabelText("API key environment variable")).toHaveValue("DEEPSEEK_API_KEY");
 });

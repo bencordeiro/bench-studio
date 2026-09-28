@@ -7,7 +7,7 @@ LocalBench Studio is a **desktop-hosted web application for benchmarking one LLM
 ## What it does
 
 - Save one or more OpenAI-compatible endpoint profiles (with optional API keys stored in the OS credential store).
-- Start from seven bundled suites (359 prompts): six original, execution-verified suites plus the public **HumanEval** benchmark, or author your own.
+- Start from seven bundled suites (356 prompts): six custom suites with automated validation plus the public **HumanEval** benchmark, or author your own.
 - Grade each prompt one of five ways: **deterministic**, **LLM judge**, **hybrid**, **manual review**, or **execution** (run the generated code against unit tests). Deterministic graders cover exact/numeric/regex/concept/JSON/multiple-choice/count and parsed **tool calls**.
 - Run a benchmark against one target model; close/refresh the browser without stopping the run.
 - Reopen later and see live progress, resume interrupted runs.
@@ -15,23 +15,29 @@ LocalBench Studio is a **desktop-hosted web application for benchmarking one LLM
 - Compare completed runs. Per-suite leaderboards ranking every tested model. Export JSON / CSV / standalone HTML reports.
 - Keep a separate judge endpoint so the model under test is not grading itself (with a clear warning when it is).
 
+## Endpoint setup
+
+Choose **Endpoint Profiles → New Endpoint → Provider preset** to fill the API URL and key environment variable. Presets include OpenAI, Alibaba/Qwen (Singapore and Beijing), DeepSeek, Z.ai, xAI, Anthropic, Gemini, Groq, Mistral, OpenRouter, and local Ollama. Enter a model ID and a key (or set the environment variable), save, then use **Test** and **Models**. Model availability and supported generation parameters depend on your provider account; presets do not pin models or prices. Alibaba workspace URLs require replacing `{WorkspaceId}`. Each preset links to its official documentation.
+
 ## Bundled benchmark suites
 
-Seven suites ship with the app and load on first run (359 prompts). Six are **original items, never published anywhere**, so they cannot be present in any model's training data — the usual problem with scoring local models against public leaderboards. The seventh is the public **HumanEval** benchmark, included for numbers that stay comparable to the published literature.
+Seven suites ship with the app and load on first run (356 prompts). Six contain custom items designed to reduce reliance on familiar public benchmark questions. Originality does not guarantee freedom from training-data contamination. The seventh is the public **HumanEval** benchmark, included for numbers that stay comparable to the published literature.
 
 | Suite | Prompts | What it measures |
 |---|---|---|
-| Code Reasoning (Python) | 55 | Output prediction over closures, mutation/aliasing, the data model, generator lifecycle, evaluation order |
-| Web Dev Correctness (JS) | 46 | Coercion, the event loop and microtask ordering, prototypes, async semantics, JSON edge cases |
-| Agentic Tool-Use (Hermes) | 14 | Function calling in BFCL categories: simple, tool selection, parallel, argument precision, relevance |
-| Instruction-Following | 12 | IFEval-style stacked constraints: exact counts, forbidden vocabulary, strict JSON, custom markup |
-| **Master Suite** | 56 | Cross-domain and deliberately brutal — see below |
-| Terminal Semantics & System Gotchas | 12 | Linux shell/permissions, tar determinism, git forensics, date normalization, log aggregation, text processing, SQLite WAL, cron, bash pipefail, packaging, locale sort, filesystem, iptables |
+| Code Reasoning (Python) | 50 | 30 output-reasoning questions and 20 original executable function tasks covering practical data processing and edge cases |
+| Web Dev Correctness (JS) | 45 | Coercion, the event loop and microtask ordering, prototypes, async semantics, JSON edge cases |
+| Agentic Tool-Use (Hermes) | 15 | Function calling in BFCL categories: simple, tool selection, parallel, argument precision, relevance |
+| Instruction-Following | 15 | IFEval-style stacked constraints: exact counts, forbidden vocabulary, strict JSON, custom markup |
+| **Master Suite** | 55 | Cross-domain and deliberately brutal — see below |
+| Terminal Semantics & System Gotchas | 12 | Linux shell/permissions, git reachability, date normalization, log aggregation, text processing, SQLite WAL, cron, bash pipefail, packaging, locale sort, filesystem, iptables |
 | **HumanEval (OpenAI)** | 164 | Code generation: complete the function, executed against its unit tests — see below |
+
+See [the suite audit](docs/SUITE_AUDIT.md) for revisions, validation evidence, and limitations. Updated bundles upgrade in place on startup; historical runs retain their snapshots. The retired example suite is removed by migration.
 
 Design rules the original items follow (HumanEval keeps the upstream problems as-is):
 
-- **Answers are produced by execution, never written by hand.** Each code prompt's expected output comes from actually running the snippet under CPython 3 / Node.
+- **Code answers are checked by execution.** Output predictions are reproduced with CPython / Node; function tasks run reference solutions against edge-case tests. Structured-output items have compliant and violating response controls.
 - **Graded without a judge.** No judge is required for any bundled suite — the deterministic graders or test execution decide — so results are reproducible.
 - **No item pays out for a non-answer.** Prohibitions ("do not use the letter 'e'") are trivially satisfied by silence, so every such item is gated on a separate check proving the task was attempted.
 - **Difficulty comes from depth, not obscurity.** Items chain several inferences rather than testing trivia, and answers are kept short so the score measures reasoning rather than transcription.
@@ -44,11 +50,11 @@ The four base suites measure one competence each, and a strong model saturates t
 
 | Domain | Items | Sample of what it covers |
 |---|---|---|
-| Code reasoning (Python / JS) | 20 | Class-creation hook ordering, `ExitStack` unwinding, `Symbol.toPrimitive` hints, field initialization vs `super()`, thenable microtask cost |
+| Code reasoning (Python / JS) | 19 | Class-creation hook ordering, `ExitStack` unwinding, `Symbol.toPrimitive` hints, field initialization vs `super()`, thenable microtask cost |
 | Quantitative reasoning | 7 | Self-overlapping pattern waiting times, base-12 factorial zeros, GCD-matrix determinants |
-| Algorithms & distributed systems | 5 | Segmented-LRU simulation, vector-clock concurrency, minimal DFA size |
+| Algorithms & distributed systems | 6 | Segmented-LRU simulation, vector clocks, minimal DFA size, transaction replay with rollback and retries |
 | Physics & chemistry | 4 | Rolling-transition dynamics, buffer pH, relativistic proper time |
-| Automotive engineering | 3 | Injector sizing, CAN bit timing, intercooler charge temperature |
+| Automotive engineering | 1 | Intercooler charge temperature |
 | Abstention & false premises | 5 | Planted falsehoods the model must refuse rather than elaborate |
 | Multi-turn stateful tool use | 5 | Id propagation past a decoy, error recovery, withholding an unsafe action |
 | Long-context synthesis | 4 | 3.5k–6.4k token corpora with conflicting facts and precedence rules |
@@ -68,7 +74,7 @@ A four-tier ladder does the separating: **anchor** (weight 1.5) from the base su
 
 The 164 hand-written Python function-completion problems from OpenAI's Codex paper (Chen et al., 2021, ["Evaluating Large Language Models Trained on Code"](https://arxiv.org/abs/2107.03374)). The dataset is **MIT-licensed** and vendored under `data/humaneval/` (source: [openai/human-eval](https://github.com/openai/human-eval); see `data/humaneval/ATTRIBUTION.md`).
 
-It is the one bundled suite that is *not* original — deliberately. The original suites keep training-data contamination out; HumanEval is included so your scores stay **comparable to the published literature**, and it is wrapped for strict parity with the reference harness:
+It is the one bundled suite that is *not* original — deliberately. The custom suites provide complementary tasks; HumanEval is included so your scores stay **comparable to the published literature**, and it is wrapped for strict parity with the reference harness:
 
 - Each prompt is the dataset's problem text, **byte-for-byte** (verified by `backend/tests/test_humaneval_suite.py`).
 - The model's completion is executed as `prompt + completion + test + check(entry_point)` in a fresh `python -I` subprocess with the reference harness's **3.0-second timeout**, its reliability guard, and its `passed / timed out / failed` classification — no partial credit, no markdown-fence stripping.

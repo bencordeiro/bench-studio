@@ -17,7 +17,6 @@ from app.core.security import configure_logging
 from app.db.session import session_scope
 from app.jobs.engine import mark_interrupted_active_runs
 from app.jobs.runner import runner
-from app.seed.example_benchmark import seed_example_benchmark
 from app.seed.suites_loader import seed_bundled_suites
 
 log = logging.getLogger(__name__)
@@ -44,11 +43,8 @@ async def lifespan(app: FastAPI):
         interrupted = mark_interrupted_active_runs(session)
         if interrupted:
             log.warning("Marked %d active run(s) as interrupted", interrupted)
-        # Seed example benchmark if absent and user hasn't disabled it.
+        # Seed curated suites unless disabled.
         if os.environ.get("LOCALBENCH_NO_SEED") != "1":
-            created = seed_example_benchmark(session)
-            if created:
-                log.info("Seeded example benchmark")
             bundled = seed_bundled_suites(session)
             if bundled:
                 log.info("Seeded %d bundled suite(s)", bundled)

@@ -40,6 +40,7 @@ Thumbs.db
 # Agent/session scratch
 .zcode/
 .claude/
+half-session.md
 
 # Calibration outputs (contain model names and per-item scores from your runs)
 calib-*.json

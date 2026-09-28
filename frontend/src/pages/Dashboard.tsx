@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { api } from "@/api/client";
 import { Card, EmptyState, PageHeader, Spinner, StatCard, Badge } from "@/components/ui";
-import { fmtScore, fmtRelative, STATUS_LABELS, statusColor, GRADING_MODE_LABELS, hasResults, isTerminal } from "@/lib/format";
+import { fmtScore, fmtRelative, fmtCost, STATUS_LABELS, statusColor, GRADING_MODE_LABELS, hasResults, isTerminal } from "@/lib/format";
 
 export default function Dashboard() {
   const { data: runs, isLoading: runsLoading } = useQuery({ queryKey: ["runs"], queryFn: api.listRuns });
@@ -109,6 +109,9 @@ export default function Dashboard() {
                     {r.name} <span className="text-gray-500 mono">· {r.target_model}</span>
                   </Link>
                   <div className="flex items-center gap-2">
+                    {r.total_cost != null && (
+                      <span className="text-xs text-gray-500 mono">{fmtCost(r.total_cost)}</span>
+                    )}
                     <Badge className={statusColor(r.status)}>{STATUS_LABELS[r.status] || r.status}</Badge>
                     <span className="text-xs text-gray-500">{fmtRelative(r.created_at)}</span>
                   </div>

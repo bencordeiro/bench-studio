@@ -71,7 +71,7 @@ def _load_grader():
 GRADER = _load_grader()
 
 SUITE_NAME = "Master Suite"
-SUITE_VERSION = "1.1.0"
+SUITE_VERSION = "2.0.0"
 
 # Tier -> (difficulty label, importance weight). The declared difficulty and the
 # weight must stay ordered together: test_declared_difficulty_matches_weight_ordering
@@ -1535,64 +1535,6 @@ def build_science_items() -> None:
 
 
 def build_automotive_items() -> None:
-    # -- A1: pulse width including injector dead time
-    rpm = 5200.0
-    fuel_g_per_cycle = 0.0324
-    static_cc_min, fuel_density = 440.0, 0.745
-    dead_time_ms = 0.92
-    flow_g_per_ms = static_cc_min * fuel_density / 60.0 / 1000.0
-    open_ms = fuel_g_per_cycle / flow_g_per_ms
-    pw_ms = open_ms + dead_time_ms
-    numeric_item(
-        "ms-auto-injector-pulse-width",
-        "Commanded pulse width including dead time",
-        "Dead time delivers no fuel, so it is added AFTER converting the fuel mass to an "
-        "open time -- not scaled with it.",
-        "engineering/automotive",
-        "extreme",
-        "A port-injected four-stroke engine requires 0.0324 g of fuel per cylinder per "
-        "combustion cycle at its current operating point of 5200 rpm.\n\n"
-        "Each injector has a static flow rating of 440 cc/min, the fuel density is 0.745 "
-        "g/cc, and at the current battery voltage the injector dead time (the latency "
-        "before the injector begins to flow, during which no fuel is delivered) is 0.92 "
-        "ms.\n\n"
-        "What commanded pulse width, in milliseconds, must the ECU output?",
-        pw_ms,
-        decimals=3,
-        rel_tol=0.004,
-    )
-
-    # -- A2: CAN oscillator tolerance, which is the MINIMUM of two rules
-    sync_seg, prop_seg, ps1, ps2, sjw = 1, 7, 7, 5, 4
-    nbt = sync_seg + prop_seg + ps1 + ps2
-    rule_sjw = sjw / (2 * 10 * nbt)
-    rule_phase = min(ps1, ps2) / (2 * (13 * nbt - ps2))
-    tolerance_pct = min(rule_sjw, rule_phase) * 100.0
-    assert rule_phase < rule_sjw
-    numeric_item(
-        "ms-auto-can-clock-tolerance",
-        "Maximum CAN oscillator tolerance",
-        "Two independent bounds constrain df/f and the answer is the smaller. Applying "
-        "only the resynchronisation-jump-width rule gives 1.0 percent, which is too "
-        "optimistic.",
-        "engineering/automotive",
-        "frontier",
-        "A classical CAN node has its nominal bit time divided into: synchronisation "
-        "segment 1 time quantum, propagation segment 7 time quanta, phase segment 1 of 7 "
-        "time quanta, and phase segment 2 of 5 time quanta. The resynchronisation jump "
-        "width is 4 time quanta.\n\n"
-        "For a CAN node to stay synchronised, its oscillator frequency error df/f must "
-        "satisfy BOTH of the standard bit-timing constraints:\n\n"
-        "    df/f  <=  SJW / (2 * 10 * NBT)\n"
-        "    df/f  <=  min(PhaseSeg1, PhaseSeg2) / (2 * (13 * NBT - PhaseSeg2))\n\n"
-        "where NBT is the nominal bit time in time quanta.\n\n"
-        "What is the maximum permissible oscillator tolerance df/f, expressed as a "
-        "percentage?",
-        tolerance_pct,
-        decimals=4,
-        abs_tol=0.005,
-    )
-
     # -- A3: charge air temperature (kept: measured as a discriminator)
     T1 = 28.0 + 273.15
     pr = (100.0 + 145.0) / 100.0
@@ -3097,6 +3039,67 @@ def verify_winnable(prompts: list[dict]) -> None:
         )
 
 
+def build_transaction_item() -> None:
+    # Independent durable-state simulation; retries only deduplicate commits.
+    balances = {"A": 90, "B": 40, "C": 10}
+    committed = set()
+    events = [
+        ("k1", "A", "B", 25, True),
+        ("k1", "A", "B", 25, True),
+        ("k2", "B", "C", 50, False),
+        ("k3", "A", "C", 70, True),
+        ("k2", "B", "C", 30, True),
+        ("k4", "C", "A", 15, True),
+        ("k3", "A", "C", 70, True),
+        ("k5", "B", "A", 10, False),
+        ("k5", "B", "A", 10, True),
+        ("k4", "C", "A", 15, True),
+    ]
+    outcomes = []
+    for key, src, dst, amount, commit in events:
+        if key in committed:
+            outcomes.append("duplicate")
+        elif balances[src] < amount:
+            outcomes.append("rejected")
+        elif not commit:
+            outcomes.append("rollback")
+        else:
+            balances[src] -= amount
+            balances[dst] += amount
+            committed.add(key)
+            outcomes.append("committed")
+    assert sum(balances.values()) == 140
+    assert balances == {"A": 20, "B": 25, "C": 95}
+    answer = ",".join(str(balances[k]) for k in "ABC") + "|" + ",".join(sorted(committed))
+    add_prompt(
+        "ms-cs-transaction-replay", "Durable state after retries, rollback and lost acknowledgements",
+        "Distinguish failed attempts from committed idempotency keys and recompute later preconditions.",
+        "algorithms/transactions", "extreme",
+        {"type": "exact", "canonical_answer": answer, "case_sensitive": True,
+         "trim_whitespace": True, "normalize_punctuation": False},
+        [{"role": "user", "content":
+          "A transfer service starts with integer balances A=90, B=40, C=10 and no committed request keys. "
+          "Process requests serially in the order below. A previously committed key returns duplicate without "
+          "changing anything. Otherwise reject if the source has insufficient funds. Rejections do not record "
+          "the key. Successful transactions atomically debit, credit, and record the key. A crash BEFORE commit "
+          "rolls all three changes back. A lost acknowledgement AFTER commit rolls nothing back. No fees or "
+          "other changes occur. A key reused after a rollback may carry corrected arguments.\n\n"
+          "1. k1: A->B 25; commit, acknowledgement lost.\n"
+          "2. k1: A->B 25; normal retry.\n"
+          "3. k2: B->C 50; crash before commit.\n"
+          "4. k3: A->C 70; normal attempt.\n"
+          "5. k2: B->C 30; corrected retry, commit.\n"
+          "6. k4: C->A 15; commit, acknowledgement lost.\n"
+          "7. k3: A->C 70; retry, commit if allowed.\n"
+          "8. k5: B->A 10; crash before commit.\n"
+          "9. k5: B->A 10; retry, commit if allowed.\n"
+          "10. k4: C->A 15; normal retry.\n\n"
+          "Give final balances A,B,C, then |, then committed keys sorted lexicographically. "
+          "End with ANSWER: <A>,<B>,<C>|<keys>, no spaces inside the value."}],
+        tags=["computed-answer", "idempotency", "rollback"],
+    )
+
+
 # =========================================================================== #
 # Assembly
 # =========================================================================== #
@@ -3108,6 +3111,7 @@ def build() -> dict:
     build_cs_items()
     build_science_items()
     build_automotive_items()
+    build_transaction_item()
     build_abstention_items()
     build_agentic_items()
     build_long_context_items()

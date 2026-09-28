@@ -49,6 +49,8 @@ export interface EndpointProfile {
   has_api_key: boolean;
   api_key_storage: string;
   api_key_env_var: string;
+  input_price_per_1m: number;
+  output_price_per_1m: number;
   masked_api_key?: string | null;
   created_at?: string;
   updated_at?: string;
@@ -212,6 +214,7 @@ export interface RunSummary {
   reliability_score: number | null;
   performance_index: number | null;
   composite_score: number | null;
+  total_cost: number | null;
 }
 
 export interface RunResponse {
@@ -249,6 +252,7 @@ export interface RunSummaryData {
   total_count?: number;
   category_scores?: Record<string, number>;
   repetition?: Record<string, number | null>;
+  total_cost?: number | null;
 }
 
 export interface ExecutionDetail {
@@ -279,6 +283,7 @@ export interface ExecutionDetail {
     /** "server" = the backend's own generation rate (excludes prefill/network). */
     tps_source?: "server" | "computed";
     prompt_tokens_per_second?: number | null;
+    cost?: number | null;
   };
   deterministics: DeterministicView[];
   judge: JudgeView | null;

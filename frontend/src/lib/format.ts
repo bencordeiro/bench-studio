@@ -97,3 +97,12 @@ export function approxTokens(text: string): number {
   if (!text) return 0;
   return Math.max(1, Math.ceil(text.length / 4));
 }
+
+/** Format a USD cost value. Returns "—" for null/undefined, appropriate precision otherwise. */
+export function fmtCost(v: number | null | undefined): string {
+  if (v === null || v === undefined) return "—";
+  if (v === 0) return "$0.00";
+  if (v < 0.0001) return `$${v.toFixed(6)}`;
+  if (v < 0.01) return `$${v.toFixed(4)}`;
+  return `$${v.toFixed(2)}`;
+}

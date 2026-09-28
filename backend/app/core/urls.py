@@ -1,6 +1,7 @@
 """URL and value normalization helpers."""
 from __future__ import annotations
 
+import re
 from urllib.parse import urlparse, urlunparse
 
 
@@ -57,12 +58,14 @@ def build_api_url(base_url: str, api_path: str) -> str:
         return api_path
     parsed = urlparse(normalized)
     segments = [s for s in parsed.path.split("/") if s != ""]
-    if "v1" not in segments:
+    # Explicit versioned prefixes (Z.ai v4, Gemini v1beta/openai) are
+    # complete API roots. Only unversioned roots need the legacy /v1 default.
+    if not any(re.fullmatch(r"v\d+(?:alpha|beta)?\d*", part) for part in segments):
         segments.append("v1")
     clean_path = "/" + "/".join(segments)
     api_path = api_path if api_path.startswith("/") else "/" + api_path
     # Prevent /v1/v1 if api_path itself begins with /v1.
-    if api_path.startswith("/v1"):
+    if api_path == "/v1" or api_path.startswith("/v1/"):
         api_path = api_path[len("/v1"):]
     return urlunparse((parsed.scheme, parsed.netloc, clean_path + api_path, "", "", ""))
 

@@ -105,6 +105,7 @@ def _summary(run: BenchmarkRun) -> RunSummary:
         reliability_score=s.get("reliability_score"),
         performance_index=s.get("performance_index"),
         composite_score=s.get("composite_score"),
+        total_cost=s.get("total_cost"),
     )
 
 
@@ -156,6 +157,7 @@ def compare_runs(ids: list[str] = Query(default=[]), session: Session = Depends(
             "reliability_score": s.get("reliability_score"),
             "performance_index": s.get("performance_index"),
             "composite_score": s.get("composite_score"),
+            "total_cost": s.get("total_cost"),
             "benchmark_version": (run.benchmark_snapshot or {}).get("version"),
             "benchmark_name": (run.benchmark_snapshot or {}).get("name"),
         })
@@ -371,6 +373,7 @@ def _build_execution_detail(e: PromptExecution, related: dict):
         # excludes prefill and network; "computed" is tokens/wall-time.
         "tps_source": target_raw.get("tps_source", "computed"),
         "prompt_tokens_per_second": target_raw.get("prompt_tokens_per_second"),
+        "cost": metric.cost if metric else None,
     }
     return {
         "id": e.id,

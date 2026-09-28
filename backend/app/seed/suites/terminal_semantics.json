@@ -3,8 +3,8 @@
   "format_version": "1.0",
   "exported_at": "",
   "name": "Terminal Semantics & System Gotchas",
-  "description": "Expert Linux shell and systems reasoning, inspired by hard Terminal-Bench task themes (permissions/ACLs, tar determinism, git forensics, date normalization, log aggregation, HTML/text processing, SQLite WAL, cron semantics, bash pipefail, packaging conflicts, locale sorting, filesystem edge cases). Every canonical answer was produced by executing the scenario on Ubuntu 24.04 (bash 5.x, GNU coreutils/findutils/sed/tar/git, mawk, sqlite3 3.45, Python 3.12 zoneinfo) — never written by hand. Graded exactly on the final ANSWER line.",
-  "version": "1.0.2",
+  "description": "Twelve self-contained Linux and systems reasoning tasks. Explicit environments and rules cover ACLs, Git reachability, UTC normalization, logs, GNU sed, SQLite WAL snapshots, cron, Bash pipelines, dependency constraints, locale ordering, filenames, and firewall rule ordering. No live machine state or network access is required. Final ANSWER lines are graded deterministically.",
+  "version": "2.0.0",
   "tags": [
     "terminal",
     "shell",
@@ -60,14 +60,14 @@
         },
         {
           "role": "user",
-          "content": "You run exactly these commands in order on Ubuntu 24.04 (GNU coreutils, getfacl 2.3):\nmkdir data && chmod 0754 data\ntouch data/report.csv && chmod 640 data/report.csv\nsetfacl -m u:1042:rwx,g:2088:rx,other::--- data/\nsetfacl -d -m u:1042:rX,g:2088:rX data/\n# state 1\nstat -c %a data\n# then\nchmod 0754 data\n# state 2\nstat -c %a data\ngetfacl data | grep \"user:1042\"\n\nWhat are: stat %a after state 1, stat %a after state 2, and the effective permission bits for user 1042 on data after state 2?\nGive them as comma-separated: <stat1>,<stat2>,<effective>\nExample: 777,755,rwx"
+          "content": "You run exactly these commands in order on Ubuntu 24.04 (GNU coreutils, getfacl 2.3):\nmkdir data && chmod 0754 data\ntouch data/report.csv && chmod 640 data/report.csv\nsetfacl -m u:1042:rwx,g:2088:rx,other::--- data/\nsetfacl -d -m u:1042:rX,g:2088:rX data/\n# state 1\nstat -c %a data\n# then\nchmod 0754 data\n# state 2\nstat -c %a data\ngetfacl data | grep \"user:1042\"\n\nWhat are: stat %a after state 1, stat %a after state 2, and the effective permission bits for user 1042 on data after state 2?\nGive them as comma-separated: <stat1>,<stat2>,<effective>\nExample: 777,755,rwx Assume the filesystem supports POSIX ACLs and all commands succeed."
         }
       ]
     },
     {
       "stable_id": "ts-git-forensics",
-      "title": "Git log reachability after two commits",
-      "description": "Deterministic git SHA-1 with fixed author dates.",
+      "title": "Reachability after reset and a divergent commit",
+      "description": "Count reachable commits independently of unreachable reflog history.",
       "category": "terminal/git",
       "tags": [
         "terminal",
@@ -76,7 +76,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 2.0,
-      "position": 2,
+      "position": 1,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -84,7 +84,7 @@
       },
       "grader_config": {
         "type": "exact",
-        "canonical_answer": "2,init",
+        "canonical_answer": "3,3,1",
         "accepted_aliases": [],
         "case_sensitive": true,
         "trim_whitespace": true,
@@ -98,7 +98,7 @@
         },
         {
           "role": "user",
-          "content": "You run exactly in an empty directory (git 2.43, Linux):\ngit init -q\ngit config user.email \"t@test\"\ngit config user.name \"T\"\nGIT_AUTHOR_DATE=\"2026-01-01T00:00:00Z\" GIT_COMMITTER_DATE=\"2026-01-01T00:00:00Z\" git commit --allow-empty -m \"init\" -q\nGIT_AUTHOR_DATE=\"2026-01-02T00:00:00Z\" GIT_COMMITTER_DATE=\"2026-01-02T00:00:00Z\" git commit --allow-empty -m \"feat A\" -q\ngit rev-list --count HEAD\ngit log --oneline --reverse | head -1 | cut -d' ' -f2\n\nWhat are: commit count from HEAD, and subject of the oldest commit?\nGive as: <count>,<subject>\nExample: 5,initial"
+          "content": "In a fresh Git repository with no hooks, make empty commits A, then B, then C on one branch. Create tag saved at C. Run git reset --hard HEAD~1, then create empty commit D. All commands succeed. What are the outputs of git rev-list --count HEAD, git rev-list --count saved, and git rev-list --count HEAD..saved? Give the three counts comma-separated."
         }
       ]
     },
@@ -114,7 +114,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 2.0,
-      "position": 3,
+      "position": 2,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -136,7 +136,7 @@
         },
         {
           "role": "user",
-          "content": "Normalize these 7 events to UTC (all times are as written, assume America/New_York for Eastern, Europe/Berlin for CET):\nA: 2026-03-08T01:45Z\nB: March 7, 2026 at 9:30 PM Eastern Time (America/New_York)\nC: March 8, 2026 at 7:00 AM Eastern Time (America/New_York)\nD: 2026-03-07T23:45Z\nE: March 8, 2026 at 1:30 AM Central European Time (Europe/Berlin)\nF: Unix epoch 1772938800\nG: March 7, 2026 at 10:25 PM Eastern Time (America/New_York)\n\nList the event IDs in chronological order (earliest first, comma-separated, no spaces).\nExample: A,B,C,D"
+          "content": "Normalize these 7 events to UTC (all times are as written, assume America/New_York for Eastern, Europe/Berlin for CET):\nA: 2026-03-08T01:45Z\nB: March 7, 2026 at 9:30 PM Eastern Time (America/New_York)\nC: March 8, 2026 at 7:00 AM Eastern Time (America/New_York)\nD: 2026-03-07T23:45Z\nE: March 8, 2026 at 1:30 AM Central European Time (Europe/Berlin)\nF: Unix epoch 1772938800\nG: March 7, 2026 at 10:25 PM Eastern Time (America/New_York)\n\nList the event IDs in chronological order (earliest first, comma-separated, no spaces).\nExample: A,B,C,D Use these offsets: New York is UTC-05:00 before 2026-03-08 07:00 UTC and UTC-04:00 afterward; Berlin is UTC+01:00 for all listed dates."
         }
       ]
     },
@@ -152,7 +152,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 2.0,
-      "position": 4,
+      "position": 3,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -190,7 +190,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 2.0,
-      "position": 5,
+      "position": 4,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -218,9 +218,47 @@
     },
     {
       "stable_id": "ts-sqlite-wal",
-      "title": "SQLite WAL visibility after commit",
-      "description": "sqlite3 3.45, journal_mode WAL, simple transaction visibility.",
+      "title": "WAL reader snapshot across a writer commit",
+      "description": "A read transaction keeps its snapshot until commit.",
       "category": "terminal/sqlite",
+      "tags": [
+        "terminal",
+        "shell",
+        "linux"
+      ],
+      "difficulty": "medium",
+      "importance_weight": 2.0,
+      "position": 5,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "10,10,30",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a Linux systems expert. Determine the exact output/behavior described. You may reason as long as you need, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is asked for (no quotes, no code fences)."
+        },
+        {
+          "role": "user",
+          "content": "SQLite 3 in WAL mode, no errors, two separate connections R and W to the same database. Initially table t(v INTEGER) contains 10. Execute in order: R: BEGIN; R: SELECT sum(v) FROM t; W: BEGIN; W: INSERT INTO t VALUES (20); W: COMMIT; R: SELECT sum(v) FROM t; R: COMMIT; R: SELECT sum(v) FROM t. No other transactions occur. Give the three SELECT results in order, comma-separated."
+        }
+      ]
+    },
+    {
+      "stable_id": "ts-cron-firing",
+      "title": "Cron restricted day-of-month and weekday use OR",
+      "description": "Apply explicitly specified Vixie cron day matching in UTC.",
+      "category": "terminal/cron",
       "tags": [
         "terminal",
         "shell",
@@ -236,7 +274,7 @@
       },
       "grader_config": {
         "type": "exact",
-        "canonical_answer": "a,b,c",
+        "canonical_answer": "24",
         "accepted_aliases": [],
         "case_sensitive": true,
         "trim_whitespace": true,
@@ -250,21 +288,21 @@
         },
         {
           "role": "user",
-          "content": "You run exactly:\nrm -f app.db app.db-wal app.db-shm\nsqlite3 app.db \"PRAGMA journal_mode=WAL;\"\nsqlite3 app.db \"CREATE TABLE t(id INTEGER PRIMARY KEY, v TEXT); INSERT INTO t(v) VALUES ('a'),('b'),('c');\"\nsqlite3 app.db \"SELECT group_concat(v,',') FROM (SELECT v FROM t ORDER BY id);\"\n\nWhat is the output of the final SELECT?\nGive just the comma-separated values."
+          "content": "Vixie/cronie five-field cron in UTC. March 2026 has 31 days and March 1 is Sunday. Schedule: 30 6 1,15 * 1-5. When both day-of-month and day-of-week are restricted, a date matches if EITHER field matches, once per scheduled time. How many times does this job run during March 2026? Give one integer."
         }
       ]
     },
     {
-      "stable_id": "ts-cron-firing",
-      "title": "Vixie cron weekday firing count",
-      "description": "Standard Vixie/cronie 5-field cron, UTC, March 2026.",
-      "category": "terminal/cron",
+      "stable_id": "ts-bash-pipefail",
+      "title": "Rightmost pipeline failure and PIPESTATUS capture",
+      "description": "Read pipefail and PIPESTATUS in one expansion before either is overwritten.",
+      "category": "terminal/bash",
       "tags": [
         "terminal",
         "shell",
         "linux"
       ],
-      "difficulty": "medium",
+      "difficulty": "hard",
       "importance_weight": 2.0,
       "position": 7,
       "enabled": true,
@@ -274,7 +312,7 @@
       },
       "grader_config": {
         "type": "exact",
-        "canonical_answer": "22",
+        "canonical_answer": "3|7 3 0",
         "accepted_aliases": [],
         "case_sensitive": true,
         "trim_whitespace": true,
@@ -288,45 +326,7 @@
         },
         {
           "role": "user",
-          "content": "Standard Vixie/cronie 5-field cron, all times UTC, March 2026 (March 1 is Sunday).\n\nCrontab line: 30 6 * * 1-5\nCommand: /usr/bin/backup.sh\n\nHow many times does this job fire in March 2026?\nGive just the integer count."
-        }
-      ]
-    },
-    {
-      "stable_id": "ts-bash-pipefail",
-      "title": "Bash pipefail exit codes",
-      "description": "bash 5.x pipefail semantics.",
-      "category": "terminal/bash",
-      "tags": [
-        "terminal",
-        "shell",
-        "linux"
-      ],
-      "difficulty": "hard",
-      "importance_weight": 2.0,
-      "position": 8,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "1,1,0",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are a Linux systems expert. Determine the exact output/behavior described. You may reason as long as you need, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is asked for (no quotes, no code fences)."
-        },
-        {
-          "role": "user",
-          "content": "You run exactly in bash 5.x:\nset -o pipefail; false | true; echo $?\ntrue | false; echo $?\nset +o pipefail; false | true; echo $?\n\nThe three echo lines produce three integers. What are they in order, comma-separated?\nExample: 0,1,0"
+          "content": "Run in Bash 5 with errexit disabled:\nset -o pipefail\n(exit 7) | (exit 3) | true\nprintf \"%s|%s\\n\" \"$?\" \"${PIPESTATUS[*]}\"\n\nWhat exact single line is printed?"
         }
       ]
     },
@@ -342,7 +342,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 2.0,
-      "position": 9,
+      "position": 8,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -350,12 +350,10 @@
       },
       "grader_config": {
         "type": "multiple_choice",
-        "correct_option": "B",
+        "correct_option": "C",
         "accepted_formats": [
-          "B",
-          "b",
-          "B) dataforge",
-          "dataforge"
+          "C",
+          "C) Relax scipy to 1.11.0"
         ],
         "points": 100.0
       },
@@ -382,7 +380,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 2.0,
-      "position": 10,
+      "position": 9,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -404,13 +402,13 @@
         },
         {
           "role": "user",
-          "content": "You have a directory containing exactly these files (no others, dotfiles hidden from plain ls):\n!bang.txt\n10.txt\n2.txt\nApple.txt\nZebra.txt\napple.txt\nzzz.txt\n.hidden\n\nYou run: LC_ALL=C ls -1\n\nWhat is the comma-separated list of names printed, in order?\nExample: a.txt,b.txt"
+          "content": "You have a directory containing exactly these files (no others, dotfiles hidden from plain ls):\n!bang.txt\n10.txt\n2.txt\nApple.txt\nZebra.txt\napple.txt\nzzz.txt\n.hidden\n\nYou run: LC_ALL=C ls -1\n\nWhat is the comma-separated list of names printed, in order?\nExample: a.txt,b.txt Assume GNU ls, no aliases, and output sent to a pipe with literal quoting (QUOTING_STYLE=literal)."
         }
       ]
     },
     {
       "stable_id": "ts-find-xargs",
-      "title": "find name pattern with weird filenames",
+      "title": "Quoted find pattern preserves whitespace in filenames",
       "description": "GNU findutils, LC_ALL=C sort.",
       "category": "terminal/filesystem",
       "tags": [
@@ -420,7 +418,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 2.0,
-      "position": 11,
+      "position": 10,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -428,7 +426,7 @@
       },
       "grader_config": {
         "type": "exact",
-        "canonical_answer": "3",
+        "canonical_answer": "4",
         "accepted_aliases": [],
         "case_sensitive": true,
         "trim_whitespace": true,
@@ -458,7 +456,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 2.0,
-      "position": 12,
+      "position": 11,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -466,7 +464,7 @@
       },
       "grader_config": {
         "type": "exact",
-        "canonical_answer": "2,4,6",
+        "canonical_answer": "1,2,3,4,5,6",
         "accepted_aliases": [],
         "case_sensitive": true,
         "trim_whitespace": true,

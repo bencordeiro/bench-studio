@@ -24,14 +24,14 @@ const completedRuns: RunSummary[] = [
     target_endpoint_name: "Local", benchmark_name: "Suite", total_prompts: 4,
     completed_prompts: 4, failed_prompts: 0, created_at: "2026-07-15T00:00:00Z",
     started_at: null, completed_at: null, quality_score: 80, reliability_score: 90,
-    performance_index: 70, composite_score: 78,
+    performance_index: 70, composite_score: 78, total_cost: null,
   },
   {
     id: "r2", name: "Run Two", status: "completed_with_errors", target_model: "beta",
     target_endpoint_name: "Local", benchmark_name: "Suite", total_prompts: 4,
     completed_prompts: 4, failed_prompts: 1, created_at: "2026-07-16T00:00:00Z",
     started_at: null, completed_at: null, quality_score: 60, reliability_score: 70,
-    performance_index: 65, composite_score: 62,
+    performance_index: 65, composite_score: 62, total_cost: null,
   },
 ];
 

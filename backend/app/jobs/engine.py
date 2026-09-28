@@ -298,6 +298,10 @@ async def _run_target_phase(
     with session_scope() as session:
         run = session.get(BenchmarkRun, run_id)
         run.status = RunStatus.RUNNING_TARGET.value
+        # Read snapshotted pricing so historical costs are immutable.
+        target_snapshot = (run.benchmark_snapshot or {}).get("target", {})
+        input_price = float(target_snapshot.get("input_price_per_1m", 0.0) or 0.0)
+        output_price = float(target_snapshot.get("output_price_per_1m", 0.0) or 0.0)
     while True:
         with session_scope() as session:
             if await _is_cancelled(session, run_id):
@@ -321,7 +325,9 @@ async def _run_target_phase(
         )
         with session_scope() as session:
             execution = session.get(PromptExecution, exec_id)
-            _store_target_result(session, execution, result)
+            _store_target_result(session, execution, result,
+                                input_price_per_1m=input_price,
+                                output_price_per_1m=output_price)
             _update_progress(session, run_id)
         await _emit_progress(run_id, execution_snapshot=prompt_snapshot, result=result)
 
@@ -395,6 +401,31 @@ def _positive_float(value: Any) -> float | None:
     return float(value) if value > 0 else None
 
 
+def _compute_cost(
+    *,
+    prompt_tokens: int | None,
+    completion_tokens: int | None,
+    input_price_per_1m: float,
+    output_price_per_1m: float,
+) -> float | None:
+    """Compute USD cost from token counts and per-1M-token pricing.
+
+    Returns None when prices are unconfigured or a priced token count is
+    unavailable, so the UI can distinguish "cost unknown" from "$0.00".
+    """
+    if input_price_per_1m <= 0 and output_price_per_1m <= 0:
+        return None
+    if ((input_price_per_1m > 0 and prompt_tokens is None)
+            or (output_price_per_1m > 0 and completion_tokens is None)):
+        return None
+    pt = prompt_tokens or 0
+    ct = completion_tokens or 0
+    if pt == 0 and ct == 0:
+        return None
+    cost = (pt / 1_000_000.0) * input_price_per_1m + (ct / 1_000_000.0) * output_price_per_1m
+    return round(cost, 8)
+
+
 def _server_generation_rate(timings: dict[str, Any] | None) -> float | None:
     """Tokens/sec of pure generation as reported by the server, if it says.
 
@@ -413,7 +444,9 @@ def _server_prompt_rate(timings: dict[str, Any] | None) -> float | None:
     return _positive_float(timings.get("prompt_per_second"))
 
 
-def _store_target_result(session: Session, execution: PromptExecution, result) -> None:
+def _store_target_result(session: Session, execution: PromptExecution, result,
+                         input_price_per_1m: float = 0.0,
+                         output_price_per_1m: float = 0.0) -> None:
     if result.error:
         execution.status = PromptStatus.FAILED.value
         execution.error_message = result.error
@@ -428,6 +461,7 @@ def _store_target_result(session: Session, execution: PromptExecution, result) -
             response_char_count=len(result.content or ""),
             truncated=result.truncated,
             finish_reason=result.finish_reason,
+            cost=None,
         )
         session.add(metric)
         return
@@ -443,6 +477,13 @@ def _store_target_result(session: Session, execution: PromptExecution, result) -
         prompt_tokens = None
         total_tokens = completion_tokens
         estimated = True
+    # Compute cost from snapshotted pricing.
+    cost = _compute_cost(
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        input_price_per_1m=input_price_per_1m,
+        output_price_per_1m=output_price_per_1m,
+    )
     # Output speed. Dividing tokens by total wall time folds in prompt
     # processing and network overhead, which understated a local llama.cpp run
     # by ~25%. When the server reports its own generation rate, that is the
@@ -485,6 +526,7 @@ def _store_target_result(session: Session, execution: PromptExecution, result) -
         retry_count=result.retry_count,
         truncated=truncated,
         response_char_count=len(content),
+        cost=cost,
     )
     session.add(metric)
 
@@ -1056,6 +1098,12 @@ def compute_run_summary(run_id: str) -> dict[str, Any]:
             if r["score"] is not None and r["status"] != PromptStatus.FAILED.value:
                 categories.setdefault(r["category"], []).append((r["score"], r["weight"]))
         cat_scores = {c: scoring.category_quality_score(v) for c, v in categories.items()}
+        # Aggregate cost across all executions.
+        total_cost = None
+        costs = [m.cost for m in metrics_by_exec.values() if m.cost is not None]
+        # A partial sum would understate the total when usage is missing.
+        if costs and len(costs) == len(execs):
+            total_cost = round(sum(costs), 6)
         return {
             "quality_score": round(quality, 2) if quality is not None else None,
             "reliability_score": round(rel, 2),
@@ -1066,6 +1114,7 @@ def compute_run_summary(run_id: str) -> dict[str, Any]:
             "total_count": total,
             "category_scores": {k: round(v, 2) for k, v in cat_scores.items() if v is not None},
             "repetition": {k: (round(val, 3) if isinstance(val, float) else val) for k, val in repetition.items()},
+            "total_cost": total_cost,
         }
 
 

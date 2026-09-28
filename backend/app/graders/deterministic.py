@@ -232,6 +232,7 @@ def grade_regex(config: dict, response: str) -> dict[str, Any]:
             hit = re.search(pat, response, flags) is not None
         except re.error as e:
             hit = False
+            required_all_pass = False
             required_results.append({"pattern": pat, "error": str(e)})
             continue
         required_results.append({"pattern": pat, "matched": hit})
@@ -350,6 +351,21 @@ def grade_concept(config: dict, response: str) -> dict[str, Any]:
 # --------------------------------------------------------------------------- #
 # Structured JSON
 # --------------------------------------------------------------------------- #
+def _strict_json_loads(text: str) -> Any:
+    def object_pairs(pairs):
+        obj = {}
+        for key, value in pairs:
+            if key in obj:
+                raise ValueError("duplicate JSON key")
+            obj[key] = value
+        return obj
+
+    def invalid_constant(value):
+        raise ValueError(f"non-JSON constant: {value}")
+
+    return json.loads(text, object_pairs_hook=object_pairs, parse_constant=invalid_constant)
+
+
 def grade_json(config: dict, response: str) -> dict[str, Any]:
     require_valid = bool(config.get("require_valid_json", True))
     required_fields = config.get("required_fields", []) or []
@@ -363,8 +379,8 @@ def grade_json(config: dict, response: str) -> dict[str, Any]:
         if fence:
             cleaned = fence.group(1).strip()
     try:
-        data = json.loads(cleaned)
-    except json.JSONDecodeError:
+        data = _strict_json_loads(cleaned)
+    except ValueError:
         return {
             "passed": False,
             "score": 0.0,
@@ -378,13 +394,21 @@ def grade_json(config: dict, response: str) -> dict[str, Any]:
             "max_score": points,
             "details": {"reason": "valid JSON but not an object or array"},
         }
+    if (required_fields or expected_values) and not isinstance(data, dict):
+        return {"passed": False, "score": 0.0, "max_score": points,
+                "details": {"reason": "expected a JSON object"}}
+    if config.get("allow_extra_fields") is False and isinstance(data, dict):
+        extra = set(data) - set(required_fields) - set(expected_values)
+        if extra:
+            return {"passed": False, "score": 0.0, "max_score": points,
+                    "details": {"unexpected_fields": sorted(extra)}}
     missing = [f for f in required_fields if isinstance(data, dict) and f not in data]
     value_results = []
     value_failures = 0
     if isinstance(data, dict):
         for field, expected in expected_values.items():
             actual = data.get(field)
-            ok = _json_values_match(actual, expected)
+            ok = field in data and _json_values_match(actual, expected)
             value_results.append({"field": field, "expected": expected, "matched": ok})
             if not ok:
                 value_failures += 1
@@ -411,9 +435,16 @@ def grade_json(config: dict, response: str) -> dict[str, Any]:
 
 
 def _json_values_match(actual: Any, expected: Any) -> bool:
-    if isinstance(expected, (int, float, str, bool)):
-        return actual == expected
-    return str(actual) == str(expected)
+    if type(actual) is not type(expected):
+        return False
+    if isinstance(expected, dict):
+        return actual.keys() == expected.keys() and all(
+            _json_values_match(actual[k], v) for k, v in expected.items())
+    if isinstance(expected, list):
+        return len(actual) == len(expected) and all(
+            _json_values_match(a, e) for a, e in zip(actual, expected))
+    return actual == expected
+
 
 
 # --------------------------------------------------------------------------- #
@@ -436,9 +467,6 @@ def grade_multiple_choice(config: dict, response: str) -> dict[str, Any]:
         or norm_candidate.startswith(a + ".")
         for a in norm_accepted
     )
-    # Also accept exact substring of full text option.
-    if not passed and correct and correct.lower() in norm_candidate:
-        passed = True
     score = points if passed else 0.0
     return {
         "passed": passed,
@@ -533,8 +561,8 @@ def parse_tool_calls(response: str) -> tuple[list[dict[str, Any]], list[str]]:
         if payload.startswith("```"):
             payload = re.sub(r"^```(?:json)?\s*|\s*```$", "", payload).strip()
         try:
-            obj = json.loads(payload)
-        except json.JSONDecodeError:
+            obj = _strict_json_loads(payload)
+        except ValueError:
             malformed.append(payload[:200])
             continue
         if isinstance(obj, list):
@@ -573,10 +601,18 @@ def _arg_values_match(actual: Any, expected: Any) -> bool:
     return str(actual).strip().lower() == str(expected).strip().lower()
 
 
-def _call_matches(call: dict, spec: dict, *, strict_args: bool) -> tuple[bool, dict]:
+def _strict_arg_match(actual: Any, expected: Any) -> bool:
+    if isinstance(expected, dict) and set(expected) == {"any_of"}:
+        return any(_strict_arg_match(actual, alt) for alt in expected["any_of"])
+    return _json_values_match(actual, expected)
+
+
+def _call_matches(call: dict, spec: dict, *, strict_args: bool, strict_types: bool = False) -> tuple[bool, dict]:
     """Does one emitted call satisfy one expected-call spec?"""
     detail: dict[str, Any] = {"expected_name": spec.get("name")}
     name_ok = str(call.get("name", "")).strip().lower() == str(spec.get("name", "")).strip().lower()
+    if strict_types:
+        name_ok = call.get("name") == spec.get("name")
     detail["name_ok"] = name_ok
     if not name_ok:
         return False, detail
@@ -590,7 +626,7 @@ def _call_matches(call: dict, spec: dict, *, strict_args: bool) -> tuple[bool, d
     all_args_ok = True
     for key, want in expected_args.items():
         present = key in args
-        ok = present and _arg_values_match(args[key], want)
+        ok = present and (_strict_arg_match(args[key], want) if strict_types else _arg_values_match(args[key], want))
         arg_details.append(
             {"arg": key, "expected": want, "actual": args.get(key), "matched": ok}
         )
@@ -637,6 +673,20 @@ def grade_tool_call(config: dict, response: str) -> dict[str, Any]:
     forbidden_names = [n.lower() for n in (config.get("forbidden_names", []) or [])]
 
     calls, malformed = parse_tool_calls(response)
+    if config.get("strict_format"):
+        blocks = _TOOL_CALL_RE.findall(response or "")
+        residue = _TOOL_CALL_RE.sub("", response or "").strip()
+        invalid = bool(residue) if not expect_none else bool(re.search(r"</?tool_call\b", response, re.I))
+        for raw in blocks:
+            try:
+                obj = _strict_json_loads(raw)
+                invalid |= (not isinstance(obj, dict) or set(obj) != {"name", "arguments"}
+                            or not isinstance(obj.get("arguments"), dict))
+            except (ValueError, AttributeError):
+                invalid = True
+        if invalid:
+            return {"passed": False, "score": 0.0, "max_score": points,
+                    "details": {"reason": "invalid Hermes envelope or extra text"}}
     base_details = {
         "calls_found": len(calls),
         "call_names": [str(c.get("name", "")) for c in calls],
@@ -668,7 +718,7 @@ def grade_tool_call(config: dict, response: str) -> dict[str, Any]:
         best_idx = None
         best_detail = None
         for idx in unmatched:
-            ok, detail = _call_matches(calls[idx], spec, strict_args=strict_args)
+            ok, detail = _call_matches(calls[idx], spec, strict_args=strict_args, strict_types=bool(config.get("strict_types")))
             if ok:
                 best_idx, best_detail = idx, detail
                 break

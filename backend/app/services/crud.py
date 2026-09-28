@@ -46,6 +46,8 @@ def create_endpoint_profile(session: Session, data: dict[str, Any]) -> EndpointP
         enabled=bool(data.get("enabled", True)),
         notes=data.get("notes", ""),
         api_key_env_var=data.get("api_key_env_var", ""),
+        input_price_per_1m=float(data.get("input_price_per_1m", 0.0) or 0.0),
+        output_price_per_1m=float(data.get("output_price_per_1m", 0.0) or 0.0),
         has_api_key=False,
         api_key_storage="none",
     )
@@ -70,6 +72,10 @@ def update_endpoint_profile(session: Session, profile: EndpointProfile, data: di
     profile.enabled = bool(data.get("enabled", profile.enabled))
     profile.notes = data.get("notes", profile.notes)
     profile.api_key_env_var = data.get("api_key_env_var", profile.api_key_env_var)
+    if "input_price_per_1m" in data:
+        profile.input_price_per_1m = float(data["input_price_per_1m"] or 0.0)
+    if "output_price_per_1m" in data:
+        profile.output_price_per_1m = float(data["output_price_per_1m"] or 0.0)
     api_key = data.get("api_key")
     if api_key:
         method = store_api_key(profile.id, api_key)
@@ -93,6 +99,8 @@ def duplicate_endpoint_profile(session: Session, profile: EndpointProfile) -> En
         enabled=profile.enabled,
         notes=profile.notes,
         api_key_env_var=profile.api_key_env_var,
+        input_price_per_1m=profile.input_price_per_1m,
+        output_price_per_1m=profile.output_price_per_1m,
         has_api_key=False,
         api_key_storage="none",
     )

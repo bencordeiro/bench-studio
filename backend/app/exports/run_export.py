@@ -93,6 +93,7 @@ def _collect_run(session: Session, run: BenchmarkRun) -> dict[str, Any]:
                 "truncated": metric.truncated if metric else False,
                 "http_status": metric.http_status if metric else None,
                 "retry_count": metric.retry_count if metric else 0,
+                "cost": metric.cost if metric else None,
             },
             "deterministic": [
                 {"type": d.grader_type, "passed": d.passed, "score": d.score,
@@ -174,7 +175,7 @@ def export_csv(document: dict[str, Any]) -> str:
         "position", "repetition", "stable_id", "title", "category", "grading_mode",
         "weight", "status", "score", "max_score", "time_to_first_token",
         "output_tokens_per_second", "total_response_time", "finish_reason",
-        "truncated", "http_status", "retry_count", "error",
+        "truncated", "http_status", "retry_count", "cost", "error",
     ])
     for p in document.get("prompts", []):
         t = p.get("timing", {})
@@ -184,7 +185,7 @@ def export_csv(document: dict[str, Any]) -> str:
             p.get("score"), p.get("max_score"), t.get("time_to_first_token"),
             t.get("output_tokens_per_second"), t.get("total_response_time"),
             t.get("finish_reason") or p.get("finish_reason"), t.get("truncated"),
-            t.get("http_status"), t.get("retry_count"), p.get("error"),
+            t.get("http_status"), t.get("retry_count"), t.get("cost"), p.get("error"),
         ])
     return out.getvalue()
 
@@ -207,6 +208,7 @@ def export_html(document: dict[str, Any]) -> str:
             f"<td>{_fmt(t.get('time_to_first_token'))}</td>"
             f"<td>{_fmt(t.get('output_tokens_per_second'))}</td>"
             f"<td>{_fmt(t.get('total_response_time'))}</td>"
+            f"<td>{_fmt_cost(t.get('cost'))}</td>"
             "</tr>"
         )
     details = []
@@ -228,6 +230,7 @@ def export_html(document: dict[str, Any]) -> str:
         reliability=_fmt(summary.get("reliability_score")),
         performance=_fmt(summary.get("performance_index")),
         composite=_fmt(summary.get("composite_score")),
+        cost=_fmt_cost(summary.get("total_cost")),
         coverage=escape(str(summary.get("scoring_coverage", ""))),
         rows="\n".join(rows_html),
         details="\n".join(details),
@@ -241,6 +244,15 @@ def _fmt(v: Any) -> str:
     if isinstance(v, float):
         return f"{v:.2f}"
     return escape(str(v))
+
+
+def _fmt_cost(v: Any) -> str:
+    if v is None:
+        return "—"
+    try:
+        return f"${float(v):.6f}"
+    except (ValueError, TypeError):
+        return "—"
 
 
 HTML_TEMPLATE = """<!doctype html>
@@ -267,11 +279,12 @@ HTML_TEMPLATE = """<!doctype html>
   <div class="card"><div>Reliability</div><div class="v">{reliability}</div></div>
   <div class="card"><div>Performance</div><div class="v">{performance}</div></div>
   <div class="card"><div>Composite</div><div class="v">{composite}</div></div>
+  <div class="card"><div>Total cost</div><div class="v">{cost}</div></div>
 </div>
 <p>Coverage: {coverage}</p>
 <h2>Prompt results</h2>
 <table>
-  <tr><th>#</th><th>Prompt</th><th>Category</th><th>Mode</th><th>Score</th><th>Status</th><th>TTFT (s)</th><th>Tok/s</th><th>Total (s)</th></tr>
+  <tr><th>#</th><th>Prompt</th><th>Category</th><th>Mode</th><th>Score</th><th>Status</th><th>TTFT (s)</th><th>Tok/s</th><th>Total (s)</th><th>Cost</th></tr>
   {rows}
 </table>
 <h2>Candidate answers</h2>

@@ -3,8 +3,8 @@
   "format_version": "1.0",
   "exported_at": "",
   "name": "Code Reasoning & Correctness (Python)",
-  "description": "Output-prediction over original Python snippets, in the CRUXEval output-prediction format. Covers closures and scoping, mutation and aliasing, the data model (MRO, descriptors, dict key identity), generator lifecycle, and evaluation order. Every canonical answer is produced by executing the snippet on CPython 3, never written by hand. Deliberately excludes interpreter implementation details such as small-integer caching, which reward trivia about one runtime rather than reasoning about the language.",
-  "version": "4.1.0",
+  "description": "A compact 50-question Python test: 30 output-reasoning items covering mutation, scoping, iterators, exceptions and the data model, plus 20 original function-completion tasks inspired by HumanEval's executable-contract format. Practical tasks cover scheduling, configuration, logs, caching, pagination and data processing. Execution tests check edge cases and non-mutation. New difficulty weights are predicted, not model-calibrated. Python 3.10+; no third-party packages or network required.",
+  "version": "5.0.0",
   "tags": [
     "coding",
     "python",
@@ -110,90 +110,6 @@
       "position": 1
     },
     {
-      "stable_id": "cr-dict-key-collapse",
-      "title": "Equal keys collapse in a dict literal",
-      "description": "True == 1 == 1.0, so they are one key; last value wins, first key kept.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "output-prediction",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "{True: 'c'}",
-        "accepted_aliases": [
-          "{True:'c'}",
-          "{true: 'c'}",
-          "{true:'c'}"
-        ],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "print({True: 'a', 1: 'b', 1.0: 'c'})",
-          "position": 1
-        }
-      ],
-      "position": 3
-    },
-    {
-      "stable_id": "cr-finally-return",
-      "title": "return in finally overrides try",
-      "description": "A return in finally replaces any value the try block returned.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "output-prediction",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "2",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "def f():\n    try:\n        return 1\n    finally:\n        return 2\n\nprint(f())",
-          "position": 1
-        }
-      ],
-      "position": 4
-    },
-    {
       "stable_id": "cr-list-mult-aliasing",
       "title": "Row aliasing from list multiplication",
       "description": "The outer list holds three references to the same inner list.",
@@ -231,47 +147,7 @@
           "position": 1
         }
       ],
-      "position": 5
-    },
-    {
-      "stable_id": "cr-running-max-sum",
-      "title": "Simulate a running-maximum accumulation",
-      "description": "Tracks state across a loop; one slip cascades.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "output-prediction",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "46",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "data = [3, 1, 4, 1, 5, 9, 2, 6]\nrm, tot = data[0], 0\nfor v in data:\n    rm = max(rm, v)\n    tot += rm\nprint(tot)",
-          "position": 1
-        }
-      ],
-      "position": 8
+      "position": 2
     },
     {
       "stable_id": "cr-decorator-attr-target",
@@ -311,7 +187,7 @@
           "position": 1
         }
       ],
-      "position": 10
+      "position": 3
     },
     {
       "stable_id": "cr-floordiv-negatives",
@@ -351,127 +227,7 @@
           "position": 1
         }
       ],
-      "position": 11
-    },
-    {
-      "stable_id": "cr-bankers-rounding",
-      "title": "Round-half-to-even (banker's rounding)",
-      "description": "round() ties go to the nearest even integer.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "output-prediction",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "0 2 2 4",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "print(round(0.5), round(1.5), round(2.5), round(3.5))",
-          "position": 1
-        }
-      ],
-      "position": 12
-    },
-    {
-      "stable_id": "cr-fstring-format-specs",
-      "title": "Format specifiers in f-strings",
-      "description": "Hex with prefix, fixed precision, zero-padded binary.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "output-prediction",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "0xff|3.14|00101010",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "print(f\"{255:#x}|{3.14159:.2f}|{42:08b}\")",
-          "position": 1
-        }
-      ],
-      "position": 13
-    },
-    {
-      "stable_id": "cr-reduce-fold",
-      "title": "Left fold with reduce",
-      "description": "Builds the number digit by digit.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "output-prediction",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "1234",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "from functools import reduce\nprint(reduce(lambda a, b: a * 10 + b, [1, 2, 3, 4]))",
-          "position": 1
-        }
-      ],
-      "position": 14
+      "position": 4
     },
     {
       "stable_id": "cr-try-else",
@@ -511,7 +267,7 @@
           "position": 1
         }
       ],
-      "position": 15
+      "position": 5
     },
     {
       "stable_id": "cr-chained-aug-assign",
@@ -551,7 +307,7 @@
           "position": 1
         }
       ],
-      "position": 16
+      "position": 6
     },
     {
       "stable_id": "cr-yield-from-sum",
@@ -591,7 +347,7 @@
           "position": 1
         }
       ],
-      "position": 17
+      "position": 7
     },
     {
       "stable_id": "cr-mro-diamond",
@@ -606,7 +362,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 18,
+      "position": 8,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -647,7 +403,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 19,
+      "position": 9,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -688,7 +444,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 20,
+      "position": 10,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -729,7 +485,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 21,
+      "position": 11,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -770,7 +526,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 22,
+      "position": 12,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -811,7 +567,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 23,
+      "position": 13,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -852,7 +608,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 24,
+      "position": 14,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -893,7 +649,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 4.0,
-      "position": 25,
+      "position": 15,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -934,7 +690,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 26,
+      "position": 16,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -963,129 +719,6 @@
       ]
     },
     {
-      "stable_id": "cr-str-partition-chain",
-      "title": "String scanning without regex",
-      "description": "Multi-step string manipulation the model must trace exactly.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 27,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "key|value=extra|key=value|extra",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "s = 'key=value=extra'\nhead, _, tail = s.partition('=')\nr_head, _, r_tail = s.rpartition('=')\nprint('|'.join([head, tail, r_head, r_tail]))",
-          "position": 1
-        }
-      ]
-    },
-    {
-      "stable_id": "cr-int-float-dict-key",
-      "title": "Numeric keys unify across types",
-      "description": "1, 1.0 and True hash equal, so they collide in a dict.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 28,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "{1: 3, 2: 2} 2",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "d = {}\nfor k in (1, 1.0, True, 2, 2.0):\n    d[k] = d.get(k, 0) + 1\nprint(d, len(d))",
-          "position": 1
-        }
-      ]
-    },
-    {
-      "stable_id": "cr-list-comp-scope-leak",
-      "title": "Comprehension scope does not leak",
-      "description": "The loop variable is confined to the comprehension in Python 3.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "code-reasoning",
-        "tracing",
-        "discriminator"
-      ],
-      "difficulty": "hard",
-      "importance_weight": 4.0,
-      "position": 29,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "outer [0, 1, 2] [10, 10]",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "x = 'outer'\nvals = [x for x in range(3)]\ndef f():\n    y = 10\n    return [y for _ in range(2)]\nprint(x, vals, f())",
-          "position": 1
-        }
-      ]
-    },
-    {
       "stable_id": "cr-tuple-mutation-error",
       "title": "Augmented assignment into a tuple's list",
       "description": "The mutation succeeds and then the assignment raises -- both happen.",
@@ -1098,7 +731,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 4.0,
-      "position": 30,
+      "position": 17,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1139,7 +772,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 4.0,
-      "position": 31,
+      "position": 18,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1180,7 +813,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 32,
+      "position": 19,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1221,7 +854,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 33,
+      "position": 20,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1262,7 +895,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 4.0,
-      "position": 34,
+      "position": 21,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1303,7 +936,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 35,
+      "position": 22,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1332,47 +965,6 @@
       ]
     },
     {
-      "stable_id": "cr3-mutable-default-memo",
-      "title": "Memoization through a mutable default across calls",
-      "description": "State persists in the default argument between top-level calls, including recursion.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 36,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "55 144 9 11",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "def fib(n, memo={}):\n    if n < 2:\n        return n\n    if n not in memo:\n        memo[n] = fib(n - 1, memo) + fib(n - 2, memo)\n    return memo[n]\n\nfirst = fib(10)\nsizes = len(fib.__defaults__[0])\nsecond = fib(12)\nprint(first, second, sizes, len(fib.__defaults__[0]))",
-          "position": 1
-        }
-      ]
-    },
-    {
       "stable_id": "cr3-generator-send",
       "title": "Two-way generator communication with send()",
       "description": "send() resumes the generator and supplies the value of the yield expression.",
@@ -1385,7 +977,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 37,
+      "position": 23,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1426,7 +1018,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 38,
+      "position": 24,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1467,7 +1059,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 39,
+      "position": 25,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1496,47 +1088,6 @@
       ]
     },
     {
-      "stable_id": "cr3-sort-key-sideeffect",
-      "title": "How many times a sort key is called",
-      "description": "sorted() calls the key exactly once per element, before comparing.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 40,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "321 3 123 312",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "calls = []\ndef key(x):\n    calls.append(x)\n    return -x\n\ndata = [3, 1, 2]\nout = sorted(data, key=key)\nprint(''.join(map(str, out)), len(calls), ''.join(map(str, sorted(calls))),\n      ''.join(map(str, data)))",
-          "position": 1
-        }
-      ]
-    },
-    {
       "stable_id": "cr3-exception-chaining",
       "title": "Implicit exception chaining through __context__",
       "description": "Raising inside an except block links the original as __context__.",
@@ -1549,7 +1100,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 41,
+      "position": 26,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1590,7 +1141,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 42,
+      "position": 27,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1631,7 +1182,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 43,
+      "position": 28,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1660,211 +1211,6 @@
       ]
     },
     {
-      "stable_id": "cr3-slots-inheritance",
-      "title": "__slots__ stops working when a subclass omits it",
-      "description": "A subclass without __slots__ regains a __dict__.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 44,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "AttributeError True False 2",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "class S:\n    __slots__ = ('x',)\n    def __init__(self): self.x = 1\n\nclass T(S):\n    pass\n\nt = T()\nt.y = 2\ns = S()\ntry:\n    s.z = 3\n    err = 'no error'\nexcept AttributeError:\n    err = 'AttributeError'\nprint(err, hasattr(t, '__dict__'), hasattr(s, '__dict__'), t.y)",
-          "position": 1
-        }
-      ]
-    },
-    {
-      "stable_id": "cr3-string-multiline-fold",
-      "title": "Multi-step string transformation",
-      "description": "A chain of transformations that must be traced in the right order.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 45,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "['hello', 'world'] olleh-dlrow Olleh-Dlrow 11",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "s = '  Hello, World  '\na = s.strip().lower().replace(',', '').split()\nb = '-'.join(w[::-1] for w in a)\nc = b.title()\nprint(a, b, c, len(c))",
-          "position": 1
-        }
-      ]
-    },
-    {
-      "stable_id": "cr4-stack-machine",
-      "title": "Trace a small stack machine",
-      "description": "Eight instructions over a stack; every step feeds the next.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 46,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "[14, 1]",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "prog = [('push', 3), ('push', 4), ('add',), ('push', 2), ('mul',),\n        ('dup',), ('push', 5), ('sub',), ('push', 10), ('swap',), ('div',)]\nst = []\nfor op in prog:\n    if op[0] == 'push': st.append(op[1])\n    elif op[0] == 'add': b, a = st.pop(), st.pop(); st.append(a + b)\n    elif op[0] == 'mul': b, a = st.pop(), st.pop(); st.append(a * b)\n    elif op[0] == 'sub': b, a = st.pop(), st.pop(); st.append(a - b)\n    elif op[0] == 'dup': st.append(st[-1])\n    elif op[0] == 'swap': st[-1], st[-2] = st[-2], st[-1]\n    elif op[0] == 'div': b, a = st.pop(), st.pop(); st.append(a // b if b else 0)\nprint(st)",
-          "position": 1
-        }
-      ]
-    },
-    {
-      "stable_id": "cr4-state-machine-transitions",
-      "title": "Multi-class state machine over eight events",
-      "description": "Inheritance and overrides decide each transition; the log accumulates.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 47,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "running,paused,running,running,paused,idle,running,error",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "class State:\n    name = 'base'\n    def on(self, ev):\n        return self if ev == 'noop' else Error()\nclass Idle(State):\n    name = 'idle'\n    def on(self, ev):\n        return Running() if ev == 'start' else super().on(ev)\nclass Running(State):\n    name = 'running'\n    def on(self, ev):\n        if ev == 'pause': return Paused()\n        if ev == 'stop': return Idle()\n        return super().on(ev)\nclass Paused(Running):\n    name = 'paused'\n    def on(self, ev):\n        return Running() if ev == 'start' else super().on(ev)\nclass Error(State):\n    name = 'error'\n\ns = Idle()\nlog = []\nfor ev in ['start', 'pause', 'start', 'noop', 'pause', 'stop', 'start', 'bogus']:\n    s = s.on(ev)\n    log.append(s.name)\nprint(','.join(log))",
-          "position": 1
-        }
-      ]
-    },
-    {
-      "stable_id": "cr4-grid-walk",
-      "title": "Walk a grid with wrapping and obstacles",
-      "description": "Twelve moves with modular wrapping and blocked cells.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 48,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "1 0 5 8 6",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "grid = [[0, 0, 1, 0],\n        [0, 1, 0, 0],\n        [0, 0, 0, 1],\n        [1, 0, 0, 0]]\nr = c = 0\nmoves = 'RRDDLLUURDDR'\nvisited = [(0, 0)]\nblocked = 0\nfor m in moves:\n    dr, dc = {'R': (0, 1), 'L': (0, -1), 'U': (-1, 0), 'D': (1, 0)}[m]\n    nr, nc = (r + dr) % 4, (c + dc) % 4\n    if grid[nr][nc] == 1:\n        blocked += 1\n        continue\n    r, c = nr, nc\n    visited.append((r, c))\nprint(r, c, blocked, len(visited), len(set(visited)))",
-          "position": 1
-        }
-      ]
-    },
-    {
       "stable_id": "cr4-accumulator-dict",
       "title": "Group and aggregate in one pass",
       "description": "Bucketing with derived keys, then a second pass that depends on the first.",
@@ -1877,7 +1223,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 49,
+      "position": 29,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1906,373 +1252,764 @@
       ]
     },
     {
-      "stable_id": "cr4-recursive-memo-order",
-      "title": "Recursion whose call order is observable",
-      "description": "Memoization changes how many times the function body actually runs.",
-      "category": "code-reasoning",
+      "stable_id": "cr-fn-merge-windows",
+      "title": "Merge overlapping maintenance windows",
+      "description": "windows is a list of integer (start, end) pairs with start <= end. Return a sorted list of tuples merging overlapping OR touching closed intervals. Preserve disjoint intervals. Empty input returns [].",
+      "category": "code-generation/python",
       "tags": [
         "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
+        "execution-graded",
+        "original",
+        "unmeasured"
       ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 50,
+      "difficulty": "hard",
+      "importance_weight": 3.0,
       "enabled": true,
-      "grading_mode": "deterministic",
+      "grading_mode": "execution",
       "generation_overrides": {
         "temperature": 0.0
       },
       "grader_config": {
-        "type": "exact",
-        "canonical_answer": "20 9 (3, 3) (3, 1)",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
+        "language": "python",
+        "entry_point": "merge_windows",
+        "timeout_seconds": 3.0,
+        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([],)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n    args = ([(5, 8), (1, 3), (3, 6)],)\n    original = deepcopy(args)\n    assert candidate(*args) == [(1, 8)]\n    assert args == original, \"inputs mutated\"\n    args = ([(1, 10), (2, 3), (12, 12)],)\n    original = deepcopy(args)\n    assert candidate(*args) == [(1, 10), (12, 12)]\n    assert args == original, \"inputs mutated\"\n    args = ([(-4, -2), (-2, 0), (5, 5), (5, 5)],)\n    original = deepcopy(args)\n    assert candidate(*args) == [(-4, 0), (5, 5)]\n    assert args == original, \"inputs mutated\"\n    args = ([(9, 10), (1, 2)],)\n    original = deepcopy(args)\n    assert candidate(*args) == [(1, 2), (9, 10)]\n    assert args == original, \"inputs mutated\"\n"
       },
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "calls = []\ndef paths(r, c, memo={}):\n    if r == 0 or c == 0:\n        return 1\n    if (r, c) in memo:\n        return memo[(r, c)]\n    calls.append((r, c))\n    memo[(r, c)] = paths(r - 1, c, memo) + paths(r, c - 1, memo)\n    return memo[(r, c)]\n\ntotal = paths(3, 3)\nprint(total, len(calls), calls[0], calls[-1])",
+          "content": "def merge_windows(windows):\n    \"\"\"windows is a list of integer (start, end) pairs with start <= end. Return a sorted list of tuples merging overlapping OR touching closed intervals. Preserve disjoint intervals. Empty input returns [].\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
           "position": 1
         }
-      ]
+      ],
+      "position": 30
     },
     {
-      "stable_id": "cr4-string-tokenize",
-      "title": "Hand-rolled tokenizer over a small expression",
-      "description": "Character-by-character scanning with multi-character tokens.",
-      "category": "code-reasoning",
+      "stable_id": "cr-fn-latest-records",
+      "title": "Select the latest event per ID",
+      "description": "records is a list of dicts with string id, integer timestamp and arbitrary payload. Return one dict per id: highest timestamp wins; on ties the last input record wins. Order output by each id's FIRST appearance, even when its winner is replaced. Empty input returns [].",
+      "category": "code-generation/python",
       "tags": [
         "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
+        "execution-graded",
+        "original",
+        "unmeasured"
       ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 51,
+      "difficulty": "hard",
+      "importance_weight": 3.0,
       "enabled": true,
-      "grading_mode": "deterministic",
+      "grading_mode": "execution",
       "generation_overrides": {
         "temperature": 0.0
       },
       "grader_config": {
-        "type": "exact",
-        "canonical_answer": "['ab', '12', '+', 'cd', '*', '3', '-', 'e', '45'] 9",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
+        "language": "python",
+        "entry_point": "latest_records",
+        "timeout_seconds": 3.0,
+        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([],)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n    args = ([{'id': 'a', 'timestamp': 2, 'payload': 1}, {'id': 'b', 'timestamp': 1, 'payload': 9}, {'id': 'a', 'timestamp': 2, 'payload': 3}, {'id': 'a', 'timestamp': 0, 'payload': 0}],)\n    original = deepcopy(args)\n    assert candidate(*args) == [{'id': 'a', 'timestamp': 2, 'payload': 3}, {'id': 'b', 'timestamp': 1, 'payload': 9}]\n    assert args == original, \"inputs mutated\"\n    args = ([{'id': 'x', 'timestamp': -3, 'payload': None}, {'id': 'x', 'timestamp': -1, 'payload': False}],)\n    original = deepcopy(args)\n    assert candidate(*args) == [{'id': 'x', 'timestamp': -1, 'payload': False}]\n    assert args == original, \"inputs mutated\"\n"
       },
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "s = 'ab12+cd*3-e45'\ntoks, cur, kind = [], '', None\nfor ch in s:\n    k = 'd' if ch.isdigit() else ('a' if ch.isalpha() else 'o')\n    if k != kind and cur:\n        toks.append(cur); cur = ''\n    kind = k\n    if k == 'o':\n        if cur: toks.append(cur)\n        toks.append(ch); cur = ''; kind = None\n    else:\n        cur += ch\nif cur: toks.append(cur)\nprint(toks, len(toks))",
+          "content": "def latest_records(records):\n    \"\"\"records is a list of dicts with string id, integer timestamp and arbitrary payload. Return one dict per id: highest timestamp wins; on ties the last input record wins. Order output by each id's FIRST appearance, even when its winner is replaced. Empty input returns [].\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
           "position": 1
         }
-      ]
+      ],
+      "position": 31
     },
     {
-      "stable_id": "cr4-linked-reversal",
-      "title": "Reverse a linked list built from tuples",
-      "description": "Pointer rewiring simulated with nested tuples over five nodes.",
-      "category": "code-reasoning",
+      "stable_id": "cr-fn-dependency-batches",
+      "title": "Schedule dependencies in deterministic batches",
+      "description": "dependencies maps every task name (string) to a list of prerequisite names; all referenced names exist as keys. Return batches of runnable tasks, each batch sorted lexicographically. A task may run only after ALL prerequisites completed in earlier batches. Duplicate prerequisites count once. Return None for any cycle (even if some tasks can run), and [] for an empty graph.",
+      "category": "code-generation/python",
       "tags": [
         "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
+        "execution-graded",
+        "original",
+        "unmeasured"
       ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 52,
+      "difficulty": "hard",
+      "importance_weight": 3.0,
       "enabled": true,
-      "grading_mode": "deterministic",
+      "grading_mode": "execution",
       "generation_overrides": {
         "temperature": 0.0
       },
       "grader_config": {
-        "type": "exact",
-        "canonical_answer": "54321 12345 6",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
+        "language": "python",
+        "entry_point": "dependency_batches",
+        "timeout_seconds": 3.0,
+        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ({},)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n    args = ({'b': ['a', 'a'], 'a': [], 'c': [], 'd': ['b', 'c']},)\n    original = deepcopy(args)\n    assert candidate(*args) == [['a', 'c'], ['b'], ['d']]\n    assert args == original, \"inputs mutated\"\n    args = ({'a': ['a']},)\n    original = deepcopy(args)\n    assert candidate(*args) == None\n    assert args == original, \"inputs mutated\"\n    args = ({'a': [], 'b': ['c'], 'c': ['b']},)\n    original = deepcopy(args)\n    assert candidate(*args) == None\n    assert args == original, \"inputs mutated\"\n    args = ({'c': ['b'], 'b': ['a'], 'a': []},)\n    original = deepcopy(args)\n    assert candidate(*args) == [['a'], ['b'], ['c']]\n    assert args == original, \"inputs mutated\"\n"
       },
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "node = None\nfor v in [1, 2, 3, 4, 5]:\n    node = (v, node)          # builds 5 -> 4 -> 3 -> 2 -> 1\ndef to_list(n):\n    out = []\n    while n: out.append(n[0]); n = n[1]\n    return out\nforward = to_list(node)\nrev = None\nwalk = node\nwhile walk:\n    rev = (walk[0], rev)\n    walk = walk[1]\nback = to_list(rev)\nprint(''.join(map(str, forward)), ''.join(map(str, back)), forward[0] + back[0])",
+          "content": "def dependency_batches(dependencies):\n    \"\"\"dependencies maps every task name (string) to a list of prerequisite names; all referenced names exist as keys. Return batches of runnable tasks, each batch sorted lexicographically. A task may run only after ALL prerequisites completed in earlier batches. Duplicate prerequisites count once. Return None for any cycle (even if some tasks can run), and [] for an empty graph.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
           "position": 1
         }
-      ]
+      ],
+      "position": 32
     },
     {
-      "stable_id": "cr5-automaton",
-      "title": "Five generations of a cellular automaton",
-      "description": "Rule 110 over a 12-cell wrapping row for five generations, reported as one string.",
-      "category": "code-reasoning",
+      "stable_id": "cr-fn-resolve-path",
+      "title": "Normalize a virtual absolute path",
+      "description": "path is an absolute POSIX path string beginning with /. Return its lexical normalization: collapse repeated slashes, remove . components, and apply .. by removing a previous component if one exists. Going above root stays at root. Remove trailing slash except for /. Do not access the filesystem; dot-prefixed names other than . and .. remain literal.",
+      "category": "code-generation/python",
       "tags": [
         "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
+        "execution-graded",
+        "original",
+        "unmeasured"
       ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 53,
+      "difficulty": "hard",
+      "importance_weight": 3.0,
       "enabled": true,
-      "grading_mode": "deterministic",
+      "grading_mode": "execution",
       "generation_overrides": {
         "temperature": 0.0
       },
       "grader_config": {
-        "type": "exact",
-        "canonical_answer": "111111011111 11",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
+        "language": "python",
+        "entry_point": "resolve_path",
+        "timeout_seconds": 3.0,
+        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ('/',)\n    original = deepcopy(args)\n    assert candidate(*args) == '/'\n    assert args == original, \"inputs mutated\"\n    args = ('/a//b/.././c/',)\n    original = deepcopy(args)\n    assert candidate(*args) == '/a/c'\n    assert args == original, \"inputs mutated\"\n    args = ('/../../x',)\n    original = deepcopy(args)\n    assert candidate(*args) == '/x'\n    assert args == original, \"inputs mutated\"\n    args = ('/.env/.../../z',)\n    original = deepcopy(args)\n    assert candidate(*args) == '/.env/z'\n    assert args == original, \"inputs mutated\"\n    args = ('/a/..',)\n    original = deepcopy(args)\n    assert candidate(*args) == '/'\n    assert args == original, \"inputs mutated\"\n"
       },
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "row = [0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0]\nfor _ in range(5):\n    nxt = []\n    for i in range(len(row)):\n        l, c, r = row[(i - 1) % 12], row[i], row[(i + 1) % 12]\n        nxt.append(1 if (l, c, r) in {(1,1,0),(1,0,1),(0,1,1),(0,1,0),(0,0,1)} else 0)\n    row = nxt\nprint(''.join(map(str, row)), sum(row))",
+          "content": "def resolve_path(path):\n    \"\"\"path is an absolute POSIX path string beginning with /. Return its lexical normalization: collapse repeated slashes, remove . components, and apply .. by removing a previous component if one exists. Going above root stays at root. Remove trailing slash except for /. Do not access the filesystem; dot-prefixed names other than . and .. remain literal.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
           "position": 1
         }
-      ]
+      ],
+      "position": 33
     },
     {
-      "stable_id": "cr5-bank-rules",
-      "title": "Fifteen transactions under overdraft rules",
-      "description": "Each transaction depends on the running balance; some are rejected.",
-      "category": "code-reasoning",
+      "stable_id": "cr-fn-apply-patch",
+      "title": "Apply a recursive configuration patch",
+      "description": "base and patch are JSON-like dicts. Return a patched dict. In patch, null (None) deletes a key; a dict recursively patches the corresponding base value (use {} if it is not a dict); other values replace it. Lists replace wholesale. Neither input may mutate, including nested objects.",
+      "category": "code-generation/python",
       "tags": [
         "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
+        "execution-graded",
+        "original",
+        "unmeasured"
       ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 54,
+      "difficulty": "hard",
+      "importance_weight": 3.0,
       "enabled": true,
-      "grading_mode": "deterministic",
+      "grading_mode": "execution",
       "generation_overrides": {
         "temperature": 0.0
       },
       "grader_config": {
-        "type": "exact",
-        "canonical_answer": "655 20 2",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
+        "language": "python",
+        "entry_point": "apply_patch",
+        "timeout_seconds": 3.0,
+        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ({}, {})\n    original = deepcopy(args)\n    assert candidate(*args) == {}\n    assert args == original, \"inputs mutated\"\n    args = ({'a': {'b': 1, 'c': 2}, 'x': [1, 2]}, {'a': {'b': None, 'd': 0}, 'x': []})\n    original = deepcopy(args)\n    assert candidate(*args) == {'a': {'c': 2, 'd': 0}, 'x': []}\n    assert args == original, \"inputs mutated\"\n    args = ({'a': 7}, {'a': {'b': 1}, 'z': None})\n    original = deepcopy(args)\n    assert candidate(*args) == {'a': {'b': 1}}\n    assert args == original, \"inputs mutated\"\n    args = ({'x': True}, {'x': False})\n    original = deepcopy(args)\n    assert candidate(*args) == {'x': False}\n    assert args == original, \"inputs mutated\"\n"
       },
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "bal, fees, rejected = 100, 0, 0\nfor amt in [-30, -50, 20, -60, -5, 200, -400, 15, -10, -10, -10, 500, -700, 40, -25]:\n    if bal + amt < -50:\n        rejected += 1\n        continue\n    bal += amt\n    if bal < 0:\n        fees += 10\n        bal -= 10\nprint(bal, fees, rejected)",
+          "content": "def apply_patch(base, patch):\n    \"\"\"base and patch are JSON-like dicts. Return a patched dict. In patch, null (None) deletes a key; a dict recursively patches the corresponding base value (use {} if it is not a dict); other values replace it. Lists replace wholesale. Neither input may mutate, including nested objects.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
           "position": 1
         }
-      ]
+      ],
+      "position": 34
     },
     {
-      "stable_id": "cr5-priority-sim",
-      "title": "Priority queue simulated over fourteen operations",
-      "description": "Pushes and pops against a list kept sorted by priority then insertion order.",
-      "category": "code-reasoning",
+      "stable_id": "cr-fn-inventory-ledger",
+      "title": "Deduplicate inventory events by event ID",
+      "description": "events is a list of (event_id, sku, delta) tuples; IDs and SKUs are strings, delta is integer. First occurrence of an event_id wins globally, even if a later duplicate differs. Sum accepted deltas by SKU, omit zero balances, and return a list of (sku, balance) tuples sorted by SKU. Negative balances are allowed.",
+      "category": "code-generation/python",
       "tags": [
         "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
+        "execution-graded",
+        "original",
+        "unmeasured"
       ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 55,
+      "difficulty": "hard",
+      "importance_weight": 3.0,
       "enabled": true,
-      "grading_mode": "deterministic",
+      "grading_mode": "execution",
       "generation_overrides": {
         "temperature": 0.0
       },
       "grader_config": {
-        "type": "exact",
-        "canonical_answer": "baecgfd 0",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
+        "language": "python",
+        "entry_point": "inventory_ledger",
+        "timeout_seconds": 3.0,
+        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([],)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n    args = ([('1', 'b', 3), ('2', 'a', 2), ('1', 'a', 99), ('3', 'b', -3)],)\n    original = deepcopy(args)\n    assert candidate(*args) == [('a', 2)]\n    assert args == original, \"inputs mutated\"\n    args = ([('x', 'z', -2), ('y', 'z', 1)],)\n    original = deepcopy(args)\n    assert candidate(*args) == [('z', -1)]\n    assert args == original, \"inputs mutated\"\n    args = ([('x', 'a', 0), ('x', 'b', 8)],)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n"
       },
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "q, out, seq = [], [], 0\nops = [('p','a',2),('p','b',1),('p','c',2),('o',),('p','d',3),('o',),\n       ('p','e',1),('o',),('o',),('p','f',2),('p','g',1),('o',),('o',),('o',)]\nfor op in ops:\n    if op[0] == 'p':\n        seq += 1\n        q.append((op[2], seq, op[1]))\n    else:\n        if not q:\n            out.append('-')\n            continue\n        q.sort()\n        out.append(q.pop(0)[2])\nprint(''.join(out), len(q))",
+          "content": "def inventory_ledger(events):\n    \"\"\"events is a list of (event_id, sku, delta) tuples; IDs and SKUs are strings, delta is integer. First occurrence of an event_id wins globally, even if a later duplicate differs. Sum accepted deltas by SKU, omit zero balances, and return a list of (sku, balance) tuples sorted by SKU. Negative balances are allowed.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
           "position": 1
         }
-      ]
+      ],
+      "position": 35
     },
     {
-      "stable_id": "cr5-collatz-variant",
-      "title": "A branching numeric trace",
-      "description": "A Collatz-like walk with an extra rule; count steps and the peak reached.",
-      "category": "code-reasoning",
+      "stable_id": "cr-fn-rolling-totals",
+      "title": "Compute event-time rolling totals at exact boundaries",
+      "description": "events is a timestamp-nondecreasing list of (integer timestamp, integer value) pairs and width is a positive integer. For each event at time t, return the sum of values seen so far with timestamps in (t-width, t]. Later events, including later ties, must not be included yet. Return a list of integers in input order. Aim for linear time.",
+      "category": "code-generation/python",
       "tags": [
         "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
+        "execution-graded",
+        "original",
+        "unmeasured"
       ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 56,
+      "difficulty": "hard",
+      "importance_weight": 3.0,
       "enabled": true,
-      "grading_mode": "deterministic",
+      "grading_mode": "execution",
       "generation_overrides": {
         "temperature": 0.0
       },
       "grader_config": {
-        "type": "exact",
-        "canonical_answer": "1 7 27",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
+        "language": "python",
+        "entry_point": "rolling_totals",
+        "timeout_seconds": 3.0,
+        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([], 3)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n    args = ([(0, 2), (2, 3), (3, -1), (3, 4), (8, 5)], 3)\n    original = deepcopy(args)\n    assert candidate(*args) == [2, 5, 2, 6, 5]\n    assert args == original, \"inputs mutated\"\n    args = ([(1, 2), (1, 3), (2, 4)], 1)\n    original = deepcopy(args)\n    assert candidate(*args) == [2, 5, 4]\n    assert args == original, \"inputs mutated\"\n    args = ([(-3, 1), (-1, 2), (0, 4)], 3)\n    original = deepcopy(args)\n    assert candidate(*args) == [1, 3, 6]\n    assert args == original, \"inputs mutated\"\n"
       },
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "n, steps, peak = 27, 0, 27\nwhile n != 1 and steps < 40:\n    if n % 3 == 0:\n        n = n // 3 + 1\n    elif n % 2 == 0:\n        n = n // 2\n    else:\n        n = 3 * n + 1\n    peak = max(peak, n)\n    steps += 1\nprint(n, steps, peak)",
+          "content": "def rolling_totals(events, width):\n    \"\"\"events is a timestamp-nondecreasing list of (integer timestamp, integer value) pairs and width is a positive integer. For each event at time t, return the sum of values seen so far with timestamps in (t-width, t]. Later events, including later ties, must not be included yet. Return a list of integers in input order. Aim for linear time.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
           "position": 1
         }
-      ]
+      ],
+      "position": 36
     },
     {
-      "stable_id": "cr5-run-length",
-      "title": "Round-trip a run-length encoding",
-      "description": "Encode, mutate the encoded form, then decode -- three dependent passes.",
-      "category": "code-reasoning",
+      "stable_id": "cr-fn-retry-delays",
+      "title": "Build a bounded exponential retry schedule",
+      "description": "All arguments are positive integers. Proposed delays are min(initial * factor**k, cap) for k starting at 0. Return the longest prefix of delays whose sum is <= budget. Stop before the first delay that exceeds remaining budget; do not shorten it. factor >= 1.",
+      "category": "code-generation/python",
       "tags": [
         "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
+        "execution-graded",
+        "original",
+        "unmeasured"
       ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 57,
+      "difficulty": "hard",
+      "importance_weight": 3.0,
       "enabled": true,
-      "grading_mode": "deterministic",
+      "grading_mode": "execution",
       "generation_overrides": {
         "temperature": 0.0
       },
       "grader_config": {
-        "type": "exact",
-        "canonical_answer": "16 aaaabb 5",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
+        "language": "python",
+        "entry_point": "retry_delays",
+        "timeout_seconds": 3.0,
+        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = (2, 2, 5, 18)\n    original = deepcopy(args)\n    assert candidate(*args) == [2, 4, 5, 5]\n    assert args == original, \"inputs mutated\"\n    args = (8, 2, 3, 8)\n    original = deepcopy(args)\n    assert candidate(*args) == [3, 3]\n    assert args == original, \"inputs mutated\"\n    args = (4, 2, 9, 3)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n    args = (2, 1, 8, 6)\n    original = deepcopy(args)\n    assert candidate(*args) == [2, 2, 2]\n    assert args == original, \"inputs mutated\"\n    args = (1, 3, 5, 9)\n    original = deepcopy(args)\n    assert candidate(*args) == [1, 3, 5]\n    assert args == original, \"inputs mutated\"\n"
       },
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "s = 'aaabbbccccdaa'\nenc = []\nfor ch in s:\n    if enc and enc[-1][0] == ch:\n        enc[-1][1] += 1\n    else:\n        enc.append([ch, 1])\nenc = [[c, n + 1 if n > 2 else n] for c, n in enc]\ndec = ''.join(c * n for c, n in enc)\nprint(len(dec), dec[:6], dec.count('c'))",
+          "content": "def retry_delays(initial, factor, cap, budget):\n    \"\"\"All arguments are positive integers. Proposed delays are min(initial * factor**k, cap) for k starting at 0. Return the longest prefix of delays whose sum is <= budget. Stop before the first delay that exceeds remaining budget; do not shorten it. factor >= 1.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
           "position": 1
         }
-      ]
+      ],
+      "position": 37
     },
     {
-      "stable_id": "cr5-nested-depth",
-      "title": "Depth and leaf count of a nested structure",
-      "description": "Recursive descent over a mixed nested literal.",
-      "category": "code-reasoning",
+      "stable_id": "cr-fn-parse-query",
+      "title": "Parse repeated URL query parameters",
+      "description": "Parse a query string, optionally beginning with ?. Split on &, ignoring empty segments. Split each segment at the first =; a missing = means an empty value. Decode percent escapes as UTF-8 and + as space in both keys and values, using urllib.parse.unquote_plus behavior. Return a dict mapping decoded keys to lists of values in occurrence order. Preserve blank keys and values.",
+      "category": "code-generation/python",
       "tags": [
         "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
+        "execution-graded",
+        "original",
+        "unmeasured"
       ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 58,
+      "difficulty": "hard",
+      "importance_weight": 3.0,
       "enabled": true,
-      "grading_mode": "deterministic",
+      "grading_mode": "execution",
       "generation_overrides": {
         "temperature": 0.0
       },
       "grader_config": {
-        "type": "exact",
-        "canonical_answer": "(4, 10, 55)",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
+        "language": "python",
+        "entry_point": "parse_query",
+        "timeout_seconds": 3.0,
+        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ('',)\n    original = deepcopy(args)\n    assert candidate(*args) == {}\n    assert args == original, \"inputs mutated\"\n    args = ('?a=1&a=2&empty&x=a=b',)\n    original = deepcopy(args)\n    assert candidate(*args) == {'a': ['1', '2'], 'empty': [''], 'x': ['a=b']}\n    assert args == original, \"inputs mutated\"\n    args = ('q=a+b&q=%2B&=x&&a%20b=c',)\n    original = deepcopy(args)\n    assert candidate(*args) == {'q': ['a b', '+'], '': ['x'], 'a b': ['c']}\n    assert args == original, \"inputs mutated\"\n    args = ('x=%E2%9C%93',)\n    original = deepcopy(args)\n    assert candidate(*args) == {'x': ['\\u2713']}\n    assert args == original, \"inputs mutated\"\n"
       },
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "data = [1, [2, [3, [4, 5]], 6], [[7], 8], 9, [[[10]]]]\ndef walk(x, d=0):\n    if not isinstance(x, list):\n        return d, 1, x\n    if not x:\n        return d, 0, 0\n    results = [walk(i, d + 1) for i in x]\n    return (max(r[0] for r in results),\n            sum(r[1] for r in results),\n            sum(r[2] for r in results))\nprint(walk(data))",
+          "content": "def parse_query(query):\n    \"\"\"Parse a query string, optionally beginning with ?. Split on &, ignoring empty segments. Split each segment at the first =; a missing = means an empty value. Decode percent escapes as UTF-8 and + as space in both keys and values, using urllib.parse.unquote_plus behavior. Return a dict mapping decoded keys to lists of values in occurrence order. Preserve blank keys and values.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
           "position": 1
         }
-      ]
+      ],
+      "position": 38
+    },
+    {
+      "stable_id": "cr-fn-diff-records",
+      "title": "Compare snapshots by record identity",
+      "description": "Each input is a list of dicts with unique string id within that input. Return a dict with keys added, removed, changed; each value is a sorted list of IDs. changed contains shared IDs whose whole dict differs under Python equality. Input order is irrelevant.",
+      "category": "code-generation/python",
+      "tags": [
+        "python",
+        "execution-graded",
+        "original",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "execution",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "language": "python",
+        "entry_point": "diff_records",
+        "timeout_seconds": 3.0,
+        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([], [])\n    original = deepcopy(args)\n    assert candidate(*args) == {'added': [], 'removed': [], 'changed': []}\n    assert args == original, \"inputs mutated\"\n    args = ([{'id': 'a', 'v': 1}, {'id': 'b', 'v': 2}], [{'id': 'a', 'v': 3}, {'id': 'c', 'v': 2}])\n    original = deepcopy(args)\n    assert candidate(*args) == {'added': ['c'], 'removed': ['b'], 'changed': ['a']}\n    assert args == original, \"inputs mutated\"\n    args = ([{'id': 'x', 'v': [1]}], [{'v': [1], 'id': 'x'}])\n    original = deepcopy(args)\n    assert candidate(*args) == {'added': [], 'removed': [], 'changed': []}\n    assert args == original, \"inputs mutated\"\n    args = ([{'id': 'x', 'v': None}], [{'id': 'x'}])\n    original = deepcopy(args)\n    assert candidate(*args) == {'added': [], 'removed': [], 'changed': ['x']}\n    assert args == original, \"inputs mutated\"\n"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def diff_records(before, after):\n    \"\"\"Each input is a list of dicts with unique string id within that input. Return a dict with keys added, removed, changed; each value is a sorted list of IDs. changed contains shared IDs whose whole dict differs under Python equality. Input order is irrelevant.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "position": 1
+        }
+      ],
+      "position": 39
+    },
+    {
+      "stable_id": "cr-fn-allocate-cents",
+      "title": "Allocate cents using largest remainders",
+      "description": "total is a nonnegative integer number of cents. weights is a nonempty list of nonnegative integers with positive sum. Allocate total proportionally: floor every exact share, then distribute remaining cents to descending fractional remainders, ties by lower input index. Return integer allocations in input order. Use exact integer arithmetic.",
+      "category": "code-generation/python",
+      "tags": [
+        "python",
+        "execution-graded",
+        "original",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "execution",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "language": "python",
+        "entry_point": "allocate_cents",
+        "timeout_seconds": 3.0,
+        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = (10, [1, 1, 1])\n    original = deepcopy(args)\n    assert candidate(*args) == [4, 3, 3]\n    assert args == original, \"inputs mutated\"\n    args = (2, [0, 1, 1, 1])\n    original = deepcopy(args)\n    assert candidate(*args) == [0, 1, 1, 0]\n    assert args == original, \"inputs mutated\"\n    args = (0, [2, 3])\n    original = deepcopy(args)\n    assert candidate(*args) == [0, 0]\n    assert args == original, \"inputs mutated\"\n    args = (7, [1, 2])\n    original = deepcopy(args)\n    assert candidate(*args) == [2, 5]\n    assert args == original, \"inputs mutated\"\n    args = (1000000000000000001, [1, 1])\n    original = deepcopy(args)\n    assert candidate(*args) == [500000000000000001, 500000000000000000]\n    assert args == original, \"inputs mutated\"\n"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def allocate_cents(total, weights):\n    \"\"\"total is a nonnegative integer number of cents. weights is a nonempty list of nonnegative integers with positive sum. Allocate total proportionally: floor every exact share, then distribute remaining cents to descending fractional remainders, ties by lower input index. Return integer allocations in input order. Use exact integer arithmetic.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "position": 1
+        }
+      ],
+      "position": 40
+    },
+    {
+      "stable_id": "cr-fn-longest-streak",
+      "title": "Find a longest run of consecutive observed days",
+      "description": "days is an unsorted list of integer day numbers, possibly duplicated or negative. Return (start, length) of the longest run of consecutive distinct days. Break ties by smallest start. For no days return (None, 0).",
+      "category": "code-generation/python",
+      "tags": [
+        "python",
+        "execution-graded",
+        "original",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "execution",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "language": "python",
+        "entry_point": "longest_streak",
+        "timeout_seconds": 3.0,
+        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([],)\n    original = deepcopy(args)\n    assert candidate(*args) == (None, 0)\n    assert args == original, \"inputs mutated\"\n    args = ([5, 2, 1, 2, 6],)\n    original = deepcopy(args)\n    assert candidate(*args) == (1, 2)\n    assert args == original, \"inputs mutated\"\n    args = ([-1, -3, -2, 7],)\n    original = deepcopy(args)\n    assert candidate(*args) == (-3, 3)\n    assert args == original, \"inputs mutated\"\n    args = ([4, 4],)\n    original = deepcopy(args)\n    assert candidate(*args) == (4, 1)\n    assert args == original, \"inputs mutated\"\n    args = ([3, 2, 4, 1],)\n    original = deepcopy(args)\n    assert candidate(*args) == (1, 4)\n    assert args == original, \"inputs mutated\"\n"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def longest_streak(days):\n    \"\"\"days is an unsorted list of integer day numbers, possibly duplicated or negative. Return (start, length) of the longest run of consecutive distinct days. Break ties by smallest start. For no days return (None, 0).\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "position": 1
+        }
+      ],
+      "position": 41
+    },
+    {
+      "stable_id": "cr-fn-flatten-records",
+      "title": "Flatten nested dictionaries without losing empty objects",
+      "description": "data is a nested dict. Keys are nonempty strings without dots. Return a flat dict with dot-separated key paths. Only dicts are expanded: lists and other values are leaves. Preserve empty nested dicts as {} at their path. Empty root returns {}.",
+      "category": "code-generation/python",
+      "tags": [
+        "python",
+        "execution-graded",
+        "original",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "execution",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "language": "python",
+        "entry_point": "flatten_records",
+        "timeout_seconds": 3.0,
+        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ({},)\n    original = deepcopy(args)\n    assert candidate(*args) == {}\n    assert args == original, \"inputs mutated\"\n    args = ({'a': {'b': 1, 'c': {}}, 'd': [{'x': 2}]},)\n    original = deepcopy(args)\n    assert candidate(*args) == {'a.b': 1, 'a.c': {}, 'd': [{'x': 2}]}\n    assert args == original, \"inputs mutated\"\n    args = ({'x': None, 'y': {'z': False}},)\n    original = deepcopy(args)\n    assert candidate(*args) == {'x': None, 'y.z': False}\n    assert args == original, \"inputs mutated\"\n"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def flatten_records(data):\n    \"\"\"data is a nested dict. Keys are nonempty strings without dots. Return a flat dict with dot-separated key paths. Only dicts are expanded: lists and other values are leaves. Preserve empty nested dicts as {} at their path. Empty root returns {}.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "position": 1
+        }
+      ],
+      "position": 42
+    },
+    {
+      "stable_id": "cr-fn-missing-ranges",
+      "title": "Compress missing IDs into inclusive ranges",
+      "description": "low <= high are integers. ids is an unsorted list of integers, with duplicates and possible values outside [low, high]. Return sorted inclusive (start, end) tuples covering exactly the missing integers within that interval. Do not enumerate every integer in the interval; it may span billions.",
+      "category": "code-generation/python",
+      "tags": [
+        "python",
+        "execution-graded",
+        "original",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "execution",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "language": "python",
+        "entry_point": "missing_ranges",
+        "timeout_seconds": 3.0,
+        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([], 1, 5)\n    original = deepcopy(args)\n    assert candidate(*args) == [(1, 5)]\n    assert args == original, \"inputs mutated\"\n    args = ([5, 1, 1, 3, 8], 1, 5)\n    original = deepcopy(args)\n    assert candidate(*args) == [(2, 2), (4, 4)]\n    assert args == original, \"inputs mutated\"\n    args = ([1, 2], 1, 2)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n    args = ([0], -1000000000, 1000000000)\n    original = deepcopy(args)\n    assert candidate(*args) == [(-1000000000, -1), (1, 1000000000)]\n    assert args == original, \"inputs mutated\"\n    args = ([8], 3, 3)\n    original = deepcopy(args)\n    assert candidate(*args) == [(3, 3)]\n    assert args == original, \"inputs mutated\"\n"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def missing_ranges(ids, low, high):\n    \"\"\"low <= high are integers. ids is an unsorted list of integers, with duplicates and possible values outside [low, high]. Return sorted inclusive (start, end) tuples covering exactly the missing integers within that interval. Do not enumerate every integer in the interval; it may span billions.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "position": 1
+        }
+      ],
+      "position": 43
+    },
+    {
+      "stable_id": "cr-fn-lru-misses",
+      "title": "Simulate a bounded LRU cache",
+      "description": "keys is a list of hashable strings; capacity is a nonnegative integer. Starting empty, access each key. A hit refreshes its recency. A miss inserts it and, if necessary, evicts the least recently used key. Capacity zero stores nothing. Return (miss_count, final_keys), with final_keys ordered least to most recently used.",
+      "category": "code-generation/python",
+      "tags": [
+        "python",
+        "execution-graded",
+        "original",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "execution",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "language": "python",
+        "entry_point": "lru_misses",
+        "timeout_seconds": 3.0,
+        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([], 2)\n    original = deepcopy(args)\n    assert candidate(*args) == (0, [])\n    assert args == original, \"inputs mutated\"\n    args = (['a', 'b', 'a', 'c', 'b'], 2)\n    original = deepcopy(args)\n    assert candidate(*args) == (4, ['c', 'b'])\n    assert args == original, \"inputs mutated\"\n    args = (['x', 'x'], 0)\n    original = deepcopy(args)\n    assert candidate(*args) == (2, [])\n    assert args == original, \"inputs mutated\"\n    args = (['a', 'a', 'b', 'b'], 1)\n    original = deepcopy(args)\n    assert candidate(*args) == (2, ['b'])\n    assert args == original, \"inputs mutated\"\n    args = (['a', 'b', 'a'], 4)\n    original = deepcopy(args)\n    assert candidate(*args) == (2, ['b', 'a'])\n    assert args == original, \"inputs mutated\"\n"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def lru_misses(keys, capacity):\n    \"\"\"keys is a list of hashable strings; capacity is a nonnegative integer. Starting empty, access each key. A hit refreshes its recency. A miss inserts it and, if necessary, evicts the least recently used key. Capacity zero stores nothing. Return (miss_count, final_keys), with final_keys ordered least to most recently used.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "position": 1
+        }
+      ],
+      "position": 44
+    },
+    {
+      "stable_id": "cr-fn-sessionize",
+      "title": "Split timestamped events at idle gaps",
+      "description": "timestamps is a nondecreasing list of integer timestamps. timeout is a nonnegative integer. Consecutive timestamps belong to one session iff their difference is <= timeout. Return (first_time, last_time, event_count) tuples for each session, including duplicates in counts.",
+      "category": "code-generation/python",
+      "tags": [
+        "python",
+        "execution-graded",
+        "original",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "execution",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "language": "python",
+        "entry_point": "sessionize",
+        "timeout_seconds": 3.0,
+        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([], 3)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n    args = ([1, 2, 5, 9, 9], 3)\n    original = deepcopy(args)\n    assert candidate(*args) == [(1, 5, 3), (9, 9, 2)]\n    assert args == original, \"inputs mutated\"\n    args = ([1, 1, 2], 0)\n    original = deepcopy(args)\n    assert candidate(*args) == [(1, 1, 2), (2, 2, 1)]\n    assert args == original, \"inputs mutated\"\n    args = ([-5, -2, 1], 3)\n    original = deepcopy(args)\n    assert candidate(*args) == [(-5, 1, 3)]\n    assert args == original, \"inputs mutated\"\n"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def sessionize(timestamps, timeout):\n    \"\"\"timestamps is a nondecreasing list of integer timestamps. timeout is a nonnegative integer. Consecutive timestamps belong to one session iff their difference is <= timeout. Return (first_time, last_time, event_count) tuples for each session, including duplicates in counts.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "position": 1
+        }
+      ],
+      "position": 45
+    },
+    {
+      "stable_id": "cr-fn-expand-template",
+      "title": "Expand placeholders in a single pass",
+      "description": "Replace ${name} placeholders with values[name] (all values are strings). Names match [A-Za-z_][A-Za-z0-9_]*. Leave unknown or malformed placeholders unchanged. Expansion is one pass: never re-expand inserted values. There is no escape syntax.",
+      "category": "code-generation/python",
+      "tags": [
+        "python",
+        "execution-graded",
+        "original",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "execution",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "language": "python",
+        "entry_point": "expand_template",
+        "timeout_seconds": 3.0,
+        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ('Hi ${user}!', {'user': 'Ana'})\n    original = deepcopy(args)\n    assert candidate(*args) == 'Hi Ana!'\n    assert args == original, \"inputs mutated\"\n    args = ('${a}/${b}/${bad-name}', {'a': '${b}', 'b': 'X'})\n    original = deepcopy(args)\n    assert candidate(*args) == '${b}/X/${bad-name}'\n    assert args == original, \"inputs mutated\"\n    args = ('${_x}${missing}${1x}', {'_x': ''})\n    original = deepcopy(args)\n    assert candidate(*args) == '${missing}${1x}'\n    assert args == original, \"inputs mutated\"\n    args = ('', {})\n    original = deepcopy(args)\n    assert candidate(*args) == ''\n    assert args == original, \"inputs mutated\"\n"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def expand_template(text, values):\n    \"\"\"Replace ${name} placeholders with values[name] (all values are strings). Names match [A-Za-z_][A-Za-z0-9_]*. Leave unknown or malformed placeholders unchanged. Expansion is one pass: never re-expand inserted values. There is no escape syntax.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "position": 1
+        }
+      ],
+      "position": 46
+    },
+    {
+      "stable_id": "cr-fn-match-route",
+      "title": "Match a URL path against named route segments",
+      "description": "Both strings begin with /. Split into slash-separated segments after removing at most one trailing slash (except root). A pattern segment starting with : captures one NONEMPTY segment by its remaining name. Capture names are nonempty and unique. Other segments are literal and case-sensitive. Return a dict of captures on full match, {} for a literal match, or None on mismatch. Do not URL-decode.",
+      "category": "code-generation/python",
+      "tags": [
+        "python",
+        "execution-graded",
+        "original",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "execution",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "language": "python",
+        "entry_point": "match_route",
+        "timeout_seconds": 3.0,
+        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ('/users/:id', '/users/42/')\n    original = deepcopy(args)\n    assert candidate(*args) == {'id': '42'}\n    assert args == original, \"inputs mutated\"\n    args = ('/', '/')\n    original = deepcopy(args)\n    assert candidate(*args) == {}\n    assert args == original, \"inputs mutated\"\n    args = ('/x/:id', '/x//')\n    original = deepcopy(args)\n    assert candidate(*args) == None\n    assert args == original, \"inputs mutated\"\n    args = ('/a', '/A')\n    original = deepcopy(args)\n    assert candidate(*args) == None\n    assert args == original, \"inputs mutated\"\n    args = ('/:a/:b', '/x/y')\n    original = deepcopy(args)\n    assert candidate(*args) == {'a': 'x', 'b': 'y'}\n    assert args == original, \"inputs mutated\"\n    args = ('/x/:id', '/x/a/b')\n    original = deepcopy(args)\n    assert candidate(*args) == None\n    assert args == original, \"inputs mutated\"\n"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def match_route(pattern, path):\n    \"\"\"Both strings begin with /. Split into slash-separated segments after removing at most one trailing slash (except root). A pattern segment starting with : captures one NONEMPTY segment by its remaining name. Capture names are nonempty and unique. Other segments are literal and case-sensitive. Return a dict of captures on full match, {} for a literal match, or None on mismatch. Do not URL-decode.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "position": 1
+        }
+      ],
+      "position": 47
+    },
+    {
+      "stable_id": "cr-fn-first-conflict",
+      "title": "Find the earliest conflicting reservation pair",
+      "description": "bookings is a list of (resource, start, end) tuples, with string resource and integers start <= end. Intervals are half-open [start,end); empty intervals never conflict. Return the lexicographically smallest pair of input indices (i,j), i<j, whose intervals overlap on the same resource, or None. Endpoint touching is not overlap.",
+      "category": "code-generation/python",
+      "tags": [
+        "python",
+        "execution-graded",
+        "original",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "execution",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "language": "python",
+        "entry_point": "first_conflict",
+        "timeout_seconds": 3.0,
+        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([],)\n    original = deepcopy(args)\n    assert candidate(*args) == None\n    assert args == original, \"inputs mutated\"\n    args = ([('a', 1, 3), ('a', 3, 5)],)\n    original = deepcopy(args)\n    assert candidate(*args) == None\n    assert args == original, \"inputs mutated\"\n    args = ([('a', 1, 5), ('b', 2, 4), ('a', 3, 3), ('a', 4, 6)],)\n    original = deepcopy(args)\n    assert candidate(*args) == (0, 3)\n    assert args == original, \"inputs mutated\"\n    args = ([('a', 5, 9), ('a', 1, 3), ('a', 2, 6)],)\n    original = deepcopy(args)\n    assert candidate(*args) == (0, 2)\n    assert args == original, \"inputs mutated\"\n    args = ([('x', 1, 2), ('x', 1, 2)],)\n    original = deepcopy(args)\n    assert candidate(*args) == (0, 1)\n    assert args == original, \"inputs mutated\"\n"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def first_conflict(bookings):\n    \"\"\"bookings is a list of (resource, start, end) tuples, with string resource and integers start <= end. Intervals are half-open [start,end); empty intervals never conflict. Return the lexicographically smallest pair of input indices (i,j), i<j, whose intervals overlap on the same resource, or None. Endpoint touching is not overlap.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "position": 1
+        }
+      ],
+      "position": 48
+    },
+    {
+      "stable_id": "cr-fn-paginate",
+      "title": "Paginate after a possibly missing cursor",
+      "description": "records is a list of dicts with unique integer id, in arbitrary order. cursor is an integer or None; limit is a positive integer. Sort ascending by id, keep ids strictly greater than cursor (all if None), and take up to limit records. Return {\"items\": page, \"next_cursor\": last returned id IF additional eligible records remain, otherwise None}. The cursor need not correspond to a record.",
+      "category": "code-generation/python",
+      "tags": [
+        "python",
+        "execution-graded",
+        "original",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "execution",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "language": "python",
+        "entry_point": "paginate",
+        "timeout_seconds": 3.0,
+        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([], None, 2)\n    original = deepcopy(args)\n    assert candidate(*args) == {'items': [], 'next_cursor': None}\n    assert args == original, \"inputs mutated\"\n    args = ([{'id': 3}, {'id': 1}, {'id': 5}], None, 2)\n    original = deepcopy(args)\n    assert candidate(*args) == {'items': [{'id': 1}, {'id': 3}], 'next_cursor': 3}\n    assert args == original, \"inputs mutated\"\n    args = ([{'id': 3}, {'id': 1}, {'id': 5}], 2, 1)\n    original = deepcopy(args)\n    assert candidate(*args) == {'items': [{'id': 3}], 'next_cursor': 3}\n    assert args == original, \"inputs mutated\"\n    args = ([{'id': 0}, {'id': 2}], 0, 1)\n    original = deepcopy(args)\n    assert candidate(*args) == {'items': [{'id': 2}], 'next_cursor': None}\n    assert args == original, \"inputs mutated\"\n    args = ([{'id': 1}], 9, 1)\n    original = deepcopy(args)\n    assert candidate(*args) == {'items': [], 'next_cursor': None}\n    assert args == original, \"inputs mutated\"\n"
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "def paginate(records, cursor, limit):\n    \"\"\"records is a list of dicts with unique integer id, in arbitrary order. cursor is an integer or None; limit is a positive integer. Sort ascending by id, keep ids strictly greater than cursor (all if None), and take up to limit records. Return {\"items\": page, \"next_cursor\": last returned id IF additional eligible records remain, otherwise None}. The cursor need not correspond to a record.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "position": 1
+        }
+      ],
+      "position": 49
     }
   ]
 }

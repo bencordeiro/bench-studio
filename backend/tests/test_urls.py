@@ -49,3 +49,16 @@ def test_custom_path_kept():
     # A non-v1 trailing path is preserved.
     url = build_api_url("https://host/custom", "/chat/completions")
     assert url == "https://host/custom/v1/chat/completions"
+
+
+def test_provider_api_prefixes_are_preserved():
+    from app.core.urls import chat_completions_url, models_url
+    for base in (
+        'https://api.z.ai/api/paas/v4',
+        'https://generativelanguage.googleapis.com/v1beta/openai',
+        'https://api.groq.com/openai/v1',
+        'https://workspace.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1',
+        'https://api.x.ai/v1',
+    ):
+        assert chat_completions_url(base) == base + '/chat/completions'
+        assert models_url(base) == base + '/models'

@@ -6,12 +6,12 @@ export function Card({ children, className = "" }: { children: ReactNode; classN
 
 export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-4 mb-5">
+    <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-6">
       <div>
-        <h1 className="text-xl font-semibold text-white">{title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-white">{title}</h1>
         {subtitle && <p className="text-sm text-gray-400 mt-1">{subtitle}</p>}
       </div>
-      {actions && <div className="flex items-center gap-2 flex-shrink-0">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
   );
 }
@@ -71,13 +71,13 @@ export function Toast({ message, kind = "info", onClose }: { message: string; ki
 export function Modal({ title, children, onClose, footer }: { title: string; children: ReactNode; onClose: () => void; footer?: ReactNode }) {
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
-      <div className="panel w-full max-w-lg max-h-[85vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-4 border-b border-border">
+      <div className="panel w-full max-w-lg max-h-[90vh] overflow-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="sticky top-0 z-10 bg-bg-panel flex items-center justify-between p-4 border-b border-border">
           <h2 className="font-semibold text-white">{title}</h2>
           <button className="btn-ghost btn" onClick={onClose} aria-label="Close">✕</button>
         </div>
         <div className="p-4">{children}</div>
-        {footer && <div className="p-4 border-t border-border flex justify-end gap-2">{footer}</div>}
+        {footer && <div className="sticky bottom-0 bg-bg-panel p-4 border-t border-border flex justify-end gap-2">{footer}</div>}
       </div>
     </div>
   );

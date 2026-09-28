@@ -106,6 +106,7 @@ class RunSummary(ORMModel):
     reliability_score: float | None = None
     performance_index: float | None = None
     composite_score: float | None = None
+    total_cost: float | None = None
 
 
 # --------------------------------------------------------------------------- #
@@ -144,6 +145,7 @@ class PerformanceMetricResponse(ORMModel):
     retry_count: int
     truncated: bool
     response_char_count: int
+    cost: float | None = None
 
 
 class ExecutionDetail(ORMModel):

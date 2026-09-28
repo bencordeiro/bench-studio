@@ -52,6 +52,9 @@ class EndpointProfile(Base):
     has_api_key: Mapped[bool] = mapped_column(Boolean, default=False)
     api_key_storage: Mapped[str] = mapped_column(String(40), default=SecretStorageMethod.NONE.value)
     api_key_env_var: Mapped[str] = mapped_column(String(200), default="")
+    # Pricing in USD per 1M tokens. 0.0 means unconfigured.
+    input_price_per_1m: Mapped[float] = mapped_column(Float, default=0.0)
+    output_price_per_1m: Mapped[float] = mapped_column(Float, default=0.0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now)
 
@@ -340,6 +343,7 @@ class PerformanceMetric(Base):
     retry_count: Mapped[int] = mapped_column(Integer, default=0)
     truncated: Mapped[bool] = mapped_column(Boolean, default=False)
     response_char_count: Mapped[int] = mapped_column(Integer, default=0)
+    cost: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     execution: Mapped[PromptExecution] = relationship(back_populates="performance_metrics")
 

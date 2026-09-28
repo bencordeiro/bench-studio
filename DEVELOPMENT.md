@@ -14,7 +14,7 @@ backend/
     graders/        deterministic, judge protocol, scoring
     jobs/           execution engine, job runner, event bus (SSE)
     exports/        benchmark JSON format, run JSON/CSV/HTML export
-    seed/           removable example benchmark + bundled suites/*.json (auto-loaded)
+    seed/           bundled suites/*.json (auto-loaded and version-upgraded)
     main.py         app factory + lifespan
   alembic/          migrations
   tests/            pytest suite (no real LLM)
@@ -78,7 +78,8 @@ npm run build       # tsc -b && vite build -> dist/
 
 Drop a `*.json` file (localbench-benchmark format, see `BENCHMARK_FORMAT.md`) into
 `app/seed/suites/`. It is auto-loaded at startup by `seed_bundled_suites`, keyed by
-suite **name** (idempotent — editing/deleting a seeded suite won't resurrect it), and
+suite **name** (same-version edits are preserved; newer bundles upgrade in place;
+deleted bundles are seeded again), and
 gated by `LOCALBENCH_NO_SEED=1`. For deterministic suites, never hand-write an expected
 answer: execute the code/logic to get ground truth, then assert it scores 100 through
 `run_deterministic` (see `tests/test_seed_suites.py`).

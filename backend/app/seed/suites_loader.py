@@ -1,9 +1,9 @@
 """Load bundled JSON benchmark suites into the database at startup.
 
 Every ``app/seed/suites/*.json`` file uses the documented localbench-benchmark
-import format (see BENCHMARK_FORMAT.md). Loading is idempotent: a suite is
-inserted only if no BenchmarkSet with the same name already exists, so a user
-may freely edit or delete a seeded suite without it reappearing under a new id.
+import format (see BENCHMARK_FORMAT.md). Loading is idempotent at the same version. A newer bundled version upgrades
+the matching suite in place; historical runs retain their own snapshots. A
+deleted bundle is re-created on startup unless seeding is disabled.
 """
 from __future__ import annotations
 

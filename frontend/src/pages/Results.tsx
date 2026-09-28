@@ -17,7 +17,7 @@ import {
 import { api } from "@/api/client";
 import { Badge, Card, EmptyState, Modal, PageHeader, Spinner, StatCard } from "@/components/ui";
 import { useToast } from "@/store/toast";
-import { GRADING_MODE_LABELS, fmtScore, fmtMs, fmtTokens, STATUS_LABELS, statusColor, scoreColor } from "@/lib/format";
+import { GRADING_MODE_LABELS, fmtScore, fmtMs, fmtTokens, fmtCost, STATUS_LABELS, statusColor, scoreColor } from "@/lib/format";
 import type { ExecutionDetail, RunResults } from "@/types";
 
 export default function Results() {
@@ -43,11 +43,12 @@ export default function Results() {
         }
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4">
         <StatCard label="Quality" value={fmtScore(summary.quality_score)} sub={coverage.label} />
         <StatCard label="Reliability" value={fmtScore(summary.reliability_score)} />
         <StatCard label="Performance" value={fmtScore(summary.performance_index)} />
         <StatCard label="Composite" value={fmtScore(summary.composite_score)} sub="user-configured utility" />
+        <StatCard label="Cost" value={fmtCost(summary.total_cost)} />
         <StatCard label="Errors" value={String(run.failed_prompts)} />
       </div>
 
@@ -214,6 +215,7 @@ function ExecutionTable({ executions, runStatus }: { executions: ExecutionDetail
               <th className="text-left px-3 py-2">Status</th>
               <th className="text-right px-3 py-2">TTFT</th>
               <th className="text-right px-3 py-2">Tok/s</th>
+              <th className="text-right px-3 py-2">Cost</th>
               <th className="text-right px-3 py-2">Total</th>
             </tr>
           </thead>
@@ -229,6 +231,7 @@ function ExecutionTable({ executions, runStatus }: { executions: ExecutionDetail
                 <td className="px-3 py-2"><Badge className={statusColor(e.status)}>{STATUS_LABELS[e.status] || e.status}</Badge></td>
                 <td className="px-3 py-2 text-right mono text-gray-400">{fmtMs(e.timing.time_to_first_token)}</td>
                 <td className="px-3 py-2 text-right mono text-gray-400">{e.timing.output_tokens_per_second?.toFixed(1) ?? "—"}</td>
+                <td className="px-3 py-2 text-right mono text-gray-400">{fmtCost(e.timing.cost)}</td>
                 <td className="px-3 py-2 text-right mono text-gray-400">{fmtMs(e.timing.total_response_time)}</td>
               </tr>
             ))}
@@ -353,6 +356,7 @@ function ExecutionDetailModal({ execution, onClose, runStatus }: { execution: Ex
               v={`${fmtTokens(execution.timing.completion_tokens)}${execution.raw_meta.tokens_estimated ? " (est.)" : ""}`}
             />
             <KV k="Prompt tokens" v={fmtTokens(execution.timing.prompt_tokens)} />
+            <KV k="Cost" v={fmtCost(execution.timing.cost)} />
             <KV k="HTTP" v={execution.raw_meta.http_status?.toString() ?? "—"} />
             <KV k="Retries" v={String(execution.raw_meta.retry_count)} />
             <KV k="Truncated" v={execution.timing.truncated ? "yes" : "no"} />

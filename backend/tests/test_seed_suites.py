@@ -222,3 +222,37 @@ def test_no_bundled_prompt_rewards_a_garbage_answer(session):
         if best >= 100.0:
             offenders.append(f"{p.stable_id} (scored {best})")
     assert not offenders, "garbage answers earned 100 on: " + ", ".join(offenders)
+
+
+def test_retiring_example_preserves_custom_suites_and_run_snapshots(session):
+    import importlib.util
+    from pathlib import Path
+    from alembic.migration import MigrationContext
+    from alembic.operations import Operations
+    from app.models import BenchmarkRun
+    from app.services.crud import create_benchmark_set
+
+    example = create_benchmark_set(session, {'name':'LocalBench Studio Example Suite','prompts':[
+        {'stable_id':'old-demo','title':'Old demo','messages':[{'role':'user','content':'Demo'}]}
+    ]})
+    example.is_example = True
+    custom = create_benchmark_set(session, {'name':'LocalBench Studio Example Suite','prompts':[]})
+    renamed = create_benchmark_set(session, {'name':'My edited example','prompts':[]})
+    renamed.is_example = True
+    snapshot = {'name':example.name,'prompts':[{'stable_id':'old-demo'}]}
+    run = BenchmarkRun(id='historical-example-run',benchmark_id=example.id,benchmark_snapshot=snapshot)
+    session.add(run)
+    session.flush()
+    example_id, custom_id, renamed_id = example.id, custom.id, renamed.id
+    path = Path(__file__).resolve().parents[1]/'alembic/versions/0004_retire_example.py'
+    spec = importlib.util.spec_from_file_location('retire_example',path)
+    migration = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(migration)
+    with Operations.context(MigrationContext.configure(session.connection())):
+        migration.upgrade()
+    session.expire_all()
+    assert session.query(BenchmarkSet).filter_by(id=example_id).first() is None
+    assert session.get(BenchmarkSet,custom_id) is not None
+    assert session.get(BenchmarkSet,renamed_id) is not None
+    assert session.query(BenchmarkPrompt).filter_by(benchmark_id=example_id).count() == 0
+    assert session.get(BenchmarkRun,'historical-example-run').benchmark_snapshot == snapshot

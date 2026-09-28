@@ -4,7 +4,7 @@
   "exported_at": "2026-08-01T00:00:00+00:00",
   "name": "Master Suite",
   "description": "A deliberately brutal cross-domain suite built to separate models at the top of the range. Spans extreme Python and JavaScript output prediction, quantitative reasoning, algorithms and distributed systems, physics, chemistry, automotive engineering, false-premise abstention, multi-turn stateful tool use, and long-context synthesis over generated corpora. Every answer is produced by execution or computation at build time (scripts/build_master_suite.py) -- none is hand-written. Items are graded deterministically, so no judge endpoint is required. Weights are PREDICTED, not measured: run scripts/calibrate_suite.py against two models of different capability before trusting a ranking.",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "tags": [
     "master",
     "hard",
@@ -1256,72 +1256,6 @@
       ]
     },
     {
-      "stable_id": "ms-auto-injector-pulse-width",
-      "title": "Commanded pulse width including dead time",
-      "description": "Dead time delivers no fuel, so it is added AFTER converting the fuel mass to an open time -- not scaled with it.",
-      "category": "engineering/automotive",
-      "tags": [
-        "computed-answer",
-        "tier-extreme",
-        "unmeasured"
-      ],
-      "difficulty": "hard",
-      "importance_weight": 3.0,
-      "position": 35,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "numeric",
-        "expected_value": 6.850445393532641,
-        "absolute_tolerance": 0.0,
-        "relative_tolerance": 0.004,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "user",
-          "content": "A port-injected four-stroke engine requires 0.0324 g of fuel per cylinder per combustion cycle at its current operating point of 5200 rpm.\n\nEach injector has a static flow rating of 440 cc/min, the fuel density is 0.745 g/cc, and at the current battery voltage the injector dead time (the latency before the injector begins to flow, during which no fuel is delivered) is 0.92 ms.\n\nWhat commanded pulse width, in milliseconds, must the ECU output?\n\nWork the problem through carefully. You may reason as long as you need to, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <number>\ngiving only the number -- no units, no thousands separators, no extra words. Round your final answer to 3 decimal places.",
-          "position": 0
-        }
-      ]
-    },
-    {
-      "stable_id": "ms-auto-can-clock-tolerance",
-      "title": "Maximum CAN oscillator tolerance",
-      "description": "Two independent bounds constrain df/f and the answer is the smaller. Applying only the resynchronisation-jump-width rule gives 1.0 percent, which is too optimistic.",
-      "category": "engineering/automotive",
-      "tags": [
-        "computed-answer",
-        "tier-frontier",
-        "unmeasured"
-      ],
-      "difficulty": "hard",
-      "importance_weight": 4.0,
-      "position": 36,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "numeric",
-        "expected_value": 0.9803921568627451,
-        "absolute_tolerance": 0.005,
-        "relative_tolerance": 0.0,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "user",
-          "content": "A classical CAN node has its nominal bit time divided into: synchronisation segment 1 time quantum, propagation segment 7 time quanta, phase segment 1 of 7 time quanta, and phase segment 2 of 5 time quanta. The resynchronisation jump width is 4 time quanta.\n\nFor a CAN node to stay synchronised, its oscillator frequency error df/f must satisfy BOTH of the standard bit-timing constraints:\n\n    df/f  <=  SJW / (2 * 10 * NBT)\n    df/f  <=  min(PhaseSeg1, PhaseSeg2) / (2 * (13 * NBT - PhaseSeg2))\n\nwhere NBT is the nominal bit time in time quanta.\n\nWhat is the maximum permissible oscillator tolerance df/f, expressed as a percentage?\n\nWork the problem through carefully. You may reason as long as you need to, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <number>\ngiving only the number -- no units, no thousands separators, no extra words. Round your final answer to 4 decimal places.",
-          "position": 0
-        }
-      ]
-    },
-    {
       "stable_id": "ms-auto-charge-air-temp",
       "title": "Charge air temperature after compressor and intercooler",
       "description": "Isentropic rise divided by compressor efficiency, then intercooler effectiveness applied against ambient rather than against zero.",
@@ -1333,7 +1267,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 3.0,
-      "position": 37,
+      "position": 35,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1355,6 +1289,41 @@
       ]
     },
     {
+      "stable_id": "ms-cs-transaction-replay",
+      "title": "Durable state after retries, rollback and lost acknowledgements",
+      "description": "Distinguish failed attempts from committed idempotency keys and recompute later preconditions.",
+      "category": "algorithms/transactions",
+      "tags": [
+        "computed-answer",
+        "idempotency",
+        "rollback",
+        "tier-extreme",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "position": 36,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "20,25,95|k1,k2,k3,k4,k5",
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "A transfer service starts with integer balances A=90, B=40, C=10 and no committed request keys. Process requests serially in the order below. A previously committed key returns duplicate without changing anything. Otherwise reject if the source has insufficient funds. Rejections do not record the key. Successful transactions atomically debit, credit, and record the key. A crash BEFORE commit rolls all three changes back. A lost acknowledgement AFTER commit rolls nothing back. No fees or other changes occur. A key reused after a rollback may carry corrected arguments.\n\n1. k1: A->B 25; commit, acknowledgement lost.\n2. k1: A->B 25; normal retry.\n3. k2: B->C 50; crash before commit.\n4. k3: A->C 70; normal attempt.\n5. k2: B->C 30; corrected retry, commit.\n6. k4: C->A 15; commit, acknowledgement lost.\n7. k3: A->C 70; retry, commit if allowed.\n8. k5: B->A 10; crash before commit.\n9. k5: B->A 10; retry, commit if allowed.\n10. k4: C->A 15; normal retry.\n\nGive final balances A,B,C, then |, then committed keys sorted lexicographically. End with ANSWER: <A>,<B>,<C>|<keys>, no spaces inside the value.",
+          "position": 0
+        }
+      ]
+    },
+    {
       "stable_id": "ms-abs-raft-byzantine",
       "title": "False premise: Raft and Byzantine faults",
       "description": "Raft tolerates crash faults, not Byzantine ones; the Byzantine bound is 3f+1, not 2f+1.",
@@ -1367,7 +1336,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 3.0,
-      "position": 38,
+      "position": 37,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1432,7 +1401,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 2.0,
-      "position": 39,
+      "position": 38,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1488,7 +1457,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 3.0,
-      "position": 40,
+      "position": 39,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1544,7 +1513,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 2.0,
-      "position": 41,
+      "position": 40,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1604,7 +1573,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 4.0,
-      "position": 42,
+      "position": 41,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1661,7 +1630,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 4.0,
-      "position": 43,
+      "position": 42,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1722,7 +1691,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 4.0,
-      "position": 44,
+      "position": 43,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1799,7 +1768,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 4.0,
-      "position": 45,
+      "position": 44,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1865,7 +1834,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 3.0,
-      "position": 46,
+      "position": 45,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1935,7 +1904,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 3.0,
-      "position": 47,
+      "position": 46,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -2008,7 +1977,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 3.0,
-      "position": 48,
+      "position": 47,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -2042,7 +2011,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 4.0,
-      "position": 49,
+      "position": 48,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -2076,7 +2045,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 3.0,
-      "position": 50,
+      "position": 49,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -2110,7 +2079,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 3.0,
-      "position": 51,
+      "position": 50,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -2143,7 +2112,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.5,
-      "position": 52,
+      "position": 51,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -2183,7 +2152,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.5,
-      "position": 53,
+      "position": 52,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -2223,7 +2192,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.5,
-      "position": 54,
+      "position": 53,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -2261,14 +2230,16 @@
               }
             ],
             "strict_args": true,
-            "points": 100.0
+            "points": 100.0,
+            "strict_format": true,
+            "strict_types": true
           }
         ]
       },
       "messages": [
         {
           "role": "system",
-          "content": "You are a function-calling AI model. You are provided with function signatures within <tools></tools> XML tags. Call the appropriate function(s) to satisfy the user query. For each call, return a JSON object with the function name and arguments within <tool_call></tool_call> tags as: <tool_call>{\"name\": \"<name>\", \"arguments\": <args-dict>}</tool_call>. Use only the arguments defined in the schema, and follow every stated format exactly. If no provided function is relevant to the query, or if a required argument is missing from the query, do NOT call any function \u2014 reply in plain text instead.\n<tools>\n[{\"name\": \"create_event\", \"description\": \"Create a calendar event.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"title\": {\"type\": \"string\"}, \"start\": {\"type\": \"string\", \"description\": \"ISO 8601, e.g. 2026-03-09T14:00\"}, \"duration_minutes\": {\"type\": \"integer\"}, \"attendees\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}, \"description\": \"List of email addresses\"}}, \"required\": [\"title\", \"start\", \"duration_minutes\", \"attendees\"]}}]\n</tools>",
+          "content": "You are a function-calling AI model. You are provided with function signatures within <tools></tools> XML tags. Call the appropriate function(s) to satisfy the user query. For each call, return a JSON object with the function name and arguments within <tool_call></tool_call> tags as: <tool_call>{\"name\": \"<name>\", \"arguments\": <args-dict>}</tool_call>. Use only the arguments defined in the schema, and follow every stated format exactly. If no provided function is relevant to the query, or if a required argument is missing from the query, do NOT call any function \u2014 reply in plain text instead.\n<tools>\n[{\"name\": \"create_event\", \"description\": \"Create a calendar event.\", \"parameters\": {\"type\": \"object\", \"properties\": {\"title\": {\"type\": \"string\"}, \"start\": {\"type\": \"string\", \"description\": \"ISO 8601, e.g. 2026-03-09T14:00\"}, \"duration_minutes\": {\"type\": \"integer\"}, \"attendees\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}, \"description\": \"List of email addresses\"}}, \"required\": [\"title\", \"start\", \"duration_minutes\", \"attendees\"]}}]\n</tools> When calling tools, output only the tool_call blocks, one JSON object per block, without prose or Markdown. Preserve exact string values and schema types. Never invent a result for a tool that has not returned.",
           "position": 0
         },
         {
@@ -2290,7 +2261,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.5,
-      "position": 55,
+      "position": 54,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -2313,8 +2284,9 @@
                 "cherry"
               ]
             },
-            "allow_code_fences": true,
-            "points": 100.0
+            "allow_code_fences": false,
+            "points": 100.0,
+            "allow_extra_fields": false
           }
         ]
       },

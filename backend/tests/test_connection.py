@@ -53,3 +53,28 @@ async def test_connection_no_model_skips_probe():
     assert res.reachable is True
     assert res.completion_ok is False
     assert "model" in (res.error or "").lower()
+
+
+@pytest.mark.parametrize("base", [
+    "https://api.openai.com/v1",
+    "https://workspace.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",
+    "https://api.deepseek.com/v1",
+    "https://api.z.ai/api/paas/v4",
+    "https://api.x.ai/v1",
+])
+@pytest.mark.asyncio
+async def test_provider_roots_support_authenticated_discovery_and_completion(base, monkeypatch):
+    """Exercise preset paths through the client, including non-v1 API roots."""
+    profile = _prof(base=base)
+    profile.api_key_env_var = "BENCH_STUDIO_TEST_PROVIDER_KEY"
+    monkeypatch.setenv(profile.api_key_env_var, "test-provider-key")
+    with respx.mock() as mock:
+        models = mock.get(base + "/models").respond(200, json={"data": [{"id": "m1"}]})
+        completion = mock.post(base + "/chat/completions").respond(
+            200, json={"choices": [{"message": {"content": "ok"}, "finish_reason": "stop"}]}
+        )
+        result = await run_connection_test(profile)
+        assert result.models_discovered and result.completion_ok
+        for route in (models, completion):
+            assert route.call_count == 1
+            assert route.calls[0].request.headers["authorization"] == "Bearer test-provider-key"

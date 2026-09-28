@@ -11,6 +11,8 @@ export default function BenchmarkLibrary() {
   const toast = useToast();
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ["benchmarks"], queryFn: api.listBenchmarks });
+  const [search, setSearch] = useState("");
+  const filtered = data?.filter((b) => `${b.name} ${b.description} ${b.tags.join(" ")}`.toLowerCase().includes(search.toLowerCase()));
   const [creating, setCreating] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -60,13 +62,19 @@ export default function BenchmarkLibrary() {
           </>
         }
       />
+      <div className="flex items-center gap-3 mb-4">
+        <input aria-label="Search benchmarks" className="input max-w-md" placeholder="Search suites, topics, or tags…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <span className="text-xs text-gray-400">{filtered?.length ?? 0} suites</span>
+      </div>
       {isLoading ? (
         <Spinner label="Loading…" />
       ) : !data || data.length === 0 ? (
         <EmptyState title="No benchmarks" hint="Create one or import a benchmark JSON file." />
+      ) : filtered?.length === 0 ? (
+        <EmptyState title="No matching suites" hint="Try a different title or topic." />
       ) : (
         <div className="grid md:grid-cols-2 gap-3">
-          {data.map((b) => (
+          {filtered?.map((b) => (
             <Card key={b.id}>
               <div className="flex items-start justify-between gap-2">
                 <Link to={`/benchmarks/${b.id}`} className="font-medium text-white hover:text-accent">
@@ -78,7 +86,7 @@ export default function BenchmarkLibrary() {
                 </div>
               </div>
               <p className="text-sm text-gray-400 mt-1 line-clamp-2">{b.description}</p>
-              <div className="flex items-center justify-between mt-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
                 <div className="text-xs text-gray-500">
                   {b.enabled_prompt_count} / {b.prompt_count} prompts · {fmtRelative(b.updated_at)}
                 </div>

@@ -3,11 +3,11 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api/client";
 import { Badge, Card, EmptyState, PageHeader, Spinner } from "@/components/ui";
-import { fmtScore, fmtRelative, hasResults, scoreColor } from "@/lib/format";
+import { fmtScore, fmtRelative, fmtCost, hasResults, scoreColor } from "@/lib/format";
 import type { RunSummary } from "@/types";
 
 interface CompareData {
-  runs: { id: string; name: string; target_model: string; quality_score: number | null; reliability_score: number | null; performance_index: number | null; composite_score: number | null; benchmark_version: string; benchmark_name: string }[];
+  runs: { id: string; name: string; target_model: string; quality_score: number | null; reliability_score: number | null; performance_index: number | null; composite_score: number | null; total_cost: number | null; benchmark_version: string; benchmark_name: string }[];
   per_prompt: { key: string; label: string; scores: Record<string, number | null> }[];
   warnings: string[];
 }
@@ -112,6 +112,12 @@ function ComparisonView({ data }: { data: CompareData }) {
             <MetricRow label="Reliability" runs={runs} get={(r) => r.reliability_score} />
             <MetricRow label="Performance" runs={runs} get={(r) => r.performance_index} />
             <MetricRow label="Composite" runs={runs} get={(r) => r.composite_score} />
+            <tr className="border-t border-border">
+              <td className="px-3 py-2 text-gray-300">Cost</td>
+              {runs.map((r) => (
+                <td key={r.id} className="px-3 py-2 text-right mono text-gray-400">{fmtCost(r.total_cost)}</td>
+              ))}
+            </tr>
             <tr className="border-t border-border">
               <td className="px-3 py-2 text-gray-500 text-xs">Benchmark version</td>
               {runs.map((r) => <td key={r.id} className="px-3 py-2 text-right text-xs mono">{r.benchmark_version}</td>)}

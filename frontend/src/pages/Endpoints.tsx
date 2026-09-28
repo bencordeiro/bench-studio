@@ -1,25 +1,28 @@
+import { PROVIDERS } from "@/lib/providers";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { api } from "@/api/client";
-import { Badge, Card, ConfirmButton, EmptyState, Modal, PageHeader, Spinner, StatCard } from "@/components/ui";
+import { Badge, Card, ConfirmButton, EmptyState, Modal, PageHeader, Spinner } from "@/components/ui";
 import { useToast } from "@/store/toast";
 import type { ConnectionTestResult, EndpointProfile, FetchModelsResult } from "@/types";
 
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
-  base_url: z.string().min(1, "Base URL is required"),
+  base_url: z.string().trim().min(1, "Base URL is required").refine((v) => !/[{}]/.test(v), "Replace the workspace placeholder with your workspace ID"),
   default_model: z.string().optional().default(""),
   request_timeout: z.coerce.number().positive("Must be > 0"),
   verify_tls: z.boolean().default(true),
   enabled: z.boolean().default(true),
   notes: z.string().optional().default(""),
   api_key_env_var: z.string().optional().default(""),
-  custom_headers: z.string().optional().default("{}"),
-  extra_body_params: z.string().optional().default("{}"),
+  custom_headers: z.string().optional().default("{}").refine(isValidJson, "Enter a JSON object"),
+  extra_body_params: z.string().optional().default("{}").refine(isValidJson, "Enter a JSON object"),
   api_key: z.string().optional().default(""),
+  input_price_per_1m: z.coerce.number().finite().min(0).optional().default(0),
+  output_price_per_1m: z.coerce.number().finite().min(0).optional().default(0),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -36,6 +39,8 @@ function profileToForm(p?: EndpointProfile): FormValues {
     custom_headers: JSON.stringify(p?.custom_headers ?? {}, null, 2),
     extra_body_params: JSON.stringify(p?.extra_body_params ?? {}, null, 2),
     api_key: "",
+    input_price_per_1m: p?.input_price_per_1m ?? 0,
+    output_price_per_1m: p?.output_price_per_1m ?? 0,
   };
 }
 
@@ -59,9 +64,11 @@ export default function Endpoints() {
         enabled: values.enabled,
         notes: values.notes,
         api_key_env_var: values.api_key_env_var,
-        custom_headers: safeJson(values.custom_headers, {}),
-        extra_body_params: safeJson(values.extra_body_params, {}),
+        custom_headers: JSON.parse(values.custom_headers.trim() || "{}"),
+        extra_body_params: JSON.parse(values.extra_body_params.trim() || "{}"),
         api_key: values.api_key || undefined,
+        input_price_per_1m: values.input_price_per_1m,
+        output_price_per_1m: values.output_price_per_1m,
       };
       return id ? api.updateEndpoint(id, payload) : api.createEndpoint(payload);
     },
@@ -89,7 +96,7 @@ export default function Endpoints() {
         <div className="space-y-3">
           {data.map((p) => (
             <Card key={p.id}>
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col lg:flex-row items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-white">{p.name}</span>
@@ -125,7 +132,7 @@ export default function Endpoints() {
                     </div>
                   )}
                 </div>
-                <div className="flex gap-2 flex-shrink-0">
+                <div className="flex flex-wrap gap-2">
                   <TestButton id={p.id} onResult={(r) => setTestResult((s) => ({ ...s, [p.id]: r }))} />
                   <ModelsButton id={p.id} onResult={(r) => setModels((s) => ({ ...s, [p.id]: r }))} />
                   <button className="btn" onClick={() => setEditing(p)}>Edit</button>
@@ -175,6 +182,7 @@ export default function Endpoints() {
 }
 
 function TestButton({ id, onResult }: { id: string; onResult: (r: ConnectionTestResult) => void }) {
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   return (
     <button
@@ -184,6 +192,8 @@ function TestButton({ id, onResult }: { id: string; onResult: (r: ConnectionTest
         setLoading(true);
         try {
           onResult(await api.testEndpoint(id));
+        } catch (error) {
+          toast(error instanceof Error ? error.message : "Connection test failed", "error");
         } finally {
           setLoading(false);
         }
@@ -195,6 +205,7 @@ function TestButton({ id, onResult }: { id: string; onResult: (r: ConnectionTest
 }
 
 function ModelsButton({ id, onResult }: { id: string; onResult: (r: FetchModelsResult) => void }) {
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   return (
     <button
@@ -204,6 +215,8 @@ function ModelsButton({ id, onResult }: { id: string; onResult: (r: FetchModelsR
         setLoading(true);
         try {
           onResult(await api.fetchModels(id));
+        } catch (error) {
+          toast(error instanceof Error ? error.message : "Model discovery failed", "error");
         } finally {
           setLoading(false);
         }
@@ -212,14 +225,6 @@ function ModelsButton({ id, onResult }: { id: string; onResult: (r: FetchModelsR
       {loading ? "Fetching…" : "Models"}
     </button>
   );
-}
-
-function safeJson(s: string, fallback: unknown): Record<string, unknown> {
-  try {
-    return JSON.parse(s);
-  } catch {
-    return fallback as Record<string, unknown>;
-  }
 }
 
 function EndpointForm({
@@ -235,10 +240,13 @@ function EndpointForm({
 }) {
   const {
     register,
+    setValue,
     handleSubmit,
     watch,
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: profileToForm(initial ?? undefined) });
+  const [providerId, setProviderId] = useState("custom");
+  const provider = PROVIDERS.find((p) => p.id === providerId)!;
   const headers = watch("custom_headers");
   const extra = watch("extra_body_params");
   const headersValid = isValidJson(headers);
@@ -261,37 +269,57 @@ function EndpointForm({
         </>
       }
     >
-      <form className="space-y-3" onSubmit={handleSubmit(onSubmit)}>
+      <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+        {!initial && <div className="rounded-lg border border-accent/30 bg-accent/5 p-3 space-y-2">
+          <label className="label" htmlFor="provider">Provider preset</label>
+          <select id="provider" className="input" value={providerId} onChange={(e) => {
+            const next = PROVIDERS.find((p) => p.id === e.target.value)!;
+            setProviderId(next.id);
+            setValue("name", next.id === "custom" ? "" : next.name);
+            setValue("base_url", next.url);
+            setValue("api_key_env_var", next.env);
+            setValue("default_model", "");
+            setValue("api_key", "");
+            setValue("custom_headers", "{}");
+            setValue("extra_body_params", "{}");
+            setValue("verify_tls", true);
+            setValue("input_price_per_1m", 0);
+            setValue("output_price_per_1m", 0);
+          }}>
+            {PROVIDERS.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+          <p className="text-xs text-gray-400">{provider.hint} {provider.docs && <a className="text-accent underline" href={provider.docs} target="_blank" rel="noreferrer">Provider docs ↗</a>}</p>
+        </div>}
         <div>
-          <label className="label">Display name</label>
-          <input className="input" {...register("name")} />
+          <label className="label" htmlFor="name">Display name</label>
+          <input id="name" className="input" {...register("name")} />
           {errors.name && <p className="text-err text-xs mt-1">{errors.name.message}</p>}
         </div>
         <div>
-          <label className="label">Base URL</label>
-          <input className="input mono" {...register("base_url")} placeholder="http://127.0.0.1:11434/v1" />
+          <label className="label" htmlFor="base_url">Base URL</label>
+          <input id="base_url" className="input mono" {...register("base_url")} placeholder="http://127.0.0.1:11434/v1" />
           {errors.base_url && <p className="text-err text-xs mt-1">{errors.base_url.message}</p>}
-          <p className="text-xs text-gray-500 mt-1">Both <code>http://host</code> and <code>http://host/v1</code> are accepted; duplicates are normalized.</p>
+          <p className="text-xs text-gray-500 mt-1">Use the API base URL, without /chat/completions. Provider-specific paths are preserved.</p>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="label">Default model</label>
-            <input className="input" {...register("default_model")} />
+            <label className="label" htmlFor="default_model">Default model</label>
+            <input id="default_model" className="input" {...register("default_model")} placeholder="Model ID from your provider" />
           </div>
           <div>
-            <label className="label">Request timeout (s)</label>
-            <input type="number" step="1" className="input" {...register("request_timeout")} />
+            <label className="label" htmlFor="request_timeout">Request timeout (s)</label>
+            <input id="request_timeout" type="number" step="1" className="input" {...register("request_timeout")} />
             {errors.request_timeout && <p className="text-err text-xs mt-1">{errors.request_timeout.message}</p>}
           </div>
         </div>
         <div>
-          <label className="label">API key (write-only; never returned)</label>
-          <input className="input mono" type="password" {...register("api_key")} placeholder={initial?.has_api_key ? "•••••••• (leave blank to keep)" : "Optional — many local servers need none"} />
+          <label className="label" htmlFor="api_key">API key (write-only; never returned)</label>
+          <input id="api_key" className="input mono" type="password" {...register("api_key")} placeholder={initial?.has_api_key ? "•••••••• (leave blank to keep)" : "Optional — many local servers need none"} />
           {initial?.has_api_key && <p className="text-xs text-ok mt-1">A key is stored for this profile.</p>}
         </div>
         <div>
-          <label className="label">API key environment variable</label>
-          <input className="input" {...register("api_key_env_var")} placeholder="e.g. OPENAI_API_KEY" />
+          <label className="label" htmlFor="api_key_env_var">API key environment variable</label>
+          <input id="api_key_env_var" className="input" {...register("api_key_env_var")} placeholder="e.g. OPENAI_API_KEY" />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <label className="flex items-center gap-2 text-sm">
@@ -302,30 +330,82 @@ function EndpointForm({
           </label>
         </div>
         <div>
-          <label className="label">Custom headers (JSON)</label>
-          <textarea className="input mono h-20" {...register("custom_headers")} />
-          {!headersValid && <p className="text-err text-xs mt-1">Invalid JSON</p>}
+          <label className="label" htmlFor="custom_headers">Custom headers (JSON)</label>
+          <textarea id="custom_headers" className="input mono h-20" {...register("custom_headers")} />
+          {!headersValid && <p className="text-err text-xs mt-1">Enter a JSON object</p>}
         </div>
         <div>
-          <label className="label">Extra body parameters (JSON)</label>
-          <textarea className="input mono h-20" {...register("extra_body_params")} />
-          {!extraValid && <p className="text-err text-xs mt-1">Invalid JSON</p>}
+          <label className="label" htmlFor="extra_body_params">Extra body parameters (JSON)</label>
+          <textarea id="extra_body_params" className="input mono h-20" {...register("extra_body_params")} />
+          {!extraValid && <p className="text-err text-xs mt-1">Enter a JSON object</p>}
         </div>
         <div>
-          <label className="label">Notes</label>
-          <textarea className="input h-16" {...register("notes")} />
+          <label className="label" htmlFor="notes">Notes</label>
+          <textarea id="notes" className="input h-16" {...register("notes")} />
         </div>
+        <PricingSection register={register} errors={errors} />
       </form>
     </Modal>
   );
 }
 
 function isValidJson(s: string | undefined): boolean {
-  if (!s) return true;
+  if (!s?.trim()) return true;
   try {
-    JSON.parse(s);
-    return true;
+    const value = JSON.parse(s);
+    return value !== null && typeof value === "object" && !Array.isArray(value);
   } catch {
     return false;
   }
+}
+
+function PricingSection({ register, errors }: {
+  register: ReturnType<typeof useForm<FormValues>>["register"];
+  errors: ReturnType<typeof useForm<FormValues>>["formState"]["errors"];
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-t border-border pt-3 mt-1">
+      <button
+        type="button"
+        className="text-xs text-gray-400 hover:text-gray-200 flex items-center gap-1"
+        onClick={() => setOpen(!open)}
+      >
+        <span className={`transition-transform ${open ? "rotate-90" : ""}`}>▸</span>
+        Pricing (optional)
+      </button>
+      {open && (
+        <div className="grid grid-cols-2 gap-3 mt-3">
+          <div>
+            <label className="label" htmlFor="input_price_per_1m">Input price per 1M tokens ($)</label>
+            <input
+              id="input_price_per_1m"
+              type="number"
+              step="0.0001"
+              min="0"
+              className="input mono"
+              placeholder="e.g. 0.15"
+              {...register("input_price_per_1m")}
+            />
+            {errors.input_price_per_1m && <p className="text-err text-xs mt-1">{errors.input_price_per_1m.message}</p>}
+            <p className="text-xs text-gray-500 mt-1">USD per million input/prompt tokens.</p>
+          </div>
+          <div>
+            <label className="label" htmlFor="output_price_per_1m">Output price per 1M tokens ($)</label>
+            <input
+              id="output_price_per_1m"
+              type="number"
+              step="0.0001"
+              min="0"
+              className="input mono"
+              placeholder="e.g. 0.60"
+              {...register("output_price_per_1m")}
+            />
+            {errors.output_price_per_1m && <p className="text-err text-xs mt-1">{errors.output_price_per_1m.message}</p>}
+            <p className="text-xs text-gray-500 mt-1">USD per million output/completion tokens.</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

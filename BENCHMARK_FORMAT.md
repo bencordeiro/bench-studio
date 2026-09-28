@@ -144,3 +144,18 @@ HumanEval reference harness (openai/human-eval, MIT) does it:
 ## Validation on import
 
 Imports are validated against these schemas. A corrupt or partially-invalid file is **rejected entirely** with a clear error — it is never partially imported. No file may contain secrets; exports never include API keys.
+
+### Strict structured-output options
+
+JSON checks accept `allow_extra_fields: false` to reject object keys outside
+`required_fields` and `expected_field_values`. Set `allow_code_fences: false` for
+raw JSON-only tasks. Field comparisons are recursive, order-independent for
+object keys, order-sensitive for arrays, and distinguish booleans from numbers.
+Duplicate keys and non-finite constants (`NaN`, `Infinity`) are rejected.
+
+Tool-call checks accept `strict_format: true` for exactly one object per Hermes
+block with only `name` and object-valued `arguments`, and no surrounding prose.
+`strict_types: true` preserves string casing and numeric types instead of using
+legacy coercion. `strict_args: true` rejects extra arguments. Explicit
+`{"any_of": [...]}` values can express equivalent timestamp forms or numeric
+representations. These strict options are opt-in for imported suites.

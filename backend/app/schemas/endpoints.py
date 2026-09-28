@@ -24,6 +24,9 @@ class EndpointProfileBase(ORMModel):
     has_api_key: bool = False
     api_key_storage: str = "none"
     api_key_env_var: str = ""
+    # Token pricing: USD per 1M tokens. 0.0 means unconfigured.
+    input_price_per_1m: float = Field(default=0.0, ge=0, allow_inf_nan=False)
+    output_price_per_1m: float = Field(default=0.0, ge=0, allow_inf_nan=False)
 
     @field_validator("base_url")
     @classmethod
