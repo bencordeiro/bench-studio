@@ -418,7 +418,7 @@ async def test_sse_error_retains_partial_reasoning_and_server_message():
 
 
 @pytest.mark.parametrize("stream", [True, False])
-async def test_native_calls_are_reported_as_protocol_mismatch(stream):
+async def test_native_calls_are_valid_final_responses(stream):
     call = {"id": "c1", "type": "function", "function": {"name": "get_weather", "arguments": "{}"}}
     if stream:
         response = httpx.Response(200, text='data: ' + json.dumps({
@@ -432,5 +432,29 @@ async def test_native_calls_are_reported_as_protocol_mismatch(stream):
         "http://test/v1", api_key=None, model="test", messages=[], stream=stream,
         transport=httpx.MockTransport(lambda request: response),
     )
-    assert "native tool_calls" in result.error
+    assert result.error is None
+    assert result.tool_calls[0]["function"] == call["function"]
+    assert not result.raw["generation_diagnostics"]["no_final_answer"]
     assert result.raw["generation_diagnostics"]["native_tool_calls_received"]
+
+
+async def test_stream_assembles_parallel_tool_call_fragments():
+    chunks = [
+        {"choices": [{"delta": {"tool_calls": [
+            {"index": 0, "id": "a", "function": {"name": "get_weather", "arguments": '{"location":"Pa'}},
+            {"index": 1, "id": "b", "function": {"name": "get_weather", "arguments": '{"location":"To'}},
+        ]}}]},
+        {"choices": [{"delta": {"tool_calls": [
+            {"index": 1, "function": {"arguments": 'kyo","unit":"celsius"}'}},
+            {"index": 0, "function": {"arguments": 'ris","unit":"celsius"}'}},
+        ]}}]},
+        {"choices": [{"delta": {}, "finish_reason": "tool_calls"}], "usage": {"completion_tokens": 42}},
+    ]
+    body = '\n\n'.join('data: ' + json.dumps(chunk) for chunk in chunks) + '\n\ndata: [DONE]'
+    result = await chat_completion("http://test/v1", api_key=None, model="m", messages=[],
+                                   transport=httpx.MockTransport(lambda request: httpx.Response(200, text=body)))
+    assert result.error is None
+    assert [json.loads(call["function"]["arguments"])["location"] for call in result.tool_calls] == ["Paris", "Tokyo"]
+    assert [call["id"] for call in result.tool_calls] == ["a", "b"]
+    assert result.usage["completion_tokens"] == 42
+    assert result.time_to_first_token is not None

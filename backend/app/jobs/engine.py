@@ -41,11 +41,12 @@ from app.models import (
     TargetResponse,
     VerifierGrade,
 )
-from app.services.openai_client import chat_completion
+from app.services.native_tools import native_request, normalize_native_result
+from app.services.openai_client import ChatResult, chat_completion
 from app.services.tool_compatibility import (
     annotate_text_tool_failure,
-    probe_text_tool_calls,
     requires_text_tool_calls,
+    select_tool_protocol,
 )
 
 log = logging.getLogger(__name__)
@@ -243,7 +244,7 @@ async def run_job(
             needs_text_tools = any(requires_text_tool_calls(p) for p in
                                    (run.benchmark_snapshot or {}).get("prompts", [])
                                    if p.get("enabled", True))
-        if needs_text_tools:
+        if needs_text_tools and not run_config.get("tool_call_protocol"):
             await _emit(run_id, "phase", phase="checking_text_tool_compatibility")
             extra_body = dict(target_profile.extra_body_params or {})
             effort = _pick({}, target_settings, run_config, "reasoning_effort")
@@ -251,16 +252,16 @@ async def run_job(
                 extra_body["chat_template_kwargs"] = {
                     **(extra_body.get("chat_template_kwargs") or {}), "reasoning_effort": effort,
                 }
-            compatibility = await _await_abortable(probe_text_tool_calls(
+            compatibility = await _await_abortable(select_tool_protocol(
                 target_profile, target_model, _resolve_key(target_profile, target_session_key),
                 run_config, extra_body,
             ), run_id)
+            run_config = {**run_config, "tool_call_protocol": compatibility.get("protocol", "text")}
             with session_scope() as session:
                 run = session.get(BenchmarkRun, run_id)
                 run.benchmark_snapshot = {**run.benchmark_snapshot, "text_tool_compatibility": compatibility}
+                run.run_config = {**run.run_config, "tool_call_protocol": run_config["tool_call_protocol"]}
             await _emit(run_id, "compatibility", **compatibility)
-            if compatibility["status"] == "incompatible":
-                raise ValueError(compatibility["message"])
         if run_config.get("warm_up_request"):
             await _warmup(run_id, target_profile, target_model, target_session_key,
                           target_settings, run_config)
@@ -365,8 +366,6 @@ async def _run_target_phase(
                                 output_price_per_1m=output_price)
             _update_progress(session, run_id)
         await _emit_progress(run_id, execution_snapshot=prompt_snapshot, result=result)
-        if (result.raw.get("generation_diagnostics") or {}).get("failure_category") == "text_tool_call_incompatibility":
-            raise ValueError(result.error)
 
 
 async def _execute_target_prompt(run_id, profile, model, session_key, settings, run_config, prompt_snapshot):
@@ -386,6 +385,17 @@ async def _execute_target_prompt(run_id, profile, model, session_key, settings, 
     # (see the opencode provider config for the same servers). Surface it as a
     # run-level "reasoning level" option: low/medium/high/xhigh.
     extra_body = dict(profile.extra_body_params or {})
+    native = run_config.get("tool_call_protocol") == "native" and requires_text_tool_calls(prompt_snapshot)
+    if native:
+        try:
+            messages, tools = native_request(messages)
+        except (ValueError, KeyError, TypeError) as exc:
+            return ChatResult(content="", finish_reason="error", truncated=False, usage={}, http_status=0,
+                              time_to_first_token=None, total_response_time=0, retry_count=0,
+                              error=f"Cannot adapt this question to native tools: {exc}")
+        extra_body.update(tools=tools, tool_choice="auto")
+        for key in ("functions", "function_call", "messages", "model"):
+            extra_body.pop(key, None)
     if reasoning_effort:
         chat_template_kwargs = dict(extra_body.get("chat_template_kwargs") or {})
         chat_template_kwargs["reasoning_effort"] = reasoning_effort
@@ -413,6 +423,14 @@ async def _execute_target_prompt(run_id, profile, model, session_key, settings, 
         backoff_max=float(run_config.get("retry_backoff_max", 30.0)),
         on_progress=report_generation,
     ), run_id)
+    if native:
+        return normalize_native_result(result)
+    if result.tool_calls and requires_text_tool_calls(prompt_snapshot):
+        # Some endpoints convert text calls even without the tools parameter.
+        return normalize_native_result(result)
+    if result.tool_calls:
+        result.error = "Unexpected native tool calls for a question without tools."
+    result.raw["tool_call_protocol"] = "text" if requires_text_tool_calls(prompt_snapshot) else "chat"
     return annotate_text_tool_failure(result, prompt_snapshot)
 
 
@@ -505,6 +523,9 @@ def _store_target_result(session: Session, execution: PromptExecution, result,
         "reasoning": result.reasoning,
         "generation_diagnostics": diagnostics,
         "wall_time": result.wall_time,
+        "native_tool_calls": result.tool_calls,
+        "answer_text": result.raw.get("answer_text", result.content),
+        "tool_call_protocol": result.raw.get("tool_call_protocol", "chat"),
     }
     if result.error:
         session.add(TargetResponse(

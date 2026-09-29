@@ -161,9 +161,12 @@ legacy coercion. `strict_args: true` rejects extra arguments. Explicit
 `{"any_of": [...]}` values can express equivalent timestamp forms or numeric
 representations. These strict options are opt-in for imported suites.
 
-These checks grade text returned in `message.content` / `delta.content`; they do
-not grade native `tool_calls` responses. Endpoints must pass through literal
-Hermes blocks. Before running enabled tool-call checks, the app probes that
-transport and stops on a confirmed parser rejection or native-call conversion.
-An inconclusive probe proceeds so model failure to copy is not confused with
-endpoint incompatibility. See [endpoint compatibility](docs/HERMES_ENDPOINT_COMPATIBILITY.md).
+These checks can grade Hermes text or native API tool calls. For servers that
+reject literal Hermes blocks, the app extracts `<tools>` schemas, converts
+supplied histories to structured assistant calls and tool results, and sends
+native API `tools`. Native responses are normalized for the existing semantic
+graders, preserving invalid arguments, extra calls and prose. The model's XML
+envelope formatting is not tested in native mode. The protocol and original
+native calls are stored with the result, and comparisons warn when protocols
+differ. Transport failures affect individual questions without stopping the
+remaining suite. See [endpoint compatibility](docs/HERMES_ENDPOINT_COMPATIBILITY.md).

@@ -60,7 +60,7 @@ describe("New Run form validation", () => {
     renderPage();
     await waitFor(() => expect(screen.getByText(/Hermes \(15 prompts\)/)).toBeInTheDocument());
     await userEvent.selectOptions(screen.getAllByRole("combobox")[0], "h1");
-    expect(screen.getByText(/Compatibility is checked before questions run/)).toBeInTheDocument();
+    expect(screen.getByText(/automatically use native API calls/)).toBeInTheDocument();
   });
 
   it("prevents starting without a target model", async () => {

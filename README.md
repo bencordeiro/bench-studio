@@ -35,7 +35,7 @@ Seven suites ship with the app and load on first run (351 prompts). Six contain 
 
 See [the suite audit](docs/SUITE_AUDIT.md) for revisions, validation evidence, and limitations. Updated bundles upgrade in place on startup; historical runs retain their snapshots. The retired example suite is removed by migration.
 
-The Hermes suite grades literal `<tool_call>` text and requires an endpoint that preserves it. A server-side tool-call parser can reject that text or convert it into native `tool_calls`. Runs containing tool-call checks perform an unscored compatibility probe before questions run; confirmed parser incompatibility stops the run with a clear error. Disable the server parser or use a pass-through endpoint. Native function-calling evaluation requires a separate protocol and is not implemented. See [the compatibility notes](docs/HERMES_ENDPOINT_COMPATIBILITY.md).
+Tool questions support Hermes text and native API function calling. The app automatically selects native `tools` / `tool_calls` when a server rejects literal Hermes blocks, converts supplied call/result histories, and grades the same tool names and argument values. The server's tool-call parser can remain enabled. The selected protocol is recorded with each run; comparisons warn when protocols differ. A tool transport failure affects that question while the rest of a mixed suite continues. See [the compatibility notes and live validation](docs/HERMES_ENDPOINT_COMPATIBILITY.md).
 
 Design rules the original items follow (HumanEval keeps the upstream problems as-is):
 

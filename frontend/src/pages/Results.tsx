@@ -294,6 +294,9 @@ function ExecutionDetailModal({ execution, onClose, runStatus }: { execution: Ex
           </p>
         )}
         {execution.error_message && <p className="text-sm text-err">{execution.error_message}</p>}
+        {execution.tool_call_protocol === "native" && (
+          <p className="text-xs text-gray-400">Native API tool calls are normalized below for argument grading. Hermes text formatting was not tested.</p>
+        )}
         {execution.reasoning_response && (
           <details>
             <summary className="text-sm text-gray-400 cursor-pointer">Model reasoning ({execution.reasoning_response.length.toLocaleString()} characters)</summary>

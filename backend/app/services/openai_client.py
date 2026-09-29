@@ -70,6 +70,7 @@ class ChatResult:
     # diluting it with prefill and network time.
     server_timings: dict[str, Any] | None = None
     reasoning: str = ""
+    tool_calls: list[dict[str, Any]] = field(default_factory=list)
 
 
 def _build_headers(
@@ -90,7 +91,7 @@ def _build_headers(
 
 
 def _build_body(
-    messages: list[dict[str, str]],
+    messages: list[dict[str, Any]],
     model: str,
     *,
     temperature: float | None,
@@ -217,6 +218,18 @@ async def stream_chat(
                 delta = choices[0].get("delta") or {}
                 if delta.get("tool_calls") or delta.get("function_call"):
                     state["native_tool_calls_received"] = True
+                    fragments = delta.get("tool_calls") or [{"index": 0, "function": delta["function_call"]}]
+                    for fragment in fragments:
+                        index = fragment.get("index", 0)
+                        call = state.setdefault("tool_call_parts", {}).setdefault(index, {
+                            "id": "", "type": "function", "function": {"name": "", "arguments": ""},
+                        })
+                        if fragment.get("id"):
+                            call["id"] += fragment["id"]
+                        function = fragment.get("function") or {}
+                        for key in ("name", "arguments"):
+                            if key in function:
+                                call["function"][key] += function[key]
             content, reasoning, finish = _delta_text(chunk)
             usage = _extract_usage(chunk)
             timings = chunk.get("timings")
@@ -278,7 +291,7 @@ async def chat_completion(
     *,
     api_key: str | None,
     model: str,
-    messages: list[dict[str, str]],
+    messages: list[dict[str, Any]],
     temperature: float | None = None,
     top_p: float | None = None,
     max_tokens: int | None = None,
@@ -421,7 +434,7 @@ async def _do_stream(
         async for content, reasoning, finish, chunk_usage, chunk_timings in stream_chat(
             client, url, headers, body, state=state
         ):
-            if first_chunk_at is None and (content or reasoning):
+            if first_chunk_at is None and (content or reasoning or state["native_tool_calls_received"]):
                 first_chunk_at = time.monotonic()
                 ttft = first_chunk_at - start
             if content:
@@ -449,27 +462,28 @@ async def _do_stream(
                 except Exception:
                     log.exception("generation progress callback failed")
     except RETRYABLE_EXCEPTIONS as exc:
-        if not (content_parts or reasoning_parts):
+        if not (content_parts or reasoning_parts or state["native_tool_calls_received"]):
             raise
         stream_error = _sanitize_error_message(str(exc) or type(exc).__name__)
     except OpenAIClientError as exc:
-        if not (content_parts or reasoning_parts):
+        if not (content_parts or reasoning_parts or state["native_tool_calls_received"]):
             raise
         stream_error = exc.sanitized_message
     total = time.monotonic() - start
     content = "".join(content_parts)
     reasoning_text = "".join(reasoning_parts)
-    no_final = not content.strip()
+    tool_parts = state.pop("tool_call_parts", {})
+    tool_calls = [tool_parts[index] for index in sorted(tool_parts)]
+    no_final = not content.strip() and not tool_calls
     truncated = finish_reason == "length"
     incomplete = finish_reason == "unknown" and not state["done_received"]
     diagnostics = generation_diagnostics(content, reasoning_text, finish_reason)
+    diagnostics["no_final_answer"] = no_final
     diagnostics.update(state, incomplete_stream=incomplete,
                        finish_reason_received=finish_reason != "unknown", usage_received=bool(usage))
     error = stream_error
     if not error and incomplete:
         error = "Endpoint stream ended without a finish_reason or [DONE]; generation was incomplete."
-    if not error and state["native_tool_calls_received"]:
-        error = "Endpoint returned native tool_calls instead of answer text; this text-format benchmark requires a pass-through endpoint."
     if not error and no_final:
         error = "No final answer returned; reasoning is retained separately."
     if error:
@@ -490,6 +504,7 @@ async def _do_stream(
         raw={"streamed": True, "chunk_sample": raw_chunks, "fell_back_to_reasoning": False,
              "generation_diagnostics": diagnostics},
         reasoning=reasoning_text,
+        tool_calls=tool_calls,
         error=error,
         server_timings=timings,
     )
@@ -530,13 +545,14 @@ async def _do_nonstream(
     timings = data.get("timings") if isinstance(data, dict) else None
     truncated = finish_reason == "length"
     native_calls = bool(message.get("tool_calls") or message.get("function_call"))
+    tool_calls = message.get("tool_calls") or (
+        [{"type": "function", "function": message["function_call"]}] if message.get("function_call") else []
+    )
     diagnostics = generation_diagnostics(content, reasoning, finish_reason)
     diagnostics["native_tool_calls_received"] = native_calls
+    diagnostics["no_final_answer"] = not content.strip() and not native_calls
     error = None
-    if native_calls:
-        error = "Endpoint returned native tool_calls instead of answer text; this text-format benchmark requires a pass-through endpoint."
-        diagnostics["failure_category"] = "native_tool_calls"
-    elif not content.strip():
+    if not content.strip() and not native_calls:
         error = "No final answer returned; reasoning is retained separately."
         diagnostics["failure_category"] = "no_final_answer"
     # TTFT unavailable for non-streaming.
@@ -551,6 +567,7 @@ async def _do_nonstream(
         retry_count=retry_count,
         raw={"streamed": False, "generation_diagnostics": diagnostics},
         reasoning=reasoning,
+        tool_calls=tool_calls,
         error=error,
         server_timings=timings if isinstance(timings, dict) else None,
     )

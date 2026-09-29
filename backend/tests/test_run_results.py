@@ -33,6 +33,30 @@ def test_compatibility_failure_is_visible_in_run_api_and_json_export(session):
         assert exported.json()["run"]["error_message"] == report["message"]
 
 
+def test_native_calls_are_retained_in_results_and_export_with_comparison_warning(session):
+    from app.main import app
+    from app.models import BenchmarkRun, PromptExecution, TargetResponse
+
+    native_id = _seed_run_with_results(session)
+    text_id = _seed_run_with_results(session)
+    run = session.get(BenchmarkRun, native_id)
+    run.run_config = {**run.run_config, "tool_call_protocol": "native"}
+    execution = session.query(PromptExecution).filter_by(run_id=native_id).order_by(PromptExecution.position).first()
+    target = session.query(TargetResponse).filter_by(execution_id=execution.id).one()
+    calls = [{"id": "c1", "type": "function", "function": {"name": "get_weather", "arguments": "{}"}}]
+    target.raw = {"native_tool_calls": calls, "tool_call_protocol": "native"}
+    session.commit()
+    with TestClient(app) as client:
+        results = client.get(f"/api/runs/{native_id}/results").json()
+        assert results["executions"][0]["native_tool_calls"] == calls
+        assert results["executions"][0]["tool_call_protocol"] == "native"
+        exported = client.get(f"/api/runs/{native_id}/export/json").json()
+        assert exported["prompts"][0]["native_tool_calls"] == calls
+        assert exported["run"]["tool_call_protocol"] == "native"
+        comparison = client.get("/api/runs/compare", params=[("ids", native_id), ("ids", text_id)]).json()
+        assert any("different tool-call protocols" in message for message in comparison["warnings"])
+
+
 def _seed_run_with_results(session, prompt_count: int = 3):
     """A completed run whose last execution deliberately has no child rows."""
     from app.models import (

@@ -150,8 +150,8 @@ export default function NewRun() {
           )}
           {selectedBenchmark?.tags?.includes("hermes") && (
             <p className="text-xs text-warn mt-2">
-              This suite requires literal &lt;tool_call&gt; text. Servers with a tool-call parser may reject or convert it.
-              Compatibility is checked before questions run; a confirmed incompatibility stops the run without scoring questions.
+              Tool questions automatically use native API calls when the endpoint rejects Hermes text blocks.
+              Tool schemas, arguments and supplied history are preserved. The selected protocol is recorded with the run.
             </p>
           )}
         </Card>

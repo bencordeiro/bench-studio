@@ -165,6 +165,8 @@ class ExecutionDetail(ORMModel):
     importance_weight: float
     messages: list[dict]
     candidate_response: str
+    native_tool_calls: list[dict] = Field(default_factory=list)
+    tool_call_protocol: str = "chat"
     reasoning_response: str = ""
     generation_diagnostics: dict = Field(default_factory=dict)
     reference_answer: str

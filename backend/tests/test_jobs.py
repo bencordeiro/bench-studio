@@ -329,18 +329,20 @@ def _detached(ep):
 
 
 @pytest.mark.parametrize("compatibility_status", ["incompatible", "compatible", "inconclusive"])
-async def test_text_tool_preflight_blocks_only_confirmed_incompatibility(monkeypatch, compatibility_status):
+async def test_text_tool_preflight_selects_protocol_without_blocking_run(monkeypatch, compatibility_status):
     from unittest.mock import AsyncMock
 
-    probe = AsyncMock(return_value={"status": compatibility_status, "message": "Endpoint parser incompatible"})
+    protocol = "native" if compatibility_status == "incompatible" else "text"
+    probe = AsyncMock(return_value={"status": compatibility_status, "protocol": protocol})
     chat = AsyncMock(side_effect=_fake_target_chat)
-    monkeypatch.setattr(engine, "probe_text_tool_calls", probe)
+    monkeypatch.setattr(engine, "select_tool_protocol", probe)
     monkeypatch.setattr(engine, "chat_completion", chat)
     with session_scope() as session:
         bench = _make_benchmark(session, [{
             "stable_id": "tool", "title": "Tool", "grading_mode": "deterministic",
             "grader_config": {"checks": [{"type": "tool_call", "expected_calls": []}]},
-            "messages": [{"role": "user", "content": "Call a tool"}],
+            "messages": [{"role": "system", "content": '<tools>[{"name":"example","parameters":{"type":"object","properties":{}}}]</tools>'},
+                         {"role": "user", "content": "Call a tool"}],
         }])
         ep = _make_endpoint(session)
         run = crud.create_run(session, {"benchmark_id": bench.id, "target_endpoint_id": ep.id})
@@ -355,32 +357,32 @@ async def test_text_tool_preflight_blocks_only_confirmed_incompatibility(monkeyp
         run = session.get(BenchmarkRun, run_id)
         assert run.benchmark_snapshot["text_tool_compatibility"]["status"] == compatibility_status
         execution = session.query(PromptExecution).filter_by(run_id=run_id).one()
-        if compatibility_status == "incompatible":
-            assert run.status == RunStatus.FAILED.value
-            assert "Endpoint parser incompatible" in run.error_message
-            assert run.completed_at is not None
-            assert execution.status == PromptStatus.PENDING.value
-            assert execution.final_score is None
-            assert run.completed_prompts == 0
-            chat.assert_not_awaited()
-        else:
-            assert run.status in {RunStatus.COMPLETED.value, RunStatus.COMPLETED_WITH_ERRORS.value}
-            chat.assert_awaited_once()
+        assert run.run_config["tool_call_protocol"] == protocol
+        assert run.status in {RunStatus.COMPLETED.value, RunStatus.COMPLETED_WITH_ERRORS.value}
+        assert execution.status == PromptStatus.COMPLETED.value
+        chat.assert_awaited_once()
+        if protocol == "native":
+            assert chat.call_args.kwargs["extra_body"]["tools"][0]["function"]["name"] == "example"
 
 
-async def test_confirmed_tool_incompatibility_after_inconclusive_probe_stops_remaining_questions(monkeypatch):
+async def test_tool_transport_failure_does_not_stop_remaining_questions(monkeypatch):
     from unittest.mock import AsyncMock
 
-    monkeypatch.setattr(engine, "probe_text_tool_calls", AsyncMock(return_value={"status": "inconclusive"}))
+    monkeypatch.setattr(engine, "select_tool_protocol", AsyncMock(return_value={"status": "inconclusive", "protocol": "text"}))
     failed = ChatResult(content="", finish_reason="error", truncated=False, usage={},
                         http_status=400, time_to_first_token=None, total_response_time=1,
                         retry_count=0, error="HTTP 400: malformed tool call: get_weather")
-    chat = AsyncMock(return_value=failed)
+    chat = AsyncMock(side_effect=[failed, await _fake_target_chat(None)])
     monkeypatch.setattr(engine, "chat_completion", chat)
     with session_scope() as session:
-        prompts = [{"stable_id": f"tool{i}", "grading_mode": "deterministic",
-                    "grader_config": {"type": "tool_call", "expected_calls": []},
-                    "messages": [{"role": "user", "content": "Call a tool"}]} for i in range(2)]
+        prompts = [
+            {"stable_id": "tool", "grading_mode": "deterministic",
+             "grader_config": {"type": "tool_call", "expected_calls": []},
+             "messages": [{"role": "user", "content": "Call a tool"}]},
+            {"stable_id": "ordinary", "grading_mode": "deterministic",
+             "grader_config": {"type": "exact", "canonical_answer": "yes"},
+             "messages": [{"role": "user", "content": "Say yes"}]},
+        ]
         bench = _make_benchmark(session, prompts)
         ep = _make_endpoint(session)
         run = crud.create_run(session, {"benchmark_id": bench.id, "target_endpoint_id": ep.id})
@@ -390,14 +392,62 @@ async def test_confirmed_tool_incompatibility_after_inconclusive_probe_stops_rem
         target_settings={}, judge_profile=None, judge_model="", judge_session_key=None,
         judge_settings={}, run_config={}, judge_enabled=False, verifier_enabled=False,
     )
-    chat.assert_awaited_once()
+    assert chat.await_count == 2
     with session_scope() as session:
         run = session.get(BenchmarkRun, run_id)
-        assert run.status == RunStatus.FAILED.value
-        assert "Endpoint rejected or converted" in run.error_message
+        assert run.status == RunStatus.COMPLETED_WITH_ERRORS.value
         executions = session.query(PromptExecution).filter_by(run_id=run_id).order_by(PromptExecution.position).all()
-        assert [e.status for e in executions] == [PromptStatus.FAILED.value, PromptStatus.PENDING.value]
-        assert all(e.final_score is None for e in executions)
+        assert [e.status for e in executions] == [PromptStatus.FAILED.value, PromptStatus.COMPLETED.value]
+        assert executions[0].final_score is None
+        assert executions[1].final_score == 100
+
+
+async def test_native_target_calls_are_stored_and_graded_alongside_normal_questions(monkeypatch):
+    from pathlib import Path
+    from unittest.mock import AsyncMock
+
+    from app.models import TargetResponse
+
+    bundle = json.loads((Path(__file__).resolve().parents[1] / "app/seed/suites/agentic_tool_use.json").read_text())
+    prompts = [next(p for p in bundle["prompts"] if p["stable_id"] == key)
+               for key in ("ag-simple-weather", "ag-missing-required-arg")]
+    prompts.append({"stable_id": "ordinary", "grading_mode": "deterministic",
+                    "grader_config": {"type": "exact", "canonical_answer": "yes"},
+                    "messages": [{"role": "user", "content": "Say yes"}]})
+    prompts = [{**prompt, "position": index} for index, prompt in enumerate(prompts)]
+    native = ChatResult(content="", finish_reason="tool_calls", truncated=False, usage={"completion_tokens": 42},
+                        http_status=200, time_to_first_token=.1, total_response_time=1, retry_count=0,
+                        tool_calls=[{"id": "c1", "type": "function", "function": {
+                            "name": "get_weather", "arguments": '{"location":"Paris","unit":"celsius"}',
+                        }}])
+    prose = await _fake_target_chat(None)
+    prose.content = "What is your destination?"
+    chat = AsyncMock(side_effect=[native, prose, await _fake_target_chat(None)])
+    monkeypatch.setattr(engine, "chat_completion", chat)
+    probe = AsyncMock(return_value={"status": "compatible", "protocol": "native"})
+    monkeypatch.setattr(engine, "select_tool_protocol", probe)
+    with session_scope() as session:
+        bench = _make_benchmark(session, prompts)
+        ep = _make_endpoint(session)
+        run = crud.create_run(session, {"benchmark_id": bench.id, "target_endpoint_id": ep.id})
+        run_id, profile = run.id, _detached(ep)
+    await engine.run_job(
+        run_id, target_profile=profile, target_model="demo", target_session_key=None,
+        target_settings={}, judge_profile=None, judge_model="", judge_session_key=None,
+        judge_settings={}, run_config={}, judge_enabled=False, verifier_enabled=False,
+    )
+    assert chat.await_count == 3
+    assert chat.await_args_list[0].kwargs["extra_body"]["tools"]
+    assert chat.await_args_list[1].kwargs["extra_body"]["tools"]
+    assert "tools" not in chat.await_args_list[2].kwargs["extra_body"]
+    with session_scope() as session:
+        run = session.get(BenchmarkRun, run_id)
+        assert run.status == RunStatus.COMPLETED.value
+        executions = session.query(PromptExecution).filter_by(run_id=run_id).order_by(PromptExecution.position).all()
+        assert [e.final_score for e in executions] == [100, 100, 100]
+        response = session.query(TargetResponse).filter_by(execution_id=executions[0].id).one()
+        assert response.raw["native_tool_calls"] == native.tool_calls
+        assert response.raw["tool_call_protocol"] == "native"
 
 
 @pytest.mark.asyncio

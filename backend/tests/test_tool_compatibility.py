@@ -11,6 +11,7 @@ from app.services.tool_compatibility import (
     classify_probe,
     probe_text_tool_calls,
     requires_text_tool_calls,
+    select_tool_protocol,
 )
 
 
@@ -70,3 +71,35 @@ async def test_probe_uses_bounded_nonstream_request_and_preserves_connection_set
     assert kwargs["custom_headers"] == {"X-Test": "value"}
     assert "max_tokens" not in kwargs["extra_body"]
     assert kwargs["extra_body"]["chat_template_kwargs"]["reasoning_effort"] == "xhigh"
+
+
+@pytest.mark.parametrize("text_status,native_status,calls,protocol", [
+    ("compatible", 0, False, "text"),
+    ("incompatible", 200, True, "native"),
+    ("incompatible", 200, False, "native"),
+    ("inconclusive", 200, True, "native"),
+    ("inconclusive", 400, False, "text"),
+    ("incompatible", 400, False, "native"),
+])
+async def test_protocol_selection_adapts_without_blocking_model_questions(monkeypatch, text_status, native_status, calls, protocol):
+    from types import SimpleNamespace
+
+    from app.services import tool_compatibility
+
+    response = result("plain response" if not calls else "")
+    response.http_status = native_status
+    response.tool_calls = [{"function": {"name": "get_weather", "arguments": "{}"}}] if calls else []
+    if native_status == 400:
+        response.error = "HTTP 400: tools not supported"
+    text_probe = AsyncMock(return_value={"status": text_status})
+    chat = AsyncMock(return_value=response)
+    monkeypatch.setattr(tool_compatibility, "probe_text_tool_calls", text_probe)
+    monkeypatch.setattr(tool_compatibility, "chat_completion", chat)
+    profile = SimpleNamespace(base_url="http://test/v1", custom_headers={}, verify_tls=True)
+    report = await select_tool_protocol(profile, "m", None, {"max_tokens": 0}, {})
+    assert report["protocol"] == protocol
+    assert report["status"] in {"compatible", "inconclusive"}
+    if text_status == "compatible":
+        chat.assert_not_awaited()
+    else:
+        assert chat.call_args.kwargs["extra_body"]["tool_choice"] == "auto"

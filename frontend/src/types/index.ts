@@ -272,6 +272,8 @@ export interface ExecutionDetail {
   importance_weight: number;
   messages: PromptMessage[];
   candidate_response: string;
+  native_tool_calls?: Record<string, unknown>[];
+  tool_call_protocol?: "native" | "text" | "chat";
   reasoning_response?: string;
   generation_diagnostics?: {
     no_final_answer?: boolean;

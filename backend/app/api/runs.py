@@ -142,12 +142,14 @@ def compare_runs(ids: list[str] = Query(default=[]), session: Session = Depends(
         raise HTTPException(status_code=400, detail="Provide at least two run ids")
     runs = []
     warnings = []
+    protocols = set()
     per_prompt: dict[str, dict] = {}
     for rid in ids:
         run = session.get(BenchmarkRun, rid)
         if run is None:
             raise HTTPException(status_code=404, detail=f"Run {rid} not found")
         s = run.summary or {}
+        protocols.add((run.run_config or {}).get("tool_call_protocol", "text"))
         runs.append({
             "id": run.id,
             "name": run.name,
@@ -179,6 +181,8 @@ def compare_runs(ids: list[str] = Query(default=[]), session: Session = Depends(
     if len(judges) > 1:
         warnings.append("Runs used different judge models; judge scores may not be directly comparable.")
     per_prompt_list = [{"key": k, **v} for k, v in per_prompt.items()]
+    if len(protocols) > 1:
+        warnings.append("Runs used different tool-call protocols (native API versus Hermes text); tool-format scores may not be directly comparable.")
     return {"run_ids": ids, "runs": runs, "per_prompt": per_prompt_list, "warnings": warnings}
 
 
@@ -392,6 +396,8 @@ def _build_execution_detail(e: PromptExecution, related: dict):
         "importance_weight": snap.get("importance_weight", 1.0),
         "messages": snap.get("messages", []),
         "candidate_response": target.content if target else "",
+        "native_tool_calls": target_raw.get("native_tool_calls", []),
+        "tool_call_protocol": target_raw.get("tool_call_protocol", "chat"),
         "reasoning_response": target_raw.get("reasoning", ""),
         "generation_diagnostics": target_raw.get("generation_diagnostics", {}),
         "reference_answer": (snap.get("grader_config", {}) or {}).get("reference_answer", ""),

@@ -108,4 +108,12 @@ describe("Results summary and manual override", () => {
     expect(screen.getByText("partial answer")).toBeInTheDocument();
   });
 
+  it("identifies normalized native calls without claiming Hermes format was tested", async () => {
+    mockResults.mockResolvedValue({ ...sample, executions: [{ ...sample.executions[0], tool_call_protocol: "native" }] });
+    renderPage();
+    await waitFor(() => expect(screen.getByText("Manual prompt")).toBeInTheDocument());
+    await userEvent.click(screen.getByText("Manual prompt"));
+    expect(screen.getByText(/Hermes text formatting was not tested/)).toBeInTheDocument();
+  });
+
 });
