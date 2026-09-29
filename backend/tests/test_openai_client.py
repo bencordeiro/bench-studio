@@ -9,12 +9,11 @@ import pytest
 import respx
 
 from app.services.openai_client import (
-    OpenAIClientError,
     RETRYABLE_STATUS,
-    chat_completion,
     _build_body,
-    _extract_stream_chunk,
     _delta_text,
+    _extract_stream_chunk,
+    chat_completion,
 )
 
 
@@ -188,7 +187,7 @@ async def test_nonstreaming_parse():
 async def test_retry_on_503_then_success():
     payload = {"choices": [{"message": {"content": "ok"}, "finish_reason": "stop"}]}
     with respx.mock(base_url="http://test") as mock:
-        route = mock.post("/v1/chat/completions").mock(
+        mock.post("/v1/chat/completions").mock(
             side_effect=[
                 httpx.Response(503, text="service unavailable"),
                 httpx.Response(200, json=payload),
@@ -206,7 +205,7 @@ async def test_retry_on_503_then_success():
 @pytest.mark.asyncio
 async def test_no_retry_on_400_permanent_error():
     with respx.mock(base_url="http://test") as mock:
-        route = mock.post("/v1/chat/completions").respond(400, json={"error": {"message": "bad model"}})
+        mock.post("/v1/chat/completions").respond(400, json={"error": {"message": "bad model"}})
         result = await chat_completion(
             "http://test", api_key=None, model="m",
             messages=[{"role": "user", "content": "hi"}],
@@ -265,3 +264,71 @@ def test_retryable_status_set():
     assert 504 in RETRYABLE_STATUS
     assert 400 not in RETRYABLE_STATUS
     assert 404 not in RETRYABLE_STATUS
+
+
+@pytest.mark.parametrize("kind", ["content", "reasoning_content", "keepalive"])
+async def test_total_deadline_stops_continuously_active_stream(kind):
+    """Incoming bytes must not allow a request to outlive its total budget."""
+    closed = asyncio.Event()
+    requests = []
+
+    class EndlessStream(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            while True:
+                await asyncio.sleep(0.005)
+                if kind == "keepalive":
+                    yield b": keepalive\n\n"
+                else:
+                    chunk = {"choices": [{"delta": {kind: "still generating"}}]}
+                    yield f"data: {json.dumps(chunk)}\n\n".encode()
+
+        async def aclose(self):
+            closed.set()
+
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(200, stream=EndlessStream())
+
+    result = await asyncio.wait_for(chat_completion(
+        "http://test/v1", api_key=None, model="test", messages=[],
+        timeout=0.05, max_retries=3, transport=httpx.MockTransport(handler),
+    ), timeout=1)
+    assert "total time budget" in result.error
+    assert result.finish_reason == "error"
+    assert result.wall_time < 0.5
+    assert len(requests) == 1  # Never restart expensive generation after the deadline.
+    assert closed.is_set()
+
+
+async def test_total_deadline_includes_retry_backoff():
+    requests = []
+
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(503, json={"error": "busy"})
+
+    result = await asyncio.wait_for(chat_completion(
+        "http://test/v1", api_key=None, model="test", messages=[],
+        timeout=0.05, backoff_base=10, max_retries=3,
+        transport=httpx.MockTransport(handler),
+    ), timeout=1)
+    assert "total time budget" in result.error
+    assert len(requests) == 1
+    assert result.retry_count == 0
+
+
+async def test_total_deadline_stops_nonstream_request():
+    cancelled = asyncio.Event()
+
+    async def handler(request):
+        try:
+            await asyncio.Event().wait()
+        finally:
+            cancelled.set()
+
+    result = await asyncio.wait_for(chat_completion(
+        "http://test/v1", api_key=None, model="test", messages=[],
+        stream=False, timeout=0.05, transport=httpx.MockTransport(handler),
+    ), timeout=1)
+    assert "total time budget" in result.error
+    assert cancelled.is_set()

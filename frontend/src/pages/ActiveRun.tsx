@@ -34,7 +34,7 @@ export default function ActiveRun() {
     es.onmessage = (ev) => {
       try {
         const data = JSON.parse(ev.data);
-        if (data.event === "snapshot" || data.event === "prompt") {
+        if (data.event === "snapshot" || data.event === "prompt" || data.event === "prompt_started" || data.event === "phase") {
           if (typeof data.progress === "number") setProgress(data.progress);
           if (data.phase) setPhase(data.phase);
           if (data.current_prompt) setCurrentPrompt(data.current_prompt);

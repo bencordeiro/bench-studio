@@ -281,7 +281,11 @@ async def chat_completion(
     backoff_max: float = 30.0,
     transport: httpx.AsyncBaseTransport | None = None,
 ) -> ChatResult:
-    """Perform a chat completion with bounded exponential backoff retries."""
+    """Complete within one wall-clock budget, including streams and retries.
+
+    HTTPX timeouts only bound inactivity between reads. The outer deadline
+    also stops endless token/keepalive streams and bounds retry backoff.
+    """
     url = chat_completions_url(base_url)
     headers = _build_headers(api_key, custom_headers)
     body = _build_body(
@@ -300,64 +304,72 @@ async def chat_completion(
     first_attempt_at = time.monotonic()
 
     attempt = 0
-    while attempt <= max_retries:
-        # Time each attempt from its own start. Measuring from the first attempt
-        # would fold failed requests and backoff sleeps into TTFT and latency,
-        # making a model look arbitrarily slow whenever the server hiccuped.
-        start = time.monotonic()
-        try:
-            limits = httpx.Limits(max_connections=10, max_keepalive_connections=5)
-            async with httpx.AsyncClient(
-                timeout=timeout,
-                verify=verify_tls,
-                limits=limits,
-                transport=transport,
-            ) as client:
-                if stream:
-                    result = await _do_stream(
-                        client, url, headers, body, retry_count=attempt, start=start
+    try:
+        async with asyncio.timeout(timeout):
+            while attempt <= max_retries:
+                # Time each attempt from its own start. Measuring from the first attempt
+                # would fold failed requests and backoff sleeps into TTFT and latency,
+                # making a model look arbitrarily slow whenever the server hiccuped.
+                start = time.monotonic()
+                try:
+                    limits = httpx.Limits(max_connections=10, max_keepalive_connections=5)
+                    async with httpx.AsyncClient(
+                        timeout=timeout,
+                        verify=verify_tls,
+                        limits=limits,
+                        transport=transport,
+                    ) as client:
+                        if stream:
+                            result = await _do_stream(
+                                client, url, headers, body, retry_count=attempt, start=start
+                            )
+                        else:
+                            result = await _do_nonstream(
+                                client, url, headers, body, retry_count=attempt, start=start
+                            )
+                        result.wall_time = time.monotonic() - first_attempt_at
+                        return result
+                except OpenAIClientError as exc:
+                    last_error = exc
+                    # Some older/stricter servers reject the usage request outright.
+                    # Drop it and retry immediately rather than failing the prompt --
+                    # we lose exact token counts, not the measurement itself.
+                    if _should_drop_stream_options(exc, body):
+                        # Not the model's fault and not a transient failure: retry at
+                        # once without spending an attempt, so this still works when
+                        # max_retries is 0.
+                        log.info("server rejected stream_options; retrying without it")
+                        body.pop("stream_options", None)
+                        continue
+                    if not exc.retryable or attempt >= max_retries:
+                        retry_count = attempt
+                        break
+                    retry_count = attempt + 1
+                    delay = min(backoff_max, backoff_base * (2**attempt))
+                    log.warning(
+                        "retryable error (attempt %d): %s; retrying in %.1fs", attempt + 1, exc, delay
                     )
-                else:
-                    result = await _do_nonstream(
-                        client, url, headers, body, retry_count=attempt, start=start
-                    )
-                result.wall_time = time.monotonic() - first_attempt_at
-                return result
-        except OpenAIClientError as exc:
-            last_error = exc
-            # Some older/stricter servers reject the usage request outright.
-            # Drop it and retry immediately rather than failing the prompt --
-            # we lose exact token counts, not the measurement itself.
-            if _should_drop_stream_options(exc, body):
-                # Not the model's fault and not a transient failure: retry at
-                # once without spending an attempt, so this still works when
-                # max_retries is 0.
-                log.info("server rejected stream_options; retrying without it")
-                body.pop("stream_options", None)
-                continue
-            if not exc.retryable or attempt >= max_retries:
-                retry_count = attempt
-                break
-            retry_count = attempt + 1
-            delay = min(backoff_max, backoff_base * (2**attempt))
-            log.warning(
-                "retryable error (attempt %d): %s; retrying in %.1fs", attempt + 1, exc, delay
-            )
-            await asyncio.sleep(delay)
-        except RETRYABLE_EXCEPTIONS as exc:
-            last_error = OpenAIClientError(_sanitize_error_message(str(exc)), retryable=True)
-            if attempt >= max_retries:
-                retry_count = attempt
-                break
-            retry_count = attempt + 1
-            delay = min(backoff_max, backoff_base * (2**attempt))
-            log.warning("retryable network error (attempt %d): %s", attempt + 1, exc)
-            await asyncio.sleep(delay)
-        except Exception as exc:  # permanent, non-retryable
-            last_error = OpenAIClientError(_sanitize_error_message(str(exc)), retryable=False)
-            retry_count = attempt
-            break
-        attempt += 1
+                    await asyncio.sleep(delay)
+                except RETRYABLE_EXCEPTIONS as exc:
+                    last_error = OpenAIClientError(_sanitize_error_message(str(exc)), retryable=True)
+                    if attempt >= max_retries:
+                        retry_count = attempt
+                        break
+                    retry_count = attempt + 1
+                    delay = min(backoff_max, backoff_base * (2**attempt))
+                    log.warning("retryable network error (attempt %d): %s", attempt + 1, exc)
+                    await asyncio.sleep(delay)
+                except Exception as exc:  # permanent, non-retryable
+                    last_error = OpenAIClientError(_sanitize_error_message(str(exc)), retryable=False)
+                    retry_count = attempt
+                    break
+                attempt += 1
+    except TimeoutError:
+        retry_count = attempt
+        last_error = OpenAIClientError(
+            f"Request exceeded total time budget of {timeout:g}s (including retries).",
+            retryable=False,
+        )
 
     # All retries exhausted.
     total = time.monotonic() - first_attempt_at

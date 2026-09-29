@@ -121,7 +121,7 @@ async def test_reasoning_effort_in_prompt_override_wins(temp_data_dir, monkeypat
 @pytest.mark.asyncio
 async def test_cancel_aborts_in_flight_request_immediately(temp_data_dir):
     """A cancel requested during a slow request must abort it, not wait for it."""
-    from app.jobs.engine import _await_abortable, JobCancelled, clear_cancel, signal_cancel
+    from app.jobs.engine import JobCancelled, _await_abortable, clear_cancel, signal_cancel
 
     started = asyncio.Event()
     released = asyncio.Event()
@@ -151,8 +151,8 @@ async def test_cancel_aborts_in_flight_request_immediately(temp_data_dir):
 
 def test_update_progress_counts_generation_complete_during_target_phase(session):
     """Progress must advance once generation stored a response, before grading."""
-    from app.jobs.engine import create_run_executions, _update_progress
-    from app.models import BenchmarkRun, BenchmarkSet, TargetResponse
+    from app.jobs.engine import _update_progress
+    from app.models import BenchmarkRun, TargetResponse
     bench = _make_benchmark(session)
     run = BenchmarkRun(
         id=str(uuid.uuid4()), name="r", status=RunStatus.RUNNING_TARGET.value,
@@ -441,3 +441,82 @@ async def test_judge_required_without_judge_defers(temp_data_dir, monkeypatch):
         e = session.query(PromptExecution).filter(PromptExecution.run_id == run_id).first()
         assert e.status == PromptStatus.AWAITING_JUDGE.value
         assert e.final_score is None
+
+
+async def test_parent_cancellation_closes_in_flight_request():
+    from app.jobs.engine import _await_abortable, clear_cancel
+
+    started = asyncio.Event()
+    closed = asyncio.Event()
+
+    async def request():
+        started.set()
+        try:
+            await asyncio.Event().wait()
+        finally:
+            closed.set()
+
+    task = asyncio.create_task(_await_abortable(request(), "parent-cancel"))
+    await started.wait()
+    task.cancel()
+    try:
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        assert closed.is_set()
+    finally:
+        clear_cancel("parent-cancel")
+
+
+async def test_request_deadline_fails_one_prompt_and_continues(monkeypatch):
+    import httpx
+
+    from app.services.openai_client import chat_completion
+
+    requests = 0
+
+    async def handler(request):
+        nonlocal requests
+        requests += 1
+        if requests == 1:
+            await asyncio.Event().wait()
+        return httpx.Response(200, json={
+            "choices": [{"message": {"content": "no"}, "finish_reason": "stop"}],
+        })
+
+    async def bounded_chat(*args, **kwargs):
+        return await chat_completion(*args, **kwargs, transport=httpx.MockTransport(handler))
+
+    monkeypatch.setattr(engine, "chat_completion", bounded_chat)
+    config = {"timeout": 0.05, "streaming_enabled": False}
+    with session_scope() as session:
+        bench = _make_benchmark(session)
+        ep = _make_endpoint(session)
+        run = crud.create_run(session, {
+            "benchmark_id": bench.id, "target_endpoint_id": ep.id,
+            "target_model": "demo", "run_config": config,
+        })
+        run_id, profile = run.id, _detached(ep)
+    await asyncio.wait_for(engine.run_job(
+        run_id, target_profile=profile, target_model="demo", target_session_key=None,
+        target_settings={}, judge_profile=None, judge_model="", judge_session_key=None,
+        judge_settings={}, run_config=config, judge_enabled=False, verifier_enabled=False,
+    ), timeout=3)
+    with session_scope() as session:
+        run = session.get(BenchmarkRun, run_id)
+        executions = session.query(PromptExecution).filter_by(run_id=run_id).order_by(PromptExecution.position).all()
+        assert run.status == RunStatus.COMPLETED_WITH_ERRORS.value
+        assert run.completed_prompts == 2
+        assert run.failed_prompts == 1
+        assert "total time budget" in executions[0].error_message
+        assert executions[1].final_score == 100
+        assert requests == 2
+
+
+@pytest.mark.parametrize("timeout", [0, -1, float("inf"), float("nan")])
+def test_run_config_rejects_invalid_time_budget(timeout):
+    from pydantic import ValidationError
+
+    from app.schemas.runs import RunConfig
+
+    with pytest.raises(ValidationError):
+        RunConfig(timeout=timeout)

@@ -190,8 +190,11 @@ async def _await_abortable(awaitable, run_id):
             raise JobCancelled()
         return task.result()
     finally:
-        if not cancel_waiter.done():
-            cancel_waiter.cancel()
+        # Parent cancellation (e.g. app shutdown) must also close the request.
+        for pending in (task, cancel_waiter):
+            if not pending.done():
+                pending.cancel()
+        await asyncio.gather(task, cancel_waiter, return_exceptions=True)
 
 
 async def _is_cancelled(session: Session, run_id: str) -> bool:
@@ -319,6 +322,10 @@ async def _run_target_phase(
             exec_id = execution.id
             execution.status = PromptStatus.RUNNING.value
 
+        await _emit(
+            run_id, "prompt_started",
+            current_prompt=prompt_snapshot.get("title") or prompt_snapshot.get("stable_id"),
+        )
         # Run the target request outside the session lock.
         result = await _execute_target_prompt(
             run_id, profile, model, session_key, settings, run_config, prompt_snapshot

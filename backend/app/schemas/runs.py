@@ -23,7 +23,7 @@ class RunConfig(ORMModel):
     top_p: float = 1.0
     max_tokens: int = 0
     reasoning_effort: str | None = None
-    timeout: float = 60.0
+    timeout: float = Field(default=60.0, gt=0, allow_inf_nan=False)
     retry_max_attempts: int = 3
     retry_backoff_base: float = 0.5
     retry_backoff_max: float = 30.0
