@@ -101,10 +101,11 @@ export default function Endpoints() {
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-white">{p.name}</span>
                     {!p.enabled && <Badge className="text-gray-500 border-border bg-bg-elev">disabled</Badge>}
-                    {p.has_api_key && <Badge className="text-ok border-ok/40 bg-ok/10">key saved</Badge>}
+                    {p.has_api_key && <Badge className="text-ok border-ok/40 bg-ok/10">{p.api_key_storage === "session" ? "key in server memory" : "key saved"}</Badge>}
                   </div>
                   <div className="text-sm text-gray-400 mono truncate mt-1">{p.base_url}</div>
                   {p.default_model && <div className="text-xs text-gray-500 mt-1">Default model: {p.default_model}</div>}
+                  {p.has_api_key && p.api_key_storage === "session" && <p className="text-xs text-warn mt-1">Re-enter this key after restarting Bench Studio, or use an environment variable to keep it available.</p>}
                   {testResult[p.id] && (
                     <div className="mt-3 text-xs">
                       <Badge className={testResult[p.id].reachable ? "text-ok border-ok/40 bg-ok/10" : "text-err border-err/40 bg-err/10"}>

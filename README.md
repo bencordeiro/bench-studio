@@ -192,7 +192,7 @@ Contents: SQLite database, application logs, optional backups, and the directory
 
 - API keys are **never returned to the frontend** after being saved. The UI only shows `••••••••` and whether a key exists.
 - When the OS credential store is available, keys are stored via Python's `keyring` (Windows Credential Manager / GNOME Keyring / KWallet).
-- When the keyring is unavailable you may: provide a key per session, reference an environment variable, or (with explicit opt-in) fall back to plaintext. The app never silently stores keys in SQLite.
+- When the keyring is unavailable, entered keys stay in server memory for Test, Models and benchmark runs. Re-enter them after restarting Bench Studio, or reference an environment variable for use across restarts. Keys are not stored in SQLite; the legacy plaintext-fallback option does not provide durable storage.
 - Keys are never written to logs, exports, or error reports. See [ARCHITECTURE.md](ARCHITECTURE.md#secret-handling).
 
 ## Creating a benchmark
@@ -257,7 +257,7 @@ Your entire state is the local data directory. Back it up by copying that direct
 ## Security limitations
 
 - No multi-user authentication. Bind to localhost.
-- API keys rely on the OS keyring; if it is unavailable, only session/env/plaintext-fallback options exist.
+- API keys use the OS keyring or server memory; environment variables also work. Keys held in memory must be re-entered after an app restart.
 - The browser never contacts the LLM endpoint directly; all traffic is proxied by the backend, which injects credentials.
 - Logs and exports are sanitized but you should still review them before sharing.
 

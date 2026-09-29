@@ -7,6 +7,7 @@ from typing import Any
 
 import httpx
 
+from app.core.secrets import MISSING_SAVED_KEY
 from app.core.security import sanitize
 from app.core.urls import models_url
 from app.models import EndpointProfile
@@ -50,7 +51,9 @@ async def fetch_models(
 ) -> FetchModelsResult:
     url = models_url(profile.base_url)
     key = _resolve_key(profile, session_key)
-    headers = _build_headers(key, profile.custom_headers)
+    if profile.has_api_key and not key:
+        return FetchModelsResult(success=False, error=MISSING_SAVED_KEY)
+    headers = _build_headers(key, profile.custom_headers, base_url=profile.base_url)
     try:
         async with httpx.AsyncClient(
             timeout=profile.request_timeout, verify=profile.verify_tls
@@ -82,7 +85,10 @@ async def test_connection(
     """
     url = models_url(profile.base_url)
     key = _resolve_key(profile, session_key)
-    headers = _build_headers(key, profile.custom_headers)
+    if profile.has_api_key and not key:
+        return ConnectionTestResult(reachable=False, http_status=None, response_time_ms=None,
+                                    models_discovered=False, error=MISSING_SAVED_KEY)
+    headers = _build_headers(key, profile.custom_headers, base_url=profile.base_url)
     start = time.monotonic()
     http_status: int | None = None
     try:

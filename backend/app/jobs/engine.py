@@ -454,7 +454,7 @@ def _pick(overrides, settings, run_config, key):
 
 
 def _resolve_key(profile, session_key):
-    from app.core.secrets import resolve_api_key
+    from app.core.secrets import MISSING_SAVED_KEY, resolve_api_key
 
     key, _ = resolve_api_key(
         profile.id,
@@ -462,6 +462,8 @@ def _resolve_key(profile, session_key):
         env_var=profile.api_key_env_var or None,
         session_key=session_key,
     )
+    if profile.has_api_key and not key:
+        raise ValueError(MISSING_SAVED_KEY)
     return key
 
 

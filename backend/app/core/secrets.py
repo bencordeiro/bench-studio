@@ -4,9 +4,16 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
-from app.core.config import SERVICE_NAME, get_settings
+from app.core.config import SERVICE_NAME
 
 log = logging.getLogger(__name__)
+_session_keys: dict[str, str] = {}
+
+MISSING_SAVED_KEY = (
+    "The endpoint's API key is unavailable in this server process. "
+    "Edit the endpoint and enter the key again, or configure its API key environment variable. "
+    "Keys kept in server memory must be entered again after restarting the app."
+)
 
 
 class KeyringUnavailable(RuntimeError):
@@ -42,27 +49,26 @@ def _profile_key(profile_id: str) -> str:
 def store_api_key(profile_id: str, api_key: str) -> str:
     """Store the API key. Returns the storage method used.
 
-    Returns one of: "keyring", "env", "session", "plaintext".
-    Plaintext is only used when explicitly enabled via settings.
+    Returns "keyring" or "session". Session keys live only in this process.
     """
-    settings = get_settings()
+    api_key = api_key.strip()
     keyring = _import_keyring()
     if keyring is not None:
         try:
             keyring.set_password(SERVICE_NAME, _profile_key(profile_id), api_key)
+            _session_keys.pop(profile_id, None)
             return "keyring"
         except Exception as exc:  # pragma: no cover
             log.warning("keyring storage failed (%s); falling back", exc)
-    if settings.allow_plaintext_key_fallback:
-        log.warning(
-            "Storing API key for profile %s in plaintext (fallback enabled).", profile_id
-        )
-        return "plaintext"
-    # Not stored durably — caller should treat as session-only.
+    # The old fallback marked a key as "session" but discarded its value.
+    # Retain it for Test, Models and queued runs without putting it in SQLite.
+    _session_keys[profile_id] = api_key
     return "session"
 
 
 def get_api_key(profile_id: str) -> Optional[str]:
+    if profile_id in _session_keys:
+        return _session_keys[profile_id]
     keyring = _import_keyring()
     if keyring is not None:
         try:
@@ -73,6 +79,7 @@ def get_api_key(profile_id: str) -> Optional[str]:
 
 
 def delete_api_key(profile_id: str) -> None:
+    _session_keys.pop(profile_id, None)
     keyring = _import_keyring()
     if keyring is not None:
         try:
@@ -95,6 +102,8 @@ def resolve_api_key(
     """
     if session_key:
         return session_key, "session"
+    if stored_value and profile_id in _session_keys:
+        return _session_keys[profile_id], "session"
     keyring_value = get_api_key(profile_id) if stored_value else None
     if keyring_value:
         return keyring_value, "keyring"

@@ -22,7 +22,7 @@ SENSITIVE_KEYS = (
 )
 
 _BEARER_RE = re.compile(r"(Bearer\s+)([A-Za-z0-9._\-]+)", re.IGNORECASE)
-_KEY_RE = re.compile(r"(sk-[A-Za-z0-9_\-]{6,})")
+_KEY_RE = re.compile(r"(\b(?:sk|tp|ttp)-[A-Za-z0-9_\-]{6,})")
 _LONG_TOKEN_RE = re.compile(r"([A-Za-z0-9_\-]{32,})")
 
 

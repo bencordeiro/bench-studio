@@ -7,6 +7,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator, Awaitable, Callable
+from urllib.parse import urlparse
 
 import httpx
 
@@ -74,17 +75,25 @@ class ChatResult:
 
 
 def _build_headers(
-    api_key: str | None, custom_headers: dict[str, str] | None
+    api_key: str | None, custom_headers: dict[str, str] | None, *, base_url: str = ""
 ) -> dict[str, str]:
     headers: dict[str, str] = {"Content-Type": "application/json", "Accept": "application/json"}
     if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
+        if urlparse(base_url).hostname in {
+            "api.xiaomimimo.com", "token-plan-sgp.xiaomimimo.com",
+            "token-plan-cn.xiaomimimo.com", "token-plan-ams.xiaomimimo.com",
+        }:
+            headers["api-key"] = api_key.strip()
+        else:
+            headers["Authorization"] = f"Bearer {api_key.strip()}"
     for k, v in (custom_headers or {}).items():
         # Lowercase compare to avoid duplicate auth headers leaking the real key in logs.
         if k.lower() == "authorization":
             headers["Authorization"] = v
         elif k.lower() == "content-type":
             headers["Content-Type"] = v
+        elif k.lower() == "api-key":
+            headers["api-key"] = v
         else:
             headers[k] = v
     return headers
@@ -314,7 +323,7 @@ async def chat_completion(
     is imposed on a question.
     """
     url = chat_completions_url(base_url)
-    headers = _build_headers(api_key, custom_headers)
+    headers = _build_headers(api_key, custom_headers, base_url=base_url)
     body = _build_body(
         messages,
         model,
