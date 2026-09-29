@@ -26,7 +26,7 @@ failed. The server reported `stop`; token counts alone do not prove truncation.
 No Python-suite run was present in the inspected history.
 
 Questions execute sequentially, so long generation times accumulate. The current
-Master suite has 55 deterministic questions; Python has 30 deterministic and 20
+Master suite now has 50 deterministic questions; Python has 30 deterministic and 20
 execution questions. Each Python execution test already has a three-second
 subprocess timeout. Neither suite needs a judge. Streaming keepalives also count
 as network activity; an inactivity timeout does not detect a model stuck thinking

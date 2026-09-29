@@ -1,7 +1,7 @@
 # Curated suite audit — September 2026
 
-This revision contains 192 custom questions, plus the unchanged 164-question
-HumanEval suite (356 total). It emphasizes clear contracts and reproducible
+This revision contains 187 custom questions, plus the unchanged 164-question
+HumanEval suite (351 total). It emphasizes clear contracts and reproducible
 scoring. Difficulty is a design judgment until measured against models; no
 paid provider calls or cross-model calibration were performed during this audit.
 
@@ -9,7 +9,7 @@ paid provider calls or cross-model calibration were performed during this audit.
 |---|---:|---|---|
 | Instruction-Following & Format Adherence | 12 → 15 | 6.0.0 | Reviewed all constraints; added untrusted-data extraction, CSV escaping, conditional redaction |
 | Agentic Tool-Use & Structured Output (Hermes) | 14 → 15 | 4.0.0 | Exact envelopes and types; harder argument derivation, cross-year dates, filtered fan-out, retry state |
-| Master Suite | 56 → 55 | 3.0.0 | Removed two formula-substitution items; added durable transaction replay; neutral deliberation wording |
+| Master Suite | 56 → 50 | 4.0.0 | Original revisions plus five duration/problem-item removals after calibration |
 | Terminal Semantics & System Gotchas | 12 → 12 | 2.0.0 | Corrected three bad keys; revised four shallow items; specified environment assumptions |
 | Web Dev Correctness & Debugging (JS) | 46 → 45 | 5.0.0 | Removed `wd-typeof-null`; reproduced every remaining output |
 | Code Reasoning & Correctness (Python) | 55 → 50 | 6.0.0 | Retained 30 reasoning items; replaced 25 with 20 original complete-function execution tasks |
@@ -211,3 +211,21 @@ HumanEval remains upstream-compatible and its existing reference-solution and
 source-parity tests remain part of the full backend test run.
 
 The [qwen27b diagnostic pilot](CALIBRATION_QWEN27B_2026_09_29.md) documents measured formatting failures, repetition loops and prompt variants behind the Python 6.0.0 and Master 3.0.0 follow-up. It is a targeted pilot, not full cross-model calibration.
+
+## Master reduced to 50 questions
+
+Version 4.0.0 removes five items without replacements: class-creation hook ordering
+(`ms-py-class-creation-order`), minimal DFA counting (`ms-cs-minimal-dfa`), weak-acid
+mixture pH (`ms-sci-coupled-diprotic-mixture`), entropy across a cycle
+(`ms-sci-cycle-entropy`), and nested relativistic velocity composition
+(`ms-sci-nested-velocity-legs`). The first two produced unfinished observations
+lasting at least 271/300 seconds. The acid and entropy items passed but took
+188.5/131.2 seconds in the pilot. The velocity item took about 257 seconds in the
+older saved Master run; it was not rerun in the pilot. These are targeted duration
+choices rather than a statistically established ranking across all questions or
+models. The remaining 50 questions retain their keys and weights. The bundled
+total is now 351 prompts; historical runs retain their original suite snapshots.
+
+The 50-question revision passed 25 Master, suite-loading and count tests, plus
+Ruff and whitespace checks. A direct comparison confirmed that retained prompts,
+grader configurations and weights match version 3.0.0.

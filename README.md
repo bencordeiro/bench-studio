@@ -7,7 +7,7 @@ LocalBench Studio is a **desktop-hosted web application for benchmarking one LLM
 ## What it does
 
 - Save one or more OpenAI-compatible endpoint profiles (with optional API keys stored in the OS credential store).
-- Start from seven bundled suites (356 prompts): six custom suites with automated validation plus the public **HumanEval** benchmark, or author your own.
+- Start from seven bundled suites (351 prompts): six custom suites with automated validation plus the public **HumanEval** benchmark, or author your own.
 - Grade each prompt one of five ways: **deterministic**, **LLM judge**, **hybrid**, **manual review**, or **execution** (run the generated code against unit tests). Deterministic graders cover exact/numeric/regex/concept/JSON/multiple-choice/count and parsed **tool calls**.
 - Run a benchmark against one target model; close/refresh the browser without stopping the run.
 - Reopen later and see live progress, resume interrupted runs.
@@ -21,7 +21,7 @@ Choose **Endpoint Profiles → New Endpoint → Provider preset** to fill the AP
 
 ## Bundled benchmark suites
 
-Seven suites ship with the app and load on first run (356 prompts). Six contain custom items designed to reduce reliance on familiar public benchmark questions. Originality does not guarantee freedom from training-data contamination. The seventh is the public **HumanEval** benchmark, included for numbers that stay comparable to the published literature.
+Seven suites ship with the app and load on first run (351 prompts). Six contain custom items designed to reduce reliance on familiar public benchmark questions. Originality does not guarantee freedom from training-data contamination. The seventh is the public **HumanEval** benchmark, included for numbers that stay comparable to the published literature.
 
 | Suite | Prompts | What it measures |
 |---|---|---|
@@ -29,7 +29,7 @@ Seven suites ship with the app and load on first run (356 prompts). Six contain 
 | Web Dev Correctness (JS) | 45 | Coercion, the event loop and microtask ordering, prototypes, async semantics, JSON edge cases |
 | Agentic Tool-Use (Hermes) | 15 | Function calling in BFCL categories: simple, tool selection, parallel, argument precision, relevance |
 | Instruction-Following | 15 | IFEval-style stacked constraints: exact counts, forbidden vocabulary, strict JSON, custom markup |
-| **Master Suite** | 55 | Cross-domain and deliberately brutal — see below |
+| **Master Suite** | 50 | Cross-domain and deliberately brutal — see below |
 | Terminal Semantics & System Gotchas | 12 | Linux shell/permissions, git reachability, date normalization, log aggregation, text processing, SQLite WAL, cron, bash pipefail, packaging, locale sort, filesystem, iptables |
 | **HumanEval (OpenAI)** | 164 | Code generation: complete the function, executed against its unit tests — see below |
 
@@ -50,10 +50,10 @@ The four base suites measure one competence each, and a strong model saturates t
 
 | Domain | Items | Sample of what it covers |
 |---|---|---|
-| Code reasoning (Python / JS) | 19 | Class-creation hook ordering, `ExitStack` unwinding, `Symbol.toPrimitive` hints, field initialization vs `super()`, thenable microtask cost |
+| Code reasoning (Python / JS) | 18 | `ExitStack` unwinding, `Symbol.toPrimitive` hints, field initialization vs `super()`, thenable microtask cost |
 | Quantitative reasoning | 7 | Self-overlapping pattern waiting times, base-12 factorial zeros, GCD-matrix determinants |
-| Algorithms & distributed systems | 6 | Segmented-LRU simulation, vector clocks, minimal DFA size, transaction replay with rollback and retries |
-| Physics & chemistry | 4 | Rolling-transition dynamics, buffer pH, relativistic proper time |
+| Algorithms & distributed systems | 5 | Segmented-LRU simulation, vector clocks, transaction replay with rollback and retries |
+| Physics | 1 | Rolling-transition dynamics |
 | Automotive engineering | 1 | Intercooler charge temperature |
 | Abstention & false premises | 5 | Planted falsehoods the model must refuse rather than elaborate |
 | Multi-turn stateful tool use | 5 | Id propagation past a decoy, error recovery, withholding an unsafe action |

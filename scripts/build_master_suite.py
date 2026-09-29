@@ -71,7 +71,7 @@ def _load_grader():
 GRADER = _load_grader()
 
 SUITE_NAME = "Master Suite"
-SUITE_VERSION = "3.0.0"
+SUITE_VERSION = "4.0.0"
 
 # Tier -> (difficulty label, importance weight). The declared difficulty and the
 # weight must stay ordered together: test_declared_difficulty_matches_weight_ordering
@@ -230,41 +230,6 @@ def numeric_item(
 # 1. Code reasoning -- Python
 # =========================================================================== #
 def build_python_items() -> None:
-    code_item(
-        "ms-py-class-creation-order",
-        "Class creation hook ordering",
-        "Interleaving of metaclass __new__/__init__, __set_name__ and __init_subclass__.",
-        "Python 3",
-        '''
-        log = []
-
-        class Probe:
-            def __set_name__(self, owner, name):
-                log.append("set:" + name)
-            def __get__(self, obj, objtype=None):
-                return len(log)
-
-        class Meta(type):
-            def __new__(mcls, name, bases, ns):
-                log.append("new:" + name)
-                return super().__new__(mcls, name, bases, ns)
-            def __init__(cls, name, bases, ns):
-                log.append("init:" + name)
-                super().__init__(name, bases, ns)
-
-        class Base(metaclass=Meta):
-            def __init_subclass__(cls):
-                log.append("sub:" + cls.__name__)
-
-        class Child(Base):
-            probe = Probe()
-            tail = "t"
-
-        print(" ".join(log), Child.probe)
-        ''',
-        "frontier",
-        tags=["metaclass", "descriptors"],
-    )
 
     code_item(
         "ms-py-class-scope-comprehension",
@@ -1238,84 +1203,6 @@ def build_cs_items() -> None:
         abs_tol=0,
     )
 
-    # -- C4: minimal complete DFA, two forbidden factors and a mod-7 counter
-    FORBIDDEN = ["1101", "000"]
-    MODULUS, TARGET = 7, 3
-    maxlen = max(len(f) for f in FORBIDDEN)
-    DEAD = ("DEAD", "")
-    start = (0, "")
-    seen = {start, DEAD}
-    stack = [start]
-    trans: dict = {}
-    while stack:
-        state = stack.pop()
-        d, suf = state
-        for ch in "01":
-            if any(f in (suf + ch) for f in FORBIDDEN):
-                nxt_state = DEAD
-            else:
-                nxt_state = ((d + (1 if ch == "0" else -1)) % MODULUS,
-                             (suf + ch)[-maxlen:])
-            trans[(state, ch)] = nxt_state
-            if nxt_state not in seen:
-                seen.add(nxt_state)
-                stack.append(nxt_state)
-    trans[(DEAD, "0")] = DEAD
-    trans[(DEAD, "1")] = DEAD
-    accepting = {s for s in seen if s != DEAD and s[0] == TARGET}
-    part = {s: int(s in accepting) for s in seen}
-    while True:
-        sig = {s: (part[s], part[trans[(s, "0")]], part[trans[(s, "1")]]) for s in seen}
-        groups: dict = {}
-        for s in seen:
-            groups.setdefault(sig[s], []).append(s)
-        newpart = {}
-        for i, (_, members) in enumerate(sorted(groups.items(), key=lambda kv: str(kv[0]))):
-            for s in members:
-                newpart[s] = i
-        if len(set(newpart.values())) == len(set(part.values())):
-            part = newpart
-            break
-        part = newpart
-    min_states = len(set(part.values()))
-
-    def in_lang(s):
-        return (not any(f in s for f in FORBIDDEN)) and (
-            s.count("0") - s.count("1")) % MODULUS == TARGET
-
-    def signature(prefix, depth=9):
-        return tuple(
-            in_lang(prefix + "".join(suf))
-            for L in range(depth + 1)
-            for suf in itertools.product("01", repeat=L)
-        )
-
-    classes = {
-        signature("".join(p))
-        for L in range(0, 11)
-        for p in itertools.product("01", repeat=L)
-    }
-    assert len(classes) == min_states, (len(classes), min_states)
-    numeric_item(
-        "ms-cs-minimal-dfa",
-        "States in the minimal complete DFA",
-        "A mod-7 counter crossed with a two-pattern suffix tracker; the many ways of "
-        "entering the trap state all collapse to one, and several live states merge.",
-        "cs/automata",
-        "frontier",
-        "Consider the language L over the alphabet {0, 1} consisting of exactly those "
-        "strings w such that ALL of the following hold:\n\n"
-        "  (a) (number of 0s in w) minus (number of 1s in w) is congruent to 3 modulo 7;\n"
-        "  (b) w does not contain 1101 as a contiguous substring;\n"
-        "  (c) w does not contain 000 as a contiguous substring.\n\n"
-        "How many states does the MINIMAL complete deterministic finite automaton for L "
-        "have? Count every state of the complete DFA, including any trap state from "
-        "which no accepting state is reachable.",
-        min_states,
-        decimals=0,
-        abs_tol=0,
-    )
-
     # -- C5: dynamic array under an interleaved push/pop workload
     cap, size, copies = 1, 0, 0
     OPS = ["push"] * 25 + (["pop"] * 4 + ["push"] * 5) * 15 + ["pop"] * 30
@@ -1419,121 +1306,6 @@ def build_science_items() -> None:
         rel_tol=0.004,
     )
 
-    # -- S2: two weak acids sharing one solution -> coupled proton balance
-    Ka1, C1 = 1.8e-4, 1.50e-3          # acid HA
-    Ka2, C2 = 6.3e-5, 2.50e-3          # acid HB
-    # Charge balance: [H+] = Ka1*C1/(Ka1+[H+]) + Ka2*C2/(Ka2+[H+])   (water ignored)
-    lo, hi = 1e-12, 1.0
-    for _ in range(300):
-        h = (lo + hi) / 2
-        f = Ka1 * C1 / (Ka1 + h) + Ka2 * C2 / (Ka2 + h) - h
-        if f > 0:
-            lo = h
-        else:
-            hi = h
-    h_exact = (lo + hi) / 2
-    ph_two = -math.log10(h_exact)
-    ph_single = -math.log10((-Ka1 + math.sqrt(Ka1 ** 2 + 4 * Ka1 * C1)) / 2)
-    assert abs(ph_two - ph_single) > 0.1
-    numeric_item(
-        "ms-sci-coupled-diprotic-mixture",
-        "pH of a mixture of two weak acids",
-        "Both acids contribute to the same [H+] and each is suppressed by the other, so "
-        "the proton balance is a single coupled equation. Treating them independently, "
-        "or ignoring the weaker one, is wrong by more than 0.1 pH.",
-        "science/chemistry",
-        "frontier",
-        "An aqueous solution at 25 degrees Celsius contains BOTH of the following weak "
-        "monoprotic acids:\n\n"
-        "    HA at 1.50 x 10^-3 M, with Ka = 1.8 x 10^-4\n"
-        "    HB at 2.50 x 10^-3 M, with Ka = 6.3 x 10^-5\n\n"
-        "The two acids share the same solution, so each one's dissociation is suppressed "
-        "by the hydrogen ions produced by the other. Neglect the autoionisation of "
-        "water, but make no other approximation that the numbers do not justify.\n\n"
-        "What is the pH of the solution?",
-        ph_two,
-        decimals=3,
-        abs_tol=0.02,
-    )
-
-    # -- S3: four-stage cycle, entropy change of the gas over the whole cycle
-    n_mol, a_cp, b_cp = 2.50, 22.60, 0.02090
-    R_GAS = 8.314
-    TA, TB = 298.15, 675.00
-    PA, PB = 100.0, 480.0
-
-    def ds_temp(t1, t2):
-        return n_mol * (a_cp * math.log(t2 / t1) + b_cp * (t2 - t1))
-
-    def ds_press(p1, p2):
-        return -n_mol * R_GAS * math.log(p2 / p1)
-
-    s1 = ds_temp(TA, TB)                       # 1: isobaric heat at PA
-    s2 = ds_press(PA, PB)                      # 2: isothermal compression at TB
-    TC = 350.00
-    s3 = ds_temp(TB, TC)                       # 3: isobaric cool at PB, to TC
-    total_three = s1 + s2 + s3
-    # Stage 3 must NOT return to the starting temperature: with TC == TA the
-    # first and third contributions cancel exactly and the whole answer reduces
-    # to the single pressure term, which is a much easier question than intended.
-    assert abs(s1 + s3) > 5.0, (s1, s3)
-    numeric_item(
-        "ms-sci-cycle-entropy",
-        "Entropy change across three stages of a cycle",
-        "Temperature-dependent Cp on two stages and a pressure term on the third; the "
-        "signs of the three contributions differ and they must be accumulated in order.",
-        "science/thermodynamics",
-        "frontier",
-        "2.50 mol of a gas has a molar heat capacity at constant pressure that varies "
-        "with temperature as\n\n"
-        "    Cp(T) = 22.60 + 0.02090 * T      (J per mol per K, with T in kelvin)\n\n"
-        "Treat it as an ideal gas with R = 8.314 J/(mol K). Starting at 298.15 K and "
-        "100.0 kPa, it is taken reversibly through three stages:\n\n"
-        "  Stage 1: heated at constant pressure (100.0 kPa) to 675.00 K.\n"
-        "  Stage 2: compressed isothermally at 675.00 K from 100.0 kPa to 480.0 kPa.\n"
-        "  Stage 3: cooled at constant pressure (480.0 kPa) to 350.00 K.\n\n"
-        "What is the TOTAL entropy change of the gas, in J/K, from the start of stage 1 "
-        "to the end of stage 3?",
-        total_three,
-        decimals=3,
-        rel_tol=0.004,
-    )
-
-    # -- S4: three successive velocity compositions, then two timed legs
-    def compose(a, b):
-        return (a + b) / (1 + a * b)
-
-    w1 = compose(0.50, 0.70)          # probe relative to station
-    w2 = compose(w1, 0.40)            # dart relative to station
-    LEG = 8.00
-    tau_out = (LEG / w2) * math.sqrt(1 - w2 ** 2)
-    w_back = compose(-0.60, -0.30)    # returning, both components toward station
-    speed_back = abs(w_back)
-    tau_back = (LEG / speed_back) * math.sqrt(1 - speed_back ** 2)
-    tau_total = tau_out + tau_back
-    numeric_item(
-        "ms-sci-nested-velocity-legs",
-        "Nested velocity composition over an out-and-back trip",
-        "Three relativistic compositions, two of them chained, and each leg carries its "
-        "own gamma. Composing in the wrong order, or adding classically anywhere, "
-        "changes the answer.",
-        "science/physics",
-        "frontier",
-        "A space station is at rest. A booster recedes from it along a straight line at "
-        "0.500c. A probe is launched from the booster in the same direction at 0.700c "
-        "relative to the booster. A dart is then launched from the probe, again in the "
-        "same direction, at 0.400c relative to the probe.\n\n"
-        "The dart travels away from the station until it is 8.00 light-years from it "
-        "(measured in the station frame). It then instantly reverses. On the return leg "
-        "it rides a carrier moving toward the station at 0.600c relative to the station, "
-        "and the dart moves at 0.300c relative to that carrier, also toward the station. "
-        "Ignore the turnaround itself.\n\n"
-        "How much proper time, in years, elapses on the dart's own clock for the whole "
-        "out-and-back journey?",
-        tau_total,
-        decimals=3,
-        rel_tol=0.003,
-    )
 
 
 def build_automotive_items() -> None:
@@ -3119,6 +2891,7 @@ def build() -> dict:
     build_long_context_items()
     build_anchor_items()
 
+    assert len(PROMPTS) == 50, f"Expected 50 Master questions, got {len(PROMPTS)}"
     total_weight = sum(p["importance_weight"] for p in PROMPTS)
     heavy = sum(p["importance_weight"] for p in PROMPTS if p["importance_weight"] >= 3.0)
     assert heavy / total_weight >= 0.10, heavy / total_weight
@@ -3135,7 +2908,7 @@ def build() -> dict:
             "A deliberately brutal cross-domain suite built to separate models at the "
             "top of the range. Spans extreme Python and JavaScript output prediction, "
             "quantitative reasoning, algorithms and distributed systems, physics, "
-            "chemistry, automotive engineering, false-premise abstention, multi-turn "
+            "automotive engineering, false-premise abstention, multi-turn "
             "stateful tool use, and long-context synthesis over generated corpora. "
             "Every answer is produced by execution or computation at build time "
             "(scripts/build_master_suite.py) -- none is hand-written. Items are graded "

@@ -16,7 +16,6 @@ import sys
 from pathlib import Path
 
 import pytest
-
 from app.seed.suites_loader import SUITES_DIR
 
 REPO = Path(__file__).resolve().parents[2]
@@ -30,7 +29,7 @@ def _suite() -> dict:
 
 def test_master_suite_is_present():
     assert MASTER.exists(), "master_suite.json is missing; run scripts/build_master_suite.py"
-    assert len(_suite()["prompts"]) >= 35
+    assert len(_suite()["prompts"]) == 50
 
 
 def test_committed_suite_matches_a_fresh_build():
@@ -118,3 +117,12 @@ def test_long_context_items_are_actually_long():
             f"{p['stable_id']} is only {chars} characters; that fits in any context "
             "window and measures nothing about retrieval"
         )
+
+
+def test_duration_problem_items_are_retired():
+    retired = {
+        "ms-py-class-creation-order", "ms-cs-minimal-dfa",
+        "ms-sci-coupled-diprotic-mixture", "ms-sci-cycle-entropy",
+        "ms-sci-nested-velocity-legs",
+    }
+    assert not retired.intersection(p["stable_id"] for p in _suite()["prompts"])

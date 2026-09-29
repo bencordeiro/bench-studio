@@ -27,7 +27,7 @@ def suite(name):
     [
         ("instruction_following", 15),
         ("agentic_tool_use", 15),
-        ("master_suite", 55),
+        ("master_suite", 50),
         ("terminal_semantics", 12),
         ("web_dev_js", 45),
         ("code_reasoning_python", 50),
