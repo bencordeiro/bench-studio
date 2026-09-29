@@ -135,7 +135,8 @@ HumanEval reference harness (openai/human-eval, MIT) does it:
 }
 ```
 
-- The program `prompt + completion + "\n" + test_code + "\n" + check(entry_point)` is executed in a fresh `python -I` subprocess (throwaway cwd, stdin closed) with a wall-clock `timeout_seconds` (default 3.0, the reference harness's default).
+- `completion_mode` defaults to `"body"`, preserving the reference completion contract. Set it to `"full_function"` when the model must return a complete raw function definition; in this mode the user message is an instruction, and only the response is executed before the tests. Neither mode strips fences or repairs indentation.
+- In body mode, the program `prompt + completion + "\n" + test_code + "\n" + check(entry_point)` is executed in a fresh `python -I` subprocess (throwaway cwd, stdin closed) with a wall-clock `timeout_seconds` (default 3.0, the reference harness's default).
 - The **prompt text is not stored in `grader_config`** — it is the prompt's user message(s), which keeps `grader_config` ASCII-clean for prompts whose docstrings contain unicode.
 - The completion is used exactly as produced: no markdown-fence stripping, no repair. A fenced reply is a SyntaxError, exactly as under the reference harness.
 - The child applies a reliability guard (adapted from the reference harness, MIT) that removes destructive builtins before the program runs. It is a guard, not a sandbox.

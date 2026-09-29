@@ -271,6 +271,14 @@ export interface ExecutionDetail {
   importance_weight: number;
   messages: PromptMessage[];
   candidate_response: string;
+  reasoning_response?: string;
+  generation_diagnostics?: {
+    no_final_answer?: boolean;
+    possible_repetition?: boolean;
+    answer_chars?: number;
+    reasoning_chars?: number;
+    truncated?: boolean;
+  };
   reference_answer: string;
   finish_reason: string;
   timing: {

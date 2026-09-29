@@ -9,10 +9,10 @@ paid provider calls or cross-model calibration were performed during this audit.
 |---|---:|---|---|
 | Instruction-Following & Format Adherence | 12 → 15 | 6.0.0 | Reviewed all constraints; added untrusted-data extraction, CSV escaping, conditional redaction |
 | Agentic Tool-Use & Structured Output (Hermes) | 14 → 15 | 4.0.0 | Exact envelopes and types; harder argument derivation, cross-year dates, filtered fan-out, retry state |
-| Master Suite | 56 → 55 | 2.0.0 | Removed two formula-substitution items; added durable transaction replay |
+| Master Suite | 56 → 55 | 3.0.0 | Removed two formula-substitution items; added durable transaction replay; neutral deliberation wording |
 | Terminal Semantics & System Gotchas | 12 → 12 | 2.0.0 | Corrected three bad keys; revised four shallow items; specified environment assumptions |
 | Web Dev Correctness & Debugging (JS) | 46 → 45 | 5.0.0 | Removed `wd-typeof-null`; reproduced every remaining output |
-| Code Reasoning & Correctness (Python) | 55 → 50 | 5.0.0 | Retained 30 reasoning items; replaced 25 with 20 original function-completion tasks |
+| Code Reasoning & Correctness (Python) | 55 → 50 | 6.0.0 | Retained 30 reasoning items; replaced 25 with 20 original complete-function execution tasks |
 
 ## Instruction following
 
@@ -209,3 +209,5 @@ npm test
 
 HumanEval remains upstream-compatible and its existing reference-solution and
 source-parity tests remain part of the full backend test run.
+
+The [qwen27b diagnostic pilot](CALIBRATION_QWEN27B_2026_09_29.md) documents measured formatting failures, repetition loops and prompt variants behind the Python 6.0.0 and Master 3.0.0 follow-up. It is a targeted pilot, not full cross-model calibration.

@@ -6,12 +6,13 @@ import json
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, Awaitable, Callable
 
 import httpx
 
 from app.core.security import sanitize
 from app.core.urls import chat_completions_url
+from app.services.generation_diagnostics import generation_diagnostics
 
 log = logging.getLogger(__name__)
 
@@ -68,6 +69,7 @@ class ChatResult:
     # sends `timings`). Lets us record the true generation rate instead of
     # diluting it with prefill and network time.
     server_timings: dict[str, Any] | None = None
+    reasoning: str = ""
 
 
 def _build_headers(
@@ -144,10 +146,9 @@ def _delta_text(chunk: dict[str, Any]) -> tuple[str, str, str | None]:
     """Return (content_delta, reasoning_delta, finish_reason) from a parsed chunk.
 
     Reasoning models (llama.cpp / LM Studio streaming) emit their chain of
-    thought in ``delta.reasoning_content`` and the final answer in
-    ``delta.content``. Some responses put *everything* in reasoning_content and
-    never populate content, so callers fall back to reasoning content when the
-    visible content is empty.
+    thought in ``delta.reasoning_content`` (or ``delta.reasoning``) and the
+    final answer in ``delta.content``. Keep the two separate: reasoning-only
+    replies are unfinished answers, not candidates for grading.
     """
     choices = chunk.get("choices") or []
     if not choices:
@@ -157,7 +158,7 @@ def _delta_text(chunk: dict[str, Any]) -> tuple[str, str, str | None]:
     content = delta.get("content") or ""
     if not isinstance(content, str):
         content = str(content)
-    reasoning = delta.get("reasoning_content") or ""
+    reasoning = delta.get("reasoning_content") or delta.get("reasoning") or ""
     if not isinstance(reasoning, str):
         reasoning = str(reasoning)
     finish = choice.get("finish_reason")
@@ -280,6 +281,7 @@ async def chat_completion(
     backoff_base: float = 0.5,
     backoff_max: float = 30.0,
     transport: httpx.AsyncBaseTransport | None = None,
+    on_progress: Callable[[dict], Awaitable[None]] | None = None,
 ) -> ChatResult:
     """Complete with network inactivity timeouts and bounded retries.
 
@@ -319,7 +321,7 @@ async def chat_completion(
             ) as client:
                 if stream:
                     result = await _do_stream(
-                        client, url, headers, body, retry_count=attempt, start=start
+                        client, url, headers, body, retry_count=attempt, start=start, on_progress=on_progress
                     )
                 else:
                     result = await _do_nonstream(
@@ -349,7 +351,7 @@ async def chat_completion(
             )
             await asyncio.sleep(delay)
         except RETRYABLE_EXCEPTIONS as exc:
-            last_error = OpenAIClientError(_sanitize_error_message(str(exc)), retryable=True)
+            last_error = OpenAIClientError(_sanitize_error_message(f"{type(exc).__name__}: {exc}"), retryable=True)
             if attempt >= max_retries:
                 retry_count = attempt
                 break
@@ -390,6 +392,7 @@ async def _do_stream(
     *,
     retry_count: int,
     start: float,
+    on_progress: Callable[[dict], Awaitable[None]] | None = None,
 ) -> ChatResult:
     content_parts: list[str] = []
     reasoning_parts: list[str] = []
@@ -399,30 +402,45 @@ async def _do_stream(
     usage: dict[str, Any] = {}
     timings: dict[str, Any] | None = None
     raw_chunks: list[dict[str, Any]] = []
-    async for content, reasoning, finish, chunk_usage, chunk_timings in stream_chat(client, url, headers, body):
-        if first_chunk_at is None:
-            first_chunk_at = time.monotonic()
-            ttft = first_chunk_at - start
-        if content:
-            content_parts.append(content)
-        if reasoning:
-            reasoning_parts.append(reasoning)
-        if finish:
-            finish_reason = finish
-        if chunk_usage:
-            usage = chunk_usage
-        if chunk_timings:
-            timings = chunk_timings
-        # Keep last few chunks for diagnostics, stripped of any token-bearing content.
-        if len(raw_chunks) < 5:
-            raw_chunks.append({"finish_reason": finish, "has_usage": bool(chunk_usage)})
+    last_progress = 0.0
+    stream_error = None
+    try:
+        async for content, reasoning, finish, chunk_usage, chunk_timings in stream_chat(client, url, headers, body):
+            if first_chunk_at is None and (content or reasoning):
+                first_chunk_at = time.monotonic()
+                ttft = first_chunk_at - start
+            if content:
+                content_parts.append(content)
+            if reasoning:
+                reasoning_parts.append(reasoning)
+            if finish:
+                finish_reason = finish
+            if chunk_usage:
+                usage = chunk_usage
+            if chunk_timings:
+                timings = chunk_timings
+            # Keep last few chunks for diagnostics, stripped of any token-bearing content.
+            if len(raw_chunks) < 5:
+                raw_chunks.append({"finish_reason": finish, "has_usage": bool(chunk_usage)})
+            now = time.monotonic()
+            if on_progress and now - last_progress >= 1:
+                last_progress = now
+                try:
+                    await on_progress({
+                        **generation_diagnostics("".join(content_parts), "".join(reasoning_parts), finish_reason),
+                        "elapsed_seconds": now - start,
+                        "retry_count": retry_count,
+                    })
+                except Exception:
+                    log.exception("generation progress callback failed")
+    except RETRYABLE_EXCEPTIONS as exc:
+        if not (content_parts or reasoning_parts):
+            raise
+        stream_error = _sanitize_error_message(str(exc) or type(exc).__name__)
     total = time.monotonic() - start
     content = "".join(content_parts)
-    # Reasoning models can stream the entire reply into reasoning_content and
-    # never populate content. Fall back so the candidate is never lost.
-    fell_back_to_reasoning = bool(content_parts) is False and bool(reasoning_parts)
-    if fell_back_to_reasoning:
-        content = "".join(reasoning_parts)
+    reasoning_text = "".join(reasoning_parts)
+    no_final = not content.strip()
     truncated = finish_reason == "length"
     return ChatResult(
         content=content,
@@ -433,7 +451,10 @@ async def _do_stream(
         time_to_first_token=ttft,
         total_response_time=total,
         retry_count=retry_count,
-        raw={"streamed": True, "chunk_sample": raw_chunks, "fell_back_to_reasoning": fell_back_to_reasoning},
+        raw={"streamed": True, "chunk_sample": raw_chunks, "fell_back_to_reasoning": False,
+             "generation_diagnostics": generation_diagnostics(content, reasoning_text, finish_reason)},
+        reasoning=reasoning_text,
+        error=stream_error or ("No final answer returned; reasoning is retained separately." if no_final else None),
         server_timings=timings,
     )
 
@@ -462,6 +483,11 @@ async def _do_nonstream(
     except json.JSONDecodeError:
         raise OpenAIClientError("invalid JSON response from server", status=200)
     content, finish_reason = _extract_content_nonstream(data)
+    choices = data.get("choices") or []
+    message = choices[0].get("message", {}) if choices else {}
+    reasoning = message.get("reasoning_content") or message.get("reasoning") or ""
+    if not isinstance(reasoning, str):
+        reasoning = str(reasoning)
     usage = data.get("usage") if isinstance(data, dict) else {}
     if not isinstance(usage, dict):
         usage = {}
@@ -477,6 +503,8 @@ async def _do_nonstream(
         time_to_first_token=None,
         total_response_time=total,
         retry_count=retry_count,
-        raw={"streamed": False},
+        raw={"streamed": False, "generation_diagnostics": generation_diagnostics(content, reasoning, finish_reason)},
+        reasoning=reasoning,
+        error="No final answer returned; reasoning is retained separately." if not content.strip() else None,
         server_timings=timings if isinstance(timings, dict) else None,
     )

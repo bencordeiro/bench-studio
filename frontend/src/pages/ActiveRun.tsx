@@ -26,6 +26,10 @@ export default function ActiveRun() {
   const [phase, setPhase] = useState<string>("");
   const [currentPrompt, setCurrentPrompt] = useState<string>("");
   const [elapsed, setElapsed] = useState(0);
+  const [generation, setGeneration] = useState<{
+    elapsed_seconds: number; answer_chars: number; reasoning_chars: number;
+    possible_repetition: boolean; retry_count: number; receivedAt: number;
+  } | null>(null);
 
   // SSE subscription while running.
   useEffect(() => {
@@ -34,6 +38,8 @@ export default function ActiveRun() {
     es.onmessage = (ev) => {
       try {
         const data = JSON.parse(ev.data);
+        if (data.event === "prompt_started") setGeneration(null);
+        if (data.event === "generation") setGeneration({ ...data, receivedAt: Date.now() });
         if (data.event === "snapshot" || data.event === "prompt" || data.event === "prompt_started" || data.event === "phase") {
           if (typeof data.progress === "number") setProgress(data.progress);
           if (data.phase) setPhase(data.phase);
@@ -136,6 +142,13 @@ export default function ActiveRun() {
           <p className="text-sm text-gray-400 mt-2 truncate">
             Now: <span className="text-white">{currentPrompt}</span>
           </p>
+        )}
+        {generation && run.status === "running_target" && (
+          <div className="mt-3 text-xs text-gray-400 space-y-1">
+            <p>Current request: {fmtElapsed(generation.elapsed_seconds + (Date.now() - generation.receivedAt) / 1000)} · Answer: {generation.answer_chars.toLocaleString()} characters · Reasoning: {generation.reasoning_chars.toLocaleString()} characters · Retries: {generation.retry_count}</p>
+            <p>Last stream update: {Math.max(0, Math.floor((Date.now() - generation.receivedAt) / 1000))}s ago</p>
+            {generation.possible_repetition && <p className="text-warn">Possible repetitive generation detected. The request continues under your global limits.</p>}
+          </div>
         )}
         <div className="mt-4">
           <div className="flex justify-between text-sm text-gray-400 mb-1">

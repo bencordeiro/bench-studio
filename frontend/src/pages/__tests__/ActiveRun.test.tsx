@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import ActiveRun from "@/pages/ActiveRun";
@@ -45,4 +45,22 @@ describe("Active Run progress display", () => {
     expect(screen.getByText("40%")).toBeInTheDocument();
     expect(screen.getByText("Errors")).toBeInTheDocument();
   });
+  it("shows generation warnings and clears them for the next question", async () => {
+    mockGet.mockResolvedValue(run);
+    renderPage();
+    await waitFor(() => expect(screen.getByText("My Run")).toBeInTheDocument());
+    const instances = (EventSource as unknown as { instances: { onmessage: ((event: MessageEvent) => void) | null }[] }).instances;
+    const source = instances[instances.length - 1];
+    act(() => source.onmessage?.(new MessageEvent("message", { data: JSON.stringify({
+      event: "generation", elapsed_seconds: 90, answer_chars: 0, reasoning_chars: 5000,
+      possible_repetition: true, retry_count: 0,
+    }) })));
+    expect(screen.getByText(/Possible repetitive generation detected/)).toBeInTheDocument();
+    expect(screen.getByText(/Reasoning: 5,000 characters/)).toBeInTheDocument();
+    act(() => source.onmessage?.(new MessageEvent("message", { data: JSON.stringify({
+      event: "prompt_started", current_prompt: "Next question",
+    }) })));
+    expect(screen.queryByText(/Possible repetitive generation detected/)).not.toBeInTheDocument();
+  });
+
 });

@@ -360,6 +360,9 @@ async def _execute_target_prompt(run_id, profile, model, session_key, settings, 
         chat_template_kwargs = dict(extra_body.get("chat_template_kwargs") or {})
         chat_template_kwargs["reasoning_effort"] = reasoning_effort
         extra_body["chat_template_kwargs"] = chat_template_kwargs
+    async def report_generation(fields):
+        await _emit(run_id, "generation", **fields)
+
     return await _await_abortable(chat_completion(
         profile.base_url,
         api_key=_resolve_key(profile, session_key),
@@ -378,6 +381,7 @@ async def _execute_target_prompt(run_id, profile, model, session_key, settings, 
         max_retries=int(run_config.get("retry_max_attempts", 3)),
         backoff_base=float(run_config.get("retry_backoff_base", 0.5)),
         backoff_max=float(run_config.get("retry_backoff_max", 30.0)),
+        on_progress=report_generation,
     ), run_id)
 
 
@@ -465,21 +469,40 @@ def _server_prompt_rate(timings: dict[str, Any] | None) -> float | None:
 def _store_target_result(session: Session, execution: PromptExecution, result,
                          input_price_per_1m: float = 0.0,
                          output_price_per_1m: float = 0.0) -> None:
+    diagnostics = result.raw.get("generation_diagnostics", {})
+    response_meta = {
+        "reasoning": result.reasoning,
+        "generation_diagnostics": diagnostics,
+        "wall_time": result.wall_time,
+    }
     if result.error:
+        session.add(TargetResponse(
+            id=str(uuid.uuid4()), execution_id=execution.id,
+            content=result.content or "", finish_reason=result.finish_reason,
+            truncated=result.truncated, raw=response_meta,
+        ))
         execution.status = PromptStatus.FAILED.value
         execution.error_message = result.error
         execution.completed_at = _now()
+        usage = result.usage or {}
         metric = PerformanceMetric(
             id=str(uuid.uuid4()),
             execution_id=execution.id,
             request_start=_now_iso(),
             total_response_time=result.total_response_time,
+            time_to_first_token=result.time_to_first_token,
+            prompt_tokens=usage.get("prompt_tokens"),
+            completion_tokens=usage.get("completion_tokens"),
+            total_tokens=usage.get("total_tokens"),
             http_status=result.http_status or None,
             retry_count=result.retry_count,
             response_char_count=len(result.content or ""),
             truncated=result.truncated,
             finish_reason=result.finish_reason,
-            cost=None,
+            cost=_compute_cost(
+                prompt_tokens=usage.get("prompt_tokens"), completion_tokens=usage.get("completion_tokens"),
+                input_price_per_1m=input_price_per_1m, output_price_per_1m=output_price_per_1m,
+            ),
         )
         session.add(metric)
         return
@@ -521,6 +544,7 @@ def _store_target_result(session: Session, execution: PromptExecution, result,
         finish_reason=result.finish_reason,
         truncated=truncated,
         raw={
+            **response_meta,
             "usage_reported": bool(usage),
             "streamed": result.raw.get("streamed", False),
             "tps_source": tps_source,

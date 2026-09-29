@@ -6,7 +6,6 @@ import json
 import uuid
 
 import pytest
-
 from app.db.session import session_scope
 from app.jobs import engine
 from app.jobs.engine import (
@@ -469,7 +468,6 @@ async def test_parent_cancellation_closes_in_flight_request():
 
 async def test_inactivity_timeout_fails_one_prompt_and_continues(monkeypatch):
     import httpx
-
     from app.services.openai_client import chat_completion
 
     requests = 0
@@ -514,9 +512,8 @@ async def test_inactivity_timeout_fails_one_prompt_and_continues(monkeypatch):
 
 @pytest.mark.parametrize("timeout", [0, -1, float("inf"), float("nan")])
 def test_run_config_rejects_invalid_timeout(timeout):
-    from pydantic import ValidationError
-
     from app.schemas.runs import RunConfig
+    from pydantic import ValidationError
 
     with pytest.raises(ValidationError):
         RunConfig(timeout=timeout)
@@ -577,3 +574,28 @@ async def test_global_limit_wins_over_prompt_and_target_settings(monkeypatch):
         assert "max_tokens" not in captured["extra_body"]
     finally:
         engine.clear_cancel("global-limits")
+
+
+def test_no_final_answer_retains_diagnostics_and_usage(session):
+    from app.models import PerformanceMetric, TargetResponse
+    from app.services.generation_diagnostics import generation_diagnostics
+
+    bench = _make_benchmark(session)
+    ep = _make_endpoint(session)
+    run = crud.create_run(session, {"benchmark_id": bench.id, "target_endpoint_id": ep.id})
+    execution = session.query(PromptExecution).filter_by(run_id=run.id).first()
+    result = ChatResult(
+        content="", reasoning="private thought", finish_reason="length", truncated=True,
+        usage={"prompt_tokens": 10, "completion_tokens": 50, "total_tokens": 60},
+        http_status=200, time_to_first_token=1, total_response_time=20, retry_count=0,
+        error="No final answer returned", raw={"generation_diagnostics": generation_diagnostics("", "private thought", "length")},
+    )
+    engine._store_target_result(session, execution, result)
+    session.flush()
+    target = session.query(TargetResponse).filter_by(execution_id=execution.id).one()
+    metric = session.query(PerformanceMetric).filter_by(execution_id=execution.id).one()
+    assert execution.status == PromptStatus.FAILED.value
+    assert target.content == ""
+    assert target.raw["reasoning"] == "private thought"
+    assert target.raw["generation_diagnostics"]["no_final_answer"]
+    assert metric.completion_tokens == 50

@@ -285,6 +285,20 @@ function ExecutionDetailModal({ execution, onClose, runStatus }: { execution: Ex
           ))}
         </Section>
 
+        {(execution.generation_diagnostics?.no_final_answer || execution.generation_diagnostics?.possible_repetition || execution.generation_diagnostics?.truncated) && (
+          <p className="text-sm text-warn">
+            {execution.generation_diagnostics.no_final_answer && "No final answer was returned. "}
+            {execution.generation_diagnostics.possible_repetition && "Possible repetitive generation detected. "}
+            {execution.generation_diagnostics.truncated && "The response reached its token limit. "}
+          </p>
+        )}
+        {execution.error_message && <p className="text-sm text-err">{execution.error_message}</p>}
+        {execution.reasoning_response && (
+          <details>
+            <summary className="text-sm text-gray-400 cursor-pointer">Model reasoning ({execution.reasoning_response.length.toLocaleString()} characters)</summary>
+            <pre className="mono text-xs bg-bg p-2 rounded border border-border whitespace-pre-wrap max-h-60 overflow-auto">{execution.reasoning_response}</pre>
+          </details>
+        )}
         <Section title="Candidate response">
           <pre className="mono text-xs bg-bg p-2 rounded border border-border whitespace-pre-wrap max-h-60 overflow-auto">{execution.candidate_response || "(empty)"}</pre>
         </Section>

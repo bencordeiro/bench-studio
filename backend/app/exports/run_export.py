@@ -81,6 +81,8 @@ def _collect_run(session: Session, run: BenchmarkRun) -> dict[str, Any]:
             "error": e.error_message,
             "messages": snap.get("messages", []),
             "candidate_response": target.content if target else "",
+            "reasoning_response": (target.raw or {}).get("reasoning", "") if target else "",
+            "generation_diagnostics": (target.raw or {}).get("generation_diagnostics", {}) if target else {},
             "finish_reason": metric.finish_reason if metric else "",
             "timing": {
                 "time_to_first_token": metric.time_to_first_token if metric else None,

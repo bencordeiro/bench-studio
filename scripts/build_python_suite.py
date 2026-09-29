@@ -37,6 +37,7 @@ def execution_prompt(t):
         generation_overrides={"temperature": 0.0},
         grader_config={
             "language": "python",
+            "completion_mode": "full_function",
             "entry_point": t["name"],
             "timeout_seconds": 3.0,
             "test_code": test,
@@ -44,7 +45,7 @@ def execution_prompt(t):
         messages=[
             {
                 "role": "system",
-                "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+                "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
             },
             {"role": "user", "content": prefix},
         ],
@@ -61,9 +62,9 @@ def build():
         p["position"] = i
         for j, m in enumerate(p["messages"]):
             m["position"] = j
-    suite["version"] = "5.0.0"
+    suite["version"] = "6.0.0"
     suite["description"] = (
-        "A compact 50-question Python test: 30 output-reasoning items covering mutation, scoping, iterators, exceptions and the data model, plus 20 original function-completion tasks inspired by HumanEval's executable-contract format. Practical tasks cover scheduling, configuration, logs, caching, pagination and data processing. Execution tests check edge cases and non-mutation. New difficulty weights are predicted, not model-calibrated. Python 3.10+; no third-party packages or network required."
+        "A compact 50-question Python test: 30 output-reasoning items covering mutation, scoping, iterators, exceptions and the data model, plus 20 original complete-function tasks inspired by HumanEval's executable-contract format. Practical tasks cover scheduling, configuration, logs, caching, pagination and data processing. Execution tests check edge cases and non-mutation. New difficulty weights are predicted, not model-calibrated. Python 3.10+; no third-party packages or network required."
     )
     return suite
 

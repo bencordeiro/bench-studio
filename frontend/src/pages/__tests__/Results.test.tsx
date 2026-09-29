@@ -82,4 +82,17 @@ describe("Results summary and manual override", () => {
     // Save calls mutation; mockManual invoked with execution id.
     await waitFor(() => expect(mockManual).toHaveBeenCalled());
   });
+  it("shows reasoning separately when no final answer was returned", async () => {
+    mockResults.mockResolvedValue({ ...sample, executions: [{ ...sample.executions[0],
+      candidate_response: "", reasoning_response: "retained model thought",
+      generation_diagnostics: { no_final_answer: true, possible_repetition: true },
+    }] });
+    renderPage();
+    await waitFor(() => expect(screen.getByText("Manual prompt")).toBeInTheDocument());
+    await userEvent.click(screen.getByText("Manual prompt"));
+    expect(screen.getByText(/No final answer was returned/)).toBeInTheDocument();
+    expect(screen.getByText("retained model thought")).toBeInTheDocument();
+    expect(screen.getByText("(empty)")).toBeInTheDocument();
+  });
+
 });

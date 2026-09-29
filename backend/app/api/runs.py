@@ -391,6 +391,8 @@ def _build_execution_detail(e: PromptExecution, related: dict):
         "importance_weight": snap.get("importance_weight", 1.0),
         "messages": snap.get("messages", []),
         "candidate_response": target.content if target else "",
+        "reasoning_response": target_raw.get("reasoning", ""),
+        "generation_diagnostics": target_raw.get("generation_diagnostics", {}),
         "reference_answer": (snap.get("grader_config", {}) or {}).get("reference_answer", ""),
         "finish_reason": metric.finish_reason if metric else "",
         "timing": timing,

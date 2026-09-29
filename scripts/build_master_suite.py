@@ -71,7 +71,7 @@ def _load_grader():
 GRADER = _load_grader()
 
 SUITE_NAME = "Master Suite"
-SUITE_VERSION = "2.0.0"
+SUITE_VERSION = "3.0.0"
 
 # Tier -> (difficulty label, importance weight). The declared difficulty and the
 # weight must stay ordered together: test_declared_difficulty_matches_weight_ordering
@@ -151,7 +151,7 @@ def run_node(src: str) -> str:
 
 CODE_PREAMBLE = (
     "You are given a short, self-contained {lang} program. Determine exactly what it "
-    "writes to standard output. You may reason as long as you need to, but you MUST end "
+    "writes to standard output. You MUST end "
     "your reply with a single final line in exactly this form:\n"
     "ANSWER: <output>\n"
     "where <output> is precisely what the program prints (one line), with no quotes, no "
@@ -159,7 +159,7 @@ CODE_PREAMBLE = (
 )
 
 NUMERIC_PREAMBLE = (
-    "Work the problem through carefully. You may reason as long as you need to, but you "
+    "You "
     "MUST end your reply with a single final line in exactly this form:\n"
     "ANSWER: <number>\n"
     "giving only the number -- no units, no thousands separators, no extra words."
@@ -1166,7 +1166,7 @@ def build_cs_items() -> None:
                     "The events happen in this global order:\n\n"
                     + "\n".join(lines)
                     + "\n\nGive the vector clock of P4 immediately after event 24.\n\n"
-                    "You may reason as long as you need to, but you MUST end your reply "
+                    "You MUST end your reply "
                     "with a single final line in exactly this form:\n"
                     "ANSWER: a,b,c,d\n"
                     "giving the four components in order, comma separated, with no "
@@ -1191,7 +1191,6 @@ def build_cs_items() -> None:
             runs.append(cur)
             cur = [ARR[i]]
     runs.append(cur)
-    initial_runs = len(runs)
     while len(runs) > 1:
         nxt: list[list[int]] = []
         for k in range(0, len(runs) - 1, 2):
@@ -1200,10 +1199,13 @@ def build_cs_items() -> None:
             while i < len(a) and j < len(b):
                 comparisons += 1
                 if a[i] <= b[j]:
-                    out.append(a[i]); i += 1
+                    out.append(a[i])
+                    i += 1
                 else:
-                    out.append(b[j]); j += 1
-            out.extend(a[i:]); out.extend(b[j:])
+                    out.append(b[j])
+                    j += 1
+            out.extend(a[i:])
+            out.extend(b[j:])
             nxt.append(out)
         if len(runs) % 2:
             nxt.append(runs[-1])

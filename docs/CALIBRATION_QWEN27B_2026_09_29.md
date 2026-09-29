@@ -101,3 +101,31 @@ timeout remains satisfied.
 Raw prompts, final responses, reasoning and grader details are retained locally
 under `data/calibration/qwen27b-2026-09-29/` (ignored runtime data). The bundled
 suites and application settings were not modified during this pilot.
+
+## Implemented follow-up
+
+The custom Python suite is now version 6.0.0: its 20 function tasks request
+complete raw definitions and use an explicit `full_function` execution contract.
+The 30 output-prediction items and all reference tests are retained. Historical
+body-completion snapshots and HumanEval retain the default body contract.
+Master is version 3.0.0 with open-ended deliberation invitations removed; its
+questions, keys, weights and count are retained.
+
+The client retains reasoning separately from final answers and records possible
+repetition, missing final answers and truncation. Partial output survives network
+failures after generation starts, without restarting that partial generation.
+Results and JSON exports expose reasoning and diagnostics. Live progress shows
+request duration, answer/reasoning characters, retries and repetition warnings.
+The global server-default token setting now explains that an unlimited server
+can leave loops unbounded. No generation deadline or sampler change was added.
+
+The endpoint went offline before these application changes, so the implemented
+changes were verified with local reference solutions and regression tests, not
+a second full live-model sweep.
+
+Validation completed: a 166-test suite/grader/results pass, a 455-test API/suite
+quality regression pass, and a final 53-test client/job pass all succeeded.
+Five frontend tests (including live diagnostics and reasoning-only results),
+production build, both suite-builder checks, Ruff and whitespace checks passed.
+A direct comparison also verified unchanged prompt IDs, counts, weights and
+reference keys across the two suite revisions.

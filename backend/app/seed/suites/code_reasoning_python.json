@@ -3,8 +3,8 @@
   "format_version": "1.0",
   "exported_at": "",
   "name": "Code Reasoning & Correctness (Python)",
-  "description": "A compact 50-question Python test: 30 output-reasoning items covering mutation, scoping, iterators, exceptions and the data model, plus 20 original function-completion tasks inspired by HumanEval's executable-contract format. Practical tasks cover scheduling, configuration, logs, caching, pagination and data processing. Execution tests check edge cases and non-mutation. New difficulty weights are predicted, not model-calibrated. Python 3.10+; no third-party packages or network required.",
-  "version": "5.0.0",
+  "description": "A compact 50-question Python test: 30 output-reasoning items covering mutation, scoping, iterators, exceptions and the data model, plus 20 original complete-function tasks inspired by HumanEval's executable-contract format. Practical tasks cover scheduling, configuration, logs, caching, pagination and data processing. Execution tests check edge cases and non-mutation. New difficulty weights are predicted, not model-calibrated. Python 3.10+; no third-party packages or network required.",
+  "version": "6.0.0",
   "tags": [
     "coding",
     "python",
@@ -1271,6 +1271,7 @@
       },
       "grader_config": {
         "language": "python",
+        "completion_mode": "full_function",
         "entry_point": "merge_windows",
         "timeout_seconds": 3.0,
         "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([],)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n    args = ([(5, 8), (1, 3), (3, 6)],)\n    original = deepcopy(args)\n    assert candidate(*args) == [(1, 8)]\n    assert args == original, \"inputs mutated\"\n    args = ([(1, 10), (2, 3), (12, 12)],)\n    original = deepcopy(args)\n    assert candidate(*args) == [(1, 10), (12, 12)]\n    assert args == original, \"inputs mutated\"\n    args = ([(-4, -2), (-2, 0), (5, 5), (5, 5)],)\n    original = deepcopy(args)\n    assert candidate(*args) == [(-4, 0), (5, 5)]\n    assert args == original, \"inputs mutated\"\n    args = ([(9, 10), (1, 2)],)\n    original = deepcopy(args)\n    assert candidate(*args) == [(1, 2), (9, 10)]\n    assert args == original, \"inputs mutated\"\n"
@@ -1278,7 +1279,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
           "position": 0
         },
         {
@@ -1309,6 +1310,7 @@
       },
       "grader_config": {
         "language": "python",
+        "completion_mode": "full_function",
         "entry_point": "latest_records",
         "timeout_seconds": 3.0,
         "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([],)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n    args = ([{'id': 'a', 'timestamp': 2, 'payload': 1}, {'id': 'b', 'timestamp': 1, 'payload': 9}, {'id': 'a', 'timestamp': 2, 'payload': 3}, {'id': 'a', 'timestamp': 0, 'payload': 0}],)\n    original = deepcopy(args)\n    assert candidate(*args) == [{'id': 'a', 'timestamp': 2, 'payload': 3}, {'id': 'b', 'timestamp': 1, 'payload': 9}]\n    assert args == original, \"inputs mutated\"\n    args = ([{'id': 'x', 'timestamp': -3, 'payload': None}, {'id': 'x', 'timestamp': -1, 'payload': False}],)\n    original = deepcopy(args)\n    assert candidate(*args) == [{'id': 'x', 'timestamp': -1, 'payload': False}]\n    assert args == original, \"inputs mutated\"\n"
@@ -1316,7 +1318,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
           "position": 0
         },
         {
@@ -1347,6 +1349,7 @@
       },
       "grader_config": {
         "language": "python",
+        "completion_mode": "full_function",
         "entry_point": "dependency_batches",
         "timeout_seconds": 3.0,
         "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ({},)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n    args = ({'b': ['a', 'a'], 'a': [], 'c': [], 'd': ['b', 'c']},)\n    original = deepcopy(args)\n    assert candidate(*args) == [['a', 'c'], ['b'], ['d']]\n    assert args == original, \"inputs mutated\"\n    args = ({'a': ['a']},)\n    original = deepcopy(args)\n    assert candidate(*args) == None\n    assert args == original, \"inputs mutated\"\n    args = ({'a': [], 'b': ['c'], 'c': ['b']},)\n    original = deepcopy(args)\n    assert candidate(*args) == None\n    assert args == original, \"inputs mutated\"\n    args = ({'c': ['b'], 'b': ['a'], 'a': []},)\n    original = deepcopy(args)\n    assert candidate(*args) == [['a'], ['b'], ['c']]\n    assert args == original, \"inputs mutated\"\n"
@@ -1354,7 +1357,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
           "position": 0
         },
         {
@@ -1385,6 +1388,7 @@
       },
       "grader_config": {
         "language": "python",
+        "completion_mode": "full_function",
         "entry_point": "resolve_path",
         "timeout_seconds": 3.0,
         "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ('/',)\n    original = deepcopy(args)\n    assert candidate(*args) == '/'\n    assert args == original, \"inputs mutated\"\n    args = ('/a//b/.././c/',)\n    original = deepcopy(args)\n    assert candidate(*args) == '/a/c'\n    assert args == original, \"inputs mutated\"\n    args = ('/../../x',)\n    original = deepcopy(args)\n    assert candidate(*args) == '/x'\n    assert args == original, \"inputs mutated\"\n    args = ('/.env/.../../z',)\n    original = deepcopy(args)\n    assert candidate(*args) == '/.env/z'\n    assert args == original, \"inputs mutated\"\n    args = ('/a/..',)\n    original = deepcopy(args)\n    assert candidate(*args) == '/'\n    assert args == original, \"inputs mutated\"\n"
@@ -1392,7 +1396,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
           "position": 0
         },
         {
@@ -1423,6 +1427,7 @@
       },
       "grader_config": {
         "language": "python",
+        "completion_mode": "full_function",
         "entry_point": "apply_patch",
         "timeout_seconds": 3.0,
         "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ({}, {})\n    original = deepcopy(args)\n    assert candidate(*args) == {}\n    assert args == original, \"inputs mutated\"\n    args = ({'a': {'b': 1, 'c': 2}, 'x': [1, 2]}, {'a': {'b': None, 'd': 0}, 'x': []})\n    original = deepcopy(args)\n    assert candidate(*args) == {'a': {'c': 2, 'd': 0}, 'x': []}\n    assert args == original, \"inputs mutated\"\n    args = ({'a': 7}, {'a': {'b': 1}, 'z': None})\n    original = deepcopy(args)\n    assert candidate(*args) == {'a': {'b': 1}}\n    assert args == original, \"inputs mutated\"\n    args = ({'x': True}, {'x': False})\n    original = deepcopy(args)\n    assert candidate(*args) == {'x': False}\n    assert args == original, \"inputs mutated\"\n"
@@ -1430,7 +1435,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
           "position": 0
         },
         {
@@ -1461,6 +1466,7 @@
       },
       "grader_config": {
         "language": "python",
+        "completion_mode": "full_function",
         "entry_point": "inventory_ledger",
         "timeout_seconds": 3.0,
         "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([],)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n    args = ([('1', 'b', 3), ('2', 'a', 2), ('1', 'a', 99), ('3', 'b', -3)],)\n    original = deepcopy(args)\n    assert candidate(*args) == [('a', 2)]\n    assert args == original, \"inputs mutated\"\n    args = ([('x', 'z', -2), ('y', 'z', 1)],)\n    original = deepcopy(args)\n    assert candidate(*args) == [('z', -1)]\n    assert args == original, \"inputs mutated\"\n    args = ([('x', 'a', 0), ('x', 'b', 8)],)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n"
@@ -1468,7 +1474,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
           "position": 0
         },
         {
@@ -1499,6 +1505,7 @@
       },
       "grader_config": {
         "language": "python",
+        "completion_mode": "full_function",
         "entry_point": "rolling_totals",
         "timeout_seconds": 3.0,
         "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([], 3)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n    args = ([(0, 2), (2, 3), (3, -1), (3, 4), (8, 5)], 3)\n    original = deepcopy(args)\n    assert candidate(*args) == [2, 5, 2, 6, 5]\n    assert args == original, \"inputs mutated\"\n    args = ([(1, 2), (1, 3), (2, 4)], 1)\n    original = deepcopy(args)\n    assert candidate(*args) == [2, 5, 4]\n    assert args == original, \"inputs mutated\"\n    args = ([(-3, 1), (-1, 2), (0, 4)], 3)\n    original = deepcopy(args)\n    assert candidate(*args) == [1, 3, 6]\n    assert args == original, \"inputs mutated\"\n"
@@ -1506,7 +1513,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
           "position": 0
         },
         {
@@ -1537,6 +1544,7 @@
       },
       "grader_config": {
         "language": "python",
+        "completion_mode": "full_function",
         "entry_point": "retry_delays",
         "timeout_seconds": 3.0,
         "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = (2, 2, 5, 18)\n    original = deepcopy(args)\n    assert candidate(*args) == [2, 4, 5, 5]\n    assert args == original, \"inputs mutated\"\n    args = (8, 2, 3, 8)\n    original = deepcopy(args)\n    assert candidate(*args) == [3, 3]\n    assert args == original, \"inputs mutated\"\n    args = (4, 2, 9, 3)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n    args = (2, 1, 8, 6)\n    original = deepcopy(args)\n    assert candidate(*args) == [2, 2, 2]\n    assert args == original, \"inputs mutated\"\n    args = (1, 3, 5, 9)\n    original = deepcopy(args)\n    assert candidate(*args) == [1, 3, 5]\n    assert args == original, \"inputs mutated\"\n"
@@ -1544,7 +1552,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
           "position": 0
         },
         {
@@ -1575,6 +1583,7 @@
       },
       "grader_config": {
         "language": "python",
+        "completion_mode": "full_function",
         "entry_point": "parse_query",
         "timeout_seconds": 3.0,
         "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ('',)\n    original = deepcopy(args)\n    assert candidate(*args) == {}\n    assert args == original, \"inputs mutated\"\n    args = ('?a=1&a=2&empty&x=a=b',)\n    original = deepcopy(args)\n    assert candidate(*args) == {'a': ['1', '2'], 'empty': [''], 'x': ['a=b']}\n    assert args == original, \"inputs mutated\"\n    args = ('q=a+b&q=%2B&=x&&a%20b=c',)\n    original = deepcopy(args)\n    assert candidate(*args) == {'q': ['a b', '+'], '': ['x'], 'a b': ['c']}\n    assert args == original, \"inputs mutated\"\n    args = ('x=%E2%9C%93',)\n    original = deepcopy(args)\n    assert candidate(*args) == {'x': ['\\u2713']}\n    assert args == original, \"inputs mutated\"\n"
@@ -1582,7 +1591,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
           "position": 0
         },
         {
@@ -1613,6 +1622,7 @@
       },
       "grader_config": {
         "language": "python",
+        "completion_mode": "full_function",
         "entry_point": "diff_records",
         "timeout_seconds": 3.0,
         "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([], [])\n    original = deepcopy(args)\n    assert candidate(*args) == {'added': [], 'removed': [], 'changed': []}\n    assert args == original, \"inputs mutated\"\n    args = ([{'id': 'a', 'v': 1}, {'id': 'b', 'v': 2}], [{'id': 'a', 'v': 3}, {'id': 'c', 'v': 2}])\n    original = deepcopy(args)\n    assert candidate(*args) == {'added': ['c'], 'removed': ['b'], 'changed': ['a']}\n    assert args == original, \"inputs mutated\"\n    args = ([{'id': 'x', 'v': [1]}], [{'v': [1], 'id': 'x'}])\n    original = deepcopy(args)\n    assert candidate(*args) == {'added': [], 'removed': [], 'changed': []}\n    assert args == original, \"inputs mutated\"\n    args = ([{'id': 'x', 'v': None}], [{'id': 'x'}])\n    original = deepcopy(args)\n    assert candidate(*args) == {'added': [], 'removed': [], 'changed': ['x']}\n    assert args == original, \"inputs mutated\"\n"
@@ -1620,7 +1630,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
           "position": 0
         },
         {
@@ -1651,6 +1661,7 @@
       },
       "grader_config": {
         "language": "python",
+        "completion_mode": "full_function",
         "entry_point": "allocate_cents",
         "timeout_seconds": 3.0,
         "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = (10, [1, 1, 1])\n    original = deepcopy(args)\n    assert candidate(*args) == [4, 3, 3]\n    assert args == original, \"inputs mutated\"\n    args = (2, [0, 1, 1, 1])\n    original = deepcopy(args)\n    assert candidate(*args) == [0, 1, 1, 0]\n    assert args == original, \"inputs mutated\"\n    args = (0, [2, 3])\n    original = deepcopy(args)\n    assert candidate(*args) == [0, 0]\n    assert args == original, \"inputs mutated\"\n    args = (7, [1, 2])\n    original = deepcopy(args)\n    assert candidate(*args) == [2, 5]\n    assert args == original, \"inputs mutated\"\n    args = (1000000000000000001, [1, 1])\n    original = deepcopy(args)\n    assert candidate(*args) == [500000000000000001, 500000000000000000]\n    assert args == original, \"inputs mutated\"\n"
@@ -1658,7 +1669,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
           "position": 0
         },
         {
@@ -1689,6 +1700,7 @@
       },
       "grader_config": {
         "language": "python",
+        "completion_mode": "full_function",
         "entry_point": "longest_streak",
         "timeout_seconds": 3.0,
         "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([],)\n    original = deepcopy(args)\n    assert candidate(*args) == (None, 0)\n    assert args == original, \"inputs mutated\"\n    args = ([5, 2, 1, 2, 6],)\n    original = deepcopy(args)\n    assert candidate(*args) == (1, 2)\n    assert args == original, \"inputs mutated\"\n    args = ([-1, -3, -2, 7],)\n    original = deepcopy(args)\n    assert candidate(*args) == (-3, 3)\n    assert args == original, \"inputs mutated\"\n    args = ([4, 4],)\n    original = deepcopy(args)\n    assert candidate(*args) == (4, 1)\n    assert args == original, \"inputs mutated\"\n    args = ([3, 2, 4, 1],)\n    original = deepcopy(args)\n    assert candidate(*args) == (1, 4)\n    assert args == original, \"inputs mutated\"\n"
@@ -1696,7 +1708,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
           "position": 0
         },
         {
@@ -1727,6 +1739,7 @@
       },
       "grader_config": {
         "language": "python",
+        "completion_mode": "full_function",
         "entry_point": "flatten_records",
         "timeout_seconds": 3.0,
         "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ({},)\n    original = deepcopy(args)\n    assert candidate(*args) == {}\n    assert args == original, \"inputs mutated\"\n    args = ({'a': {'b': 1, 'c': {}}, 'd': [{'x': 2}]},)\n    original = deepcopy(args)\n    assert candidate(*args) == {'a.b': 1, 'a.c': {}, 'd': [{'x': 2}]}\n    assert args == original, \"inputs mutated\"\n    args = ({'x': None, 'y': {'z': False}},)\n    original = deepcopy(args)\n    assert candidate(*args) == {'x': None, 'y.z': False}\n    assert args == original, \"inputs mutated\"\n"
@@ -1734,7 +1747,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
           "position": 0
         },
         {
@@ -1765,6 +1778,7 @@
       },
       "grader_config": {
         "language": "python",
+        "completion_mode": "full_function",
         "entry_point": "missing_ranges",
         "timeout_seconds": 3.0,
         "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([], 1, 5)\n    original = deepcopy(args)\n    assert candidate(*args) == [(1, 5)]\n    assert args == original, \"inputs mutated\"\n    args = ([5, 1, 1, 3, 8], 1, 5)\n    original = deepcopy(args)\n    assert candidate(*args) == [(2, 2), (4, 4)]\n    assert args == original, \"inputs mutated\"\n    args = ([1, 2], 1, 2)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n    args = ([0], -1000000000, 1000000000)\n    original = deepcopy(args)\n    assert candidate(*args) == [(-1000000000, -1), (1, 1000000000)]\n    assert args == original, \"inputs mutated\"\n    args = ([8], 3, 3)\n    original = deepcopy(args)\n    assert candidate(*args) == [(3, 3)]\n    assert args == original, \"inputs mutated\"\n"
@@ -1772,7 +1786,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
           "position": 0
         },
         {
@@ -1803,6 +1817,7 @@
       },
       "grader_config": {
         "language": "python",
+        "completion_mode": "full_function",
         "entry_point": "lru_misses",
         "timeout_seconds": 3.0,
         "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([], 2)\n    original = deepcopy(args)\n    assert candidate(*args) == (0, [])\n    assert args == original, \"inputs mutated\"\n    args = (['a', 'b', 'a', 'c', 'b'], 2)\n    original = deepcopy(args)\n    assert candidate(*args) == (4, ['c', 'b'])\n    assert args == original, \"inputs mutated\"\n    args = (['x', 'x'], 0)\n    original = deepcopy(args)\n    assert candidate(*args) == (2, [])\n    assert args == original, \"inputs mutated\"\n    args = (['a', 'a', 'b', 'b'], 1)\n    original = deepcopy(args)\n    assert candidate(*args) == (2, ['b'])\n    assert args == original, \"inputs mutated\"\n    args = (['a', 'b', 'a'], 4)\n    original = deepcopy(args)\n    assert candidate(*args) == (2, ['b', 'a'])\n    assert args == original, \"inputs mutated\"\n"
@@ -1810,7 +1825,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
           "position": 0
         },
         {
@@ -1841,6 +1856,7 @@
       },
       "grader_config": {
         "language": "python",
+        "completion_mode": "full_function",
         "entry_point": "sessionize",
         "timeout_seconds": 3.0,
         "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([], 3)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n    args = ([1, 2, 5, 9, 9], 3)\n    original = deepcopy(args)\n    assert candidate(*args) == [(1, 5, 3), (9, 9, 2)]\n    assert args == original, \"inputs mutated\"\n    args = ([1, 1, 2], 0)\n    original = deepcopy(args)\n    assert candidate(*args) == [(1, 1, 2), (2, 2, 1)]\n    assert args == original, \"inputs mutated\"\n    args = ([-5, -2, 1], 3)\n    original = deepcopy(args)\n    assert candidate(*args) == [(-5, 1, 3)]\n    assert args == original, \"inputs mutated\"\n"
@@ -1848,7 +1864,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
           "position": 0
         },
         {
@@ -1879,6 +1895,7 @@
       },
       "grader_config": {
         "language": "python",
+        "completion_mode": "full_function",
         "entry_point": "expand_template",
         "timeout_seconds": 3.0,
         "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ('Hi ${user}!', {'user': 'Ana'})\n    original = deepcopy(args)\n    assert candidate(*args) == 'Hi Ana!'\n    assert args == original, \"inputs mutated\"\n    args = ('${a}/${b}/${bad-name}', {'a': '${b}', 'b': 'X'})\n    original = deepcopy(args)\n    assert candidate(*args) == '${b}/X/${bad-name}'\n    assert args == original, \"inputs mutated\"\n    args = ('${_x}${missing}${1x}', {'_x': ''})\n    original = deepcopy(args)\n    assert candidate(*args) == '${missing}${1x}'\n    assert args == original, \"inputs mutated\"\n    args = ('', {})\n    original = deepcopy(args)\n    assert candidate(*args) == ''\n    assert args == original, \"inputs mutated\"\n"
@@ -1886,7 +1903,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
           "position": 0
         },
         {
@@ -1917,6 +1934,7 @@
       },
       "grader_config": {
         "language": "python",
+        "completion_mode": "full_function",
         "entry_point": "match_route",
         "timeout_seconds": 3.0,
         "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ('/users/:id', '/users/42/')\n    original = deepcopy(args)\n    assert candidate(*args) == {'id': '42'}\n    assert args == original, \"inputs mutated\"\n    args = ('/', '/')\n    original = deepcopy(args)\n    assert candidate(*args) == {}\n    assert args == original, \"inputs mutated\"\n    args = ('/x/:id', '/x//')\n    original = deepcopy(args)\n    assert candidate(*args) == None\n    assert args == original, \"inputs mutated\"\n    args = ('/a', '/A')\n    original = deepcopy(args)\n    assert candidate(*args) == None\n    assert args == original, \"inputs mutated\"\n    args = ('/:a/:b', '/x/y')\n    original = deepcopy(args)\n    assert candidate(*args) == {'a': 'x', 'b': 'y'}\n    assert args == original, \"inputs mutated\"\n    args = ('/x/:id', '/x/a/b')\n    original = deepcopy(args)\n    assert candidate(*args) == None\n    assert args == original, \"inputs mutated\"\n"
@@ -1924,7 +1942,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
           "position": 0
         },
         {
@@ -1955,6 +1973,7 @@
       },
       "grader_config": {
         "language": "python",
+        "completion_mode": "full_function",
         "entry_point": "first_conflict",
         "timeout_seconds": 3.0,
         "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([],)\n    original = deepcopy(args)\n    assert candidate(*args) == None\n    assert args == original, \"inputs mutated\"\n    args = ([('a', 1, 3), ('a', 3, 5)],)\n    original = deepcopy(args)\n    assert candidate(*args) == None\n    assert args == original, \"inputs mutated\"\n    args = ([('a', 1, 5), ('b', 2, 4), ('a', 3, 3), ('a', 4, 6)],)\n    original = deepcopy(args)\n    assert candidate(*args) == (0, 3)\n    assert args == original, \"inputs mutated\"\n    args = ([('a', 5, 9), ('a', 1, 3), ('a', 2, 6)],)\n    original = deepcopy(args)\n    assert candidate(*args) == (0, 2)\n    assert args == original, \"inputs mutated\"\n    args = ([('x', 1, 2), ('x', 1, 2)],)\n    original = deepcopy(args)\n    assert candidate(*args) == (0, 1)\n    assert args == original, \"inputs mutated\"\n"
@@ -1962,7 +1981,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
           "position": 0
         },
         {
@@ -1993,6 +2012,7 @@
       },
       "grader_config": {
         "language": "python",
+        "completion_mode": "full_function",
         "entry_point": "paginate",
         "timeout_seconds": 3.0,
         "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([], None, 2)\n    original = deepcopy(args)\n    assert candidate(*args) == {'items': [], 'next_cursor': None}\n    assert args == original, \"inputs mutated\"\n    args = ([{'id': 3}, {'id': 1}, {'id': 5}], None, 2)\n    original = deepcopy(args)\n    assert candidate(*args) == {'items': [{'id': 1}, {'id': 3}], 'next_cursor': 3}\n    assert args == original, \"inputs mutated\"\n    args = ([{'id': 3}, {'id': 1}, {'id': 5}], 2, 1)\n    original = deepcopy(args)\n    assert candidate(*args) == {'items': [{'id': 3}], 'next_cursor': 3}\n    assert args == original, \"inputs mutated\"\n    args = ([{'id': 0}, {'id': 2}], 0, 1)\n    original = deepcopy(args)\n    assert candidate(*args) == {'items': [{'id': 2}], 'next_cursor': None}\n    assert args == original, \"inputs mutated\"\n    args = ([{'id': 1}], 9, 1)\n    original = deepcopy(args)\n    assert candidate(*args) == {'items': [], 'next_cursor': None}\n    assert args == original, \"inputs mutated\"\n"
@@ -2000,7 +2020,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "Complete the Python function below. Return only the indented function body as raw Python, with no Markdown, explanation, or repeated signature. Your response is appended directly to the code prefix.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
           "position": 0
         },
         {

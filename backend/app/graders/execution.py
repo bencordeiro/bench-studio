@@ -145,6 +145,7 @@ def run_execution(config: dict, completion: str, prompt_text: str = "") -> dict[
       entry_point     name of the function under test
       timeout_seconds wall-clock limit for the whole run (default 3.0)
       language        must be "python" (the only supported language)
+      completion_mode "body" (default/reference contract) or "full_function"
 
     prompt_text is the code prefix the model completed (the prompt's user
     message). The result dict matches the deterministic graders' contract:
@@ -158,10 +159,20 @@ def run_execution(config: dict, completion: str, prompt_text: str = "") -> dict[
         test_code = config.get("test_code", "")
         entry_point = config.get("entry_point", "")
         timeout = float(config.get("timeout_seconds", DEFAULT_TIMEOUT_SECONDS))
-        if not (test_code and entry_point and prompt_text):
+        completion_mode = config.get("completion_mode", "body")
+        if completion_mode not in {"body", "full_function"}:
+            return _result("failed: unsupported completion mode", False)
+        if not (test_code and entry_point and (prompt_text or completion_mode == "full_function")):
             return _result("failed: incomplete execution grader config", False)
 
-        program = build_check_program(prompt_text, completion or "", test_code, entry_point)
+        prefix = prompt_text if completion_mode == "body" else ""
+        program = build_check_program(prefix, completion or "", test_code, entry_point)
+        try:
+            compile(program, "<candidate>", "exec")
+        except SyntaxError as exc:
+            result = _result(f"failed: invalid Python ({type(exc).__name__}: {exc.msg})", False)
+            result["details"]["failure_category"] = "invalid_code"
+            return result
         child_src = _GUARD_PREAMBLE + program + "\n" + _SENTINEL_EPILOGUE
 
         with tempfile.TemporaryDirectory(prefix="localbench-exec-") as td:
@@ -182,7 +193,9 @@ def run_execution(config: dict, completion: str, prompt_text: str = "") -> dict[
                         timeout=timeout,
                     )
             except subprocess.TimeoutExpired:
-                return _result("timed out", False, _tail(out_path))
+                result = _result("timed out", False, _tail(out_path))
+                result["details"]["failure_category"] = "execution_timeout"
+                return result
             if proc.returncode != 0:
                 return _result(f"failed: exit {proc.returncode}", False, _tail(out_path))
             try:

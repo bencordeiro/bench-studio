@@ -53,6 +53,7 @@ export default function SettingsPage() {
             <NumField label="Default temperature" value={form.default_temperature} onChange={(v) => set({ default_temperature: v })} step={0.1} />
             <NumField label="Default top-p" value={form.default_top_p} onChange={(v) => set({ default_top_p: v })} step={0.05} />
             <NumField label="Max tokens per question (0 = server default)" value={form.default_max_tokens} onChange={(v) => set({ default_max_tokens: v })} />
+            {form.default_max_tokens === 0 && <p className="text-xs text-warn col-span-2">The server controls the token limit. If its default is unlimited, repetitive reasoning can continue indefinitely. Set a positive limit for a consistent generation budget.</p>}
             <div>
               <label className="label">Log level</label>
               <select className="input" value={form.log_level} onChange={(e) => set({ log_level: e.target.value })}>

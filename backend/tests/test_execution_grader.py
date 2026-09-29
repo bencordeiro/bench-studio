@@ -6,7 +6,6 @@ completion text.
 """
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 from app.graders.execution import build_check_program, run_execution
@@ -91,3 +90,18 @@ def test_incomplete_config_fails_cleanly():
     assert r["details"]["status"].startswith("failed:")
     r = run_execution(GC, "    return n + 1\n", "")
     assert r["passed"] is False
+
+
+def test_full_function_contract_ignores_prompt_prefix_and_checks_tests():
+    config = {**GC, "completion_mode": "full_function"}
+    assert run_execution(config, "def add_one(n):\n    return n + 1\n", PROMPT)["passed"]
+    assert not run_execution(config, "def add_one(n):\n    return n + 2\n", PROMPT)["passed"]
+    assert not run_execution(config, "    return n + 1\n", PROMPT)["passed"]
+    assert not run_execution(config, "```python\ndef add_one(n):\n    return n + 1\n```", PROMPT)["passed"]
+    # Historical body-mode configurations keep their original assembly.
+    assert run_execution(GC, "    return n + 1\n", PROMPT)["passed"]
+
+
+def test_invalid_python_has_actionable_failure_category():
+    result = run_execution(GC, "return n + 1\n", PROMPT)
+    assert result["details"]["failure_category"] == "invalid_code"

@@ -8,7 +8,6 @@ from pathlib import Path
 from textwrap import indent
 
 import pytest
-
 from app.graders.deterministic import run_deterministic
 from app.graders.execution import run_execution
 from app.seed.suites_loader import SUITES_DIR
@@ -45,10 +44,10 @@ def test_requested_suite_counts(name, count):
 def test_python_function_contract(task):
     p = execution_prompt(task)
     prefix = p["messages"][-1]["content"]
-    result = run_execution(p["grader_config"], indent(task["body"], "    ") + "\n", prefix)
+    result = run_execution(p["grader_config"], prefix + indent(task["body"], "    ") + "\n", prefix)
     assert result["passed"], result
     for wrong in ("    pass\n", "    return None\n", "    return []\n"):
-        assert not run_execution(p["grader_config"], wrong, prefix)["passed"]
+        assert not run_execution(p["grader_config"], prefix + wrong, prefix)["passed"]
 
 
 @pytest.mark.parametrize(
