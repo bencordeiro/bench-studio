@@ -6,6 +6,7 @@ import json
 import uuid
 
 import pytest
+
 from app.db.session import session_scope
 from app.jobs import engine
 from app.jobs.engine import (
@@ -327,6 +328,78 @@ def _detached(ep):
     )
 
 
+@pytest.mark.parametrize("compatibility_status", ["incompatible", "compatible", "inconclusive"])
+async def test_text_tool_preflight_blocks_only_confirmed_incompatibility(monkeypatch, compatibility_status):
+    from unittest.mock import AsyncMock
+
+    probe = AsyncMock(return_value={"status": compatibility_status, "message": "Endpoint parser incompatible"})
+    chat = AsyncMock(side_effect=_fake_target_chat)
+    monkeypatch.setattr(engine, "probe_text_tool_calls", probe)
+    monkeypatch.setattr(engine, "chat_completion", chat)
+    with session_scope() as session:
+        bench = _make_benchmark(session, [{
+            "stable_id": "tool", "title": "Tool", "grading_mode": "deterministic",
+            "grader_config": {"checks": [{"type": "tool_call", "expected_calls": []}]},
+            "messages": [{"role": "user", "content": "Call a tool"}],
+        }])
+        ep = _make_endpoint(session)
+        run = crud.create_run(session, {"benchmark_id": bench.id, "target_endpoint_id": ep.id})
+        run_id, profile = run.id, _detached(ep)
+    await engine.run_job(
+        run_id, target_profile=profile, target_model="demo", target_session_key=None,
+        target_settings={}, judge_profile=None, judge_model="", judge_session_key=None,
+        judge_settings={}, run_config={}, judge_enabled=False, verifier_enabled=False,
+    )
+    probe.assert_awaited_once()
+    with session_scope() as session:
+        run = session.get(BenchmarkRun, run_id)
+        assert run.benchmark_snapshot["text_tool_compatibility"]["status"] == compatibility_status
+        execution = session.query(PromptExecution).filter_by(run_id=run_id).one()
+        if compatibility_status == "incompatible":
+            assert run.status == RunStatus.FAILED.value
+            assert "Endpoint parser incompatible" in run.error_message
+            assert run.completed_at is not None
+            assert execution.status == PromptStatus.PENDING.value
+            assert execution.final_score is None
+            assert run.completed_prompts == 0
+            chat.assert_not_awaited()
+        else:
+            assert run.status in {RunStatus.COMPLETED.value, RunStatus.COMPLETED_WITH_ERRORS.value}
+            chat.assert_awaited_once()
+
+
+async def test_confirmed_tool_incompatibility_after_inconclusive_probe_stops_remaining_questions(monkeypatch):
+    from unittest.mock import AsyncMock
+
+    monkeypatch.setattr(engine, "probe_text_tool_calls", AsyncMock(return_value={"status": "inconclusive"}))
+    failed = ChatResult(content="", finish_reason="error", truncated=False, usage={},
+                        http_status=400, time_to_first_token=None, total_response_time=1,
+                        retry_count=0, error="HTTP 400: malformed tool call: get_weather")
+    chat = AsyncMock(return_value=failed)
+    monkeypatch.setattr(engine, "chat_completion", chat)
+    with session_scope() as session:
+        prompts = [{"stable_id": f"tool{i}", "grading_mode": "deterministic",
+                    "grader_config": {"type": "tool_call", "expected_calls": []},
+                    "messages": [{"role": "user", "content": "Call a tool"}]} for i in range(2)]
+        bench = _make_benchmark(session, prompts)
+        ep = _make_endpoint(session)
+        run = crud.create_run(session, {"benchmark_id": bench.id, "target_endpoint_id": ep.id})
+        run_id, profile = run.id, _detached(ep)
+    await engine.run_job(
+        run_id, target_profile=profile, target_model="demo", target_session_key=None,
+        target_settings={}, judge_profile=None, judge_model="", judge_session_key=None,
+        judge_settings={}, run_config={}, judge_enabled=False, verifier_enabled=False,
+    )
+    chat.assert_awaited_once()
+    with session_scope() as session:
+        run = session.get(BenchmarkRun, run_id)
+        assert run.status == RunStatus.FAILED.value
+        assert "Endpoint rejected or converted" in run.error_message
+        executions = session.query(PromptExecution).filter_by(run_id=run_id).order_by(PromptExecution.position).all()
+        assert [e.status for e in executions] == [PromptStatus.FAILED.value, PromptStatus.PENDING.value]
+        assert all(e.final_score is None for e in executions)
+
+
 @pytest.mark.asyncio
 async def test_judge_invalid_output_is_repaired_with_candidate(temp_data_dir, monkeypatch):
     """A judge that first returns invalid JSON gets one repair attempt.
@@ -468,6 +541,7 @@ async def test_parent_cancellation_closes_in_flight_request():
 
 async def test_inactivity_timeout_fails_one_prompt_and_continues(monkeypatch):
     import httpx
+
     from app.services.openai_client import chat_completion
 
     requests = 0
@@ -512,8 +586,9 @@ async def test_inactivity_timeout_fails_one_prompt_and_continues(monkeypatch):
 
 @pytest.mark.parametrize("timeout", [0, -1, float("inf"), float("nan")])
 def test_run_config_rejects_invalid_timeout(timeout):
-    from app.schemas.runs import RunConfig
     from pydantic import ValidationError
+
+    from app.schemas.runs import RunConfig
 
     with pytest.raises(ValidationError):
         RunConfig(timeout=timeout)

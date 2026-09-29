@@ -72,6 +72,7 @@ class RunResponse(ORMModel):
     run_config: dict
     summary: dict
     error_message: str
+    text_tool_compatibility: dict = Field(default_factory=dict)
     total_prompts: int
     completed_prompts: int
     failed_prompts: int

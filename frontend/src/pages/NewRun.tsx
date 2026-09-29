@@ -148,6 +148,12 @@ export default function NewRun() {
               {needsJudge ? "Includes judge/hybrid prompts — configure a judge below or defer judging." : "Deterministic/manual only — no judge required."}
             </p>
           )}
+          {selectedBenchmark?.tags?.includes("hermes") && (
+            <p className="text-xs text-warn mt-2">
+              This suite requires literal &lt;tool_call&gt; text. Servers with a tool-call parser may reject or convert it.
+              Compatibility is checked before questions run; a confirmed incompatibility stops the run without scoring questions.
+            </p>
+          )}
         </Card>
         <Card>
           <label className="label">Notes</label>

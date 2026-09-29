@@ -168,6 +168,9 @@ export default function ActiveRun() {
         {run.error_message && (
           <p className="text-sm text-err mt-3">Error: {run.error_message}</p>
         )}
+        {run.text_tool_compatibility?.status === "inconclusive" && (
+          <p className="text-sm text-warn mt-3">{run.text_tool_compatibility.message}</p>
+        )}
       </Card>
       {run.status === "interrupted" && (
         <Card>

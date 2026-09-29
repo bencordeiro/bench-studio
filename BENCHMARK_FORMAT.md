@@ -160,3 +160,10 @@ block with only `name` and object-valued `arguments`, and no surrounding prose.
 legacy coercion. `strict_args: true` rejects extra arguments. Explicit
 `{"any_of": [...]}` values can express equivalent timestamp forms or numeric
 representations. These strict options are opt-in for imported suites.
+
+These checks grade text returned in `message.content` / `delta.content`; they do
+not grade native `tool_calls` responses. Endpoints must pass through literal
+Hermes blocks. Before running enabled tool-call checks, the app probes that
+transport and stops on a confirmed parser rejection or native-call conversion.
+An inconclusive probe proceeds so model failure to copy is not confused with
+endpoint incompatibility. See [endpoint compatibility](docs/HERMES_ENDPOINT_COMPATIBILITY.md).

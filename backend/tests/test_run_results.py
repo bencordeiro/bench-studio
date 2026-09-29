@@ -11,6 +11,28 @@ import uuid
 from fastapi.testclient import TestClient
 
 
+def test_compatibility_failure_is_visible_in_run_api_and_json_export(session):
+    from app.main import app
+    from app.models import BenchmarkRun
+
+    run_id = _seed_run_with_results(session)
+    run = session.get(BenchmarkRun, run_id)
+    report = {"status": "incompatible", "message": "Endpoint requires disabling its tool-call parser",
+              "http_status": 400, "error": "HTTP 400: malformed tool call"}
+    run.benchmark_snapshot = {**run.benchmark_snapshot, "text_tool_compatibility": report}
+    run.status = "failed"
+    run.error_message = report["message"]
+    session.commit()
+    with TestClient(app) as client:
+        response = client.get(f"/api/runs/{run_id}")
+        assert response.status_code == 200
+        assert response.json()["text_tool_compatibility"] == report
+        exported = client.get(f"/api/runs/{run_id}/export/json")
+        assert exported.status_code == 200
+        assert exported.json()["run"]["text_tool_compatibility"] == report
+        assert exported.json()["run"]["error_message"] == report["message"]
+
+
 def _seed_run_with_results(session, prompt_count: int = 3):
     """A completed run whose last execution deliberately has no child rows."""
     from app.models import (

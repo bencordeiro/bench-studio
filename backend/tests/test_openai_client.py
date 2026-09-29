@@ -7,6 +7,7 @@ import json
 import httpx
 import pytest
 import respx
+
 from app.services.openai_client import (
     RETRYABLE_STATUS,
     _build_body,
@@ -367,3 +368,69 @@ async def test_empty_network_error_still_marks_request_failed():
     )
     assert result.error
     assert "ReadTimeout" in result.error
+
+
+@pytest.mark.parametrize("kind", ["content", "reasoning_content"])
+async def test_silent_stream_abort_is_failed_and_partial_output_preserved(kind):
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        return httpx.Response(200, text='data: ' + json.dumps({
+            "choices": [{"delta": {kind: "partial output"}, "finish_reason": None}],
+        }) + '\n\n')
+
+    result = await chat_completion(
+        "http://test/v1", api_key=None, model="test", messages=[],
+        transport=httpx.MockTransport(handler),
+    )
+    assert "without a finish_reason or [DONE]" in result.error
+    assert result.raw["generation_diagnostics"]["incomplete_stream"]
+    assert result.raw["generation_diagnostics"]["failure_category"] == "incomplete_stream"
+    assert (result.content if kind == "content" else result.reasoning) == "partial output"
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize("ending", ["done", "finish"])
+async def test_stream_accepts_either_completion_marker(ending):
+    chunks = ['data: {"choices":[{"delta":{"content":"answer"}}]}']
+    chunks.append('data: [DONE]' if ending == "done" else
+                  'data: {"choices":[{"delta":{},"finish_reason":"stop"}]}')
+    result = await chat_completion(
+        "http://test/v1", api_key=None, model="test", messages=[],
+        transport=httpx.MockTransport(lambda request: httpx.Response(200, text='\n\n'.join(chunks))),
+    )
+    assert result.error is None
+    assert not result.raw["generation_diagnostics"]["incomplete_stream"]
+
+
+async def test_sse_error_retains_partial_reasoning_and_server_message():
+    body = '\n\n'.join([
+        'data: {"choices":[{"delta":{"reasoning_content":"partial thought"}}]}',
+        'data: {"error":{"message":"malformed tool call: get_weather"}}',
+    ])
+    result = await chat_completion(
+        "http://test/v1", api_key=None, model="test", messages=[],
+        transport=httpx.MockTransport(lambda request: httpx.Response(200, text=body)),
+    )
+    assert result.reasoning == "partial thought"
+    assert "malformed tool call" in result.error
+
+
+@pytest.mark.parametrize("stream", [True, False])
+async def test_native_calls_are_reported_as_protocol_mismatch(stream):
+    call = {"id": "c1", "type": "function", "function": {"name": "get_weather", "arguments": "{}"}}
+    if stream:
+        response = httpx.Response(200, text='data: ' + json.dumps({
+            "choices": [{"delta": {"tool_calls": [call]}, "finish_reason": "tool_calls"}],
+        }) + '\n\ndata: [DONE]\n\n')
+    else:
+        response = httpx.Response(200, json={
+            "choices": [{"message": {"tool_calls": [call]}, "finish_reason": "tool_calls"}],
+        })
+    result = await chat_completion(
+        "http://test/v1", api_key=None, model="test", messages=[], stream=stream,
+        transport=httpx.MockTransport(lambda request: response),
+    )
+    assert "native tool_calls" in result.error
+    assert result.raw["generation_diagnostics"]["native_tool_calls_received"]

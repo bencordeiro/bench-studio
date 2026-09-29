@@ -218,6 +218,7 @@ export interface RunSummary {
 }
 
 export interface RunResponse {
+  text_tool_compatibility?: { status: "compatible" | "incompatible" | "inconclusive"; message?: string; error?: string | null; http_status?: number };
   id: string;
   name: string;
   notes: string;
@@ -278,6 +279,10 @@ export interface ExecutionDetail {
     answer_chars?: number;
     reasoning_chars?: number;
     truncated?: boolean;
+    incomplete_stream?: boolean;
+    possible_tool_parser_abort?: boolean;
+    native_tool_calls_received?: boolean;
+    failure_category?: string;
   };
   reference_answer: string;
   finish_reason: string;

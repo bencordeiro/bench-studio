@@ -53,6 +53,16 @@ describe("New Run form validation", () => {
     expect(screen.queryByText("Request time budget (s)")).not.toBeInTheDocument();
   });
 
+  it("explains Hermes compatibility before starting a run", async () => {
+    mockBenchmarks.mockResolvedValue([
+      { id: "h1", name: "Hermes", enabled_prompt_count: 15, version: "4.0.0", tags: ["hermes"] },
+    ]);
+    renderPage();
+    await waitFor(() => expect(screen.getByText(/Hermes \(15 prompts\)/)).toBeInTheDocument());
+    await userEvent.selectOptions(screen.getAllByRole("combobox")[0], "h1");
+    expect(screen.getByText(/Compatibility is checked before questions run/)).toBeInTheDocument();
+  });
+
   it("prevents starting without a target model", async () => {
     renderPage();
     await waitFor(() => expect(screen.getByText("Start run")).toBeInTheDocument());

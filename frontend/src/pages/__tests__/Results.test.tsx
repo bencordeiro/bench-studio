@@ -95,4 +95,17 @@ describe("Results summary and manual override", () => {
     expect(screen.getByText("(empty)")).toBeInTheDocument();
   });
 
+  it("shows an incomplete endpoint stream separately from an empty answer", async () => {
+    mockResults.mockResolvedValue({ ...sample, executions: [{ ...sample.executions[0],
+      candidate_response: "partial answer",
+      generation_diagnostics: { incomplete_stream: true },
+      error_message: "Endpoint stream ended without a finish_reason or [DONE]",
+    }] });
+    renderPage();
+    await waitFor(() => expect(screen.getByText("Manual prompt")).toBeInTheDocument());
+    await userEvent.click(screen.getByText("Manual prompt"));
+    expect(screen.getByText(/endpoint stream ended without a completion marker/)).toBeInTheDocument();
+    expect(screen.getByText("partial answer")).toBeInTheDocument();
+  });
+
 });

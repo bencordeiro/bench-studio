@@ -76,6 +76,7 @@ def _run_to_response(run: BenchmarkRun, session: Session) -> RunResponse:
         run_config=run.run_config or {},
         summary=run.summary or {},
         error_message=run.error_message,
+        text_tool_compatibility=(run.benchmark_snapshot or {}).get("text_tool_compatibility", {}),
         total_prompts=run.total_prompts,
         completed_prompts=run.completed_prompts,
         failed_prompts=run.failed_prompts,
@@ -563,4 +564,3 @@ def add_manual_grade(execution_id: str, payload: ManualGradeRequest, session: Se
             run.summary = summary
             session.commit()
     return {"execution_id": execution_id, "score": grade.score}
-

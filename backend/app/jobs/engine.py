@@ -42,6 +42,11 @@ from app.models import (
     VerifierGrade,
 )
 from app.services.openai_client import chat_completion
+from app.services.tool_compatibility import (
+    annotate_text_tool_failure,
+    probe_text_tool_calls,
+    requires_text_tool_calls,
+)
 
 log = logging.getLogger(__name__)
 
@@ -233,6 +238,29 @@ async def run_job(
     await _emit(run_id, "phase", phase="preparing")
 
     try:
+        with session_scope() as session:
+            run = session.get(BenchmarkRun, run_id)
+            needs_text_tools = any(requires_text_tool_calls(p) for p in
+                                   (run.benchmark_snapshot or {}).get("prompts", [])
+                                   if p.get("enabled", True))
+        if needs_text_tools:
+            await _emit(run_id, "phase", phase="checking_text_tool_compatibility")
+            extra_body = dict(target_profile.extra_body_params or {})
+            effort = _pick({}, target_settings, run_config, "reasoning_effort")
+            if effort:
+                extra_body["chat_template_kwargs"] = {
+                    **(extra_body.get("chat_template_kwargs") or {}), "reasoning_effort": effort,
+                }
+            compatibility = await _await_abortable(probe_text_tool_calls(
+                target_profile, target_model, _resolve_key(target_profile, target_session_key),
+                run_config, extra_body,
+            ), run_id)
+            with session_scope() as session:
+                run = session.get(BenchmarkRun, run_id)
+                run.benchmark_snapshot = {**run.benchmark_snapshot, "text_tool_compatibility": compatibility}
+            await _emit(run_id, "compatibility", **compatibility)
+            if compatibility["status"] == "incompatible":
+                raise ValueError(compatibility["message"])
         if run_config.get("warm_up_request"):
             await _warmup(run_id, target_profile, target_model, target_session_key,
                           target_settings, run_config)
@@ -337,6 +365,8 @@ async def _run_target_phase(
                                 output_price_per_1m=output_price)
             _update_progress(session, run_id)
         await _emit_progress(run_id, execution_snapshot=prompt_snapshot, result=result)
+        if (result.raw.get("generation_diagnostics") or {}).get("failure_category") == "text_tool_call_incompatibility":
+            raise ValueError(result.error)
 
 
 async def _execute_target_prompt(run_id, profile, model, session_key, settings, run_config, prompt_snapshot):
@@ -363,7 +393,7 @@ async def _execute_target_prompt(run_id, profile, model, session_key, settings, 
     async def report_generation(fields):
         await _emit(run_id, "generation", **fields)
 
-    return await _await_abortable(chat_completion(
+    result = await _await_abortable(chat_completion(
         profile.base_url,
         api_key=_resolve_key(profile, session_key),
         model=model,
@@ -383,6 +413,7 @@ async def _execute_target_prompt(run_id, profile, model, session_key, settings, 
         backoff_max=float(run_config.get("retry_backoff_max", 30.0)),
         on_progress=report_generation,
     ), run_id)
+    return annotate_text_tool_failure(result, prompt_snapshot)
 
 
 def _limit_extra_body(extra_body, max_tokens):

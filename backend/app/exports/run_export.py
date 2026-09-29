@@ -112,6 +112,8 @@ def _collect_run(session: Session, run: BenchmarkRun) -> dict[str, Any]:
             "name": run.name,
             "notes": run.notes,
             "status": run.status,
+            "error_message": run.error_message,
+            "text_tool_compatibility": (run.benchmark_snapshot or {}).get("text_tool_compatibility", {}),
             "benchmark_name": (run.benchmark_snapshot or {}).get("name", ""),
             "benchmark_version": (run.benchmark_snapshot or {}).get("version", ""),
             "target_endpoint_name": run.target_endpoint_name,

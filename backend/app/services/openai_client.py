@@ -189,6 +189,8 @@ async def stream_chat(
     url: str,
     headers: dict[str, str],
     body: dict[str, Any],
+    *,
+    state: dict[str, Any] | None = None,
 ) -> AsyncIterator[tuple[str, str, str | None, dict[str, Any] | None, dict[str, Any] | None]]:
     """Yield (content_delta, reasoning_delta, finish_reason_or_None, usage_or_None, timings_or_None)."""
     async with client.stream("POST", url, headers=headers, json=body) as response:
@@ -204,7 +206,17 @@ async def stream_chat(
             if chunk is None:
                 continue
             if chunk.get("__done__"):
+                if state is not None:
+                    state["done_received"] = True
                 return
+            if chunk.get("error"):
+                raise OpenAIClientError(_error_from_body(json.dumps(chunk), response.status_code),
+                                        status=response.status_code)
+            choices = chunk.get("choices") or []
+            if state is not None and choices:
+                delta = choices[0].get("delta") or {}
+                if delta.get("tool_calls") or delta.get("function_call"):
+                    state["native_tool_calls_received"] = True
             content, reasoning, finish = _delta_text(chunk)
             usage = _extract_usage(chunk)
             timings = chunk.get("timings")
@@ -404,8 +416,11 @@ async def _do_stream(
     raw_chunks: list[dict[str, Any]] = []
     last_progress = 0.0
     stream_error = None
+    state = {"done_received": False, "native_tool_calls_received": False}
     try:
-        async for content, reasoning, finish, chunk_usage, chunk_timings in stream_chat(client, url, headers, body):
+        async for content, reasoning, finish, chunk_usage, chunk_timings in stream_chat(
+            client, url, headers, body, state=state
+        ):
             if first_chunk_at is None and (content or reasoning):
                 first_chunk_at = time.monotonic()
                 ttft = first_chunk_at - start
@@ -437,11 +452,32 @@ async def _do_stream(
         if not (content_parts or reasoning_parts):
             raise
         stream_error = _sanitize_error_message(str(exc) or type(exc).__name__)
+    except OpenAIClientError as exc:
+        if not (content_parts or reasoning_parts):
+            raise
+        stream_error = exc.sanitized_message
     total = time.monotonic() - start
     content = "".join(content_parts)
     reasoning_text = "".join(reasoning_parts)
     no_final = not content.strip()
     truncated = finish_reason == "length"
+    incomplete = finish_reason == "unknown" and not state["done_received"]
+    diagnostics = generation_diagnostics(content, reasoning_text, finish_reason)
+    diagnostics.update(state, incomplete_stream=incomplete,
+                       finish_reason_received=finish_reason != "unknown", usage_received=bool(usage))
+    error = stream_error
+    if not error and incomplete:
+        error = "Endpoint stream ended without a finish_reason or [DONE]; generation was incomplete."
+    if not error and state["native_tool_calls_received"]:
+        error = "Endpoint returned native tool_calls instead of answer text; this text-format benchmark requires a pass-through endpoint."
+    if not error and no_final:
+        error = "No final answer returned; reasoning is retained separately."
+    if error:
+        diagnostics["failure_category"] = (
+            "incomplete_stream" if incomplete else
+            "native_tool_calls" if state["native_tool_calls_received"] else
+            "endpoint_error" if stream_error else "no_final_answer"
+        )
     return ChatResult(
         content=content,
         finish_reason=finish_reason,
@@ -452,9 +488,9 @@ async def _do_stream(
         total_response_time=total,
         retry_count=retry_count,
         raw={"streamed": True, "chunk_sample": raw_chunks, "fell_back_to_reasoning": False,
-             "generation_diagnostics": generation_diagnostics(content, reasoning_text, finish_reason)},
+             "generation_diagnostics": diagnostics},
         reasoning=reasoning_text,
-        error=stream_error or ("No final answer returned; reasoning is retained separately." if no_final else None),
+        error=error,
         server_timings=timings,
     )
 
@@ -493,6 +529,16 @@ async def _do_nonstream(
         usage = {}
     timings = data.get("timings") if isinstance(data, dict) else None
     truncated = finish_reason == "length"
+    native_calls = bool(message.get("tool_calls") or message.get("function_call"))
+    diagnostics = generation_diagnostics(content, reasoning, finish_reason)
+    diagnostics["native_tool_calls_received"] = native_calls
+    error = None
+    if native_calls:
+        error = "Endpoint returned native tool_calls instead of answer text; this text-format benchmark requires a pass-through endpoint."
+        diagnostics["failure_category"] = "native_tool_calls"
+    elif not content.strip():
+        error = "No final answer returned; reasoning is retained separately."
+        diagnostics["failure_category"] = "no_final_answer"
     # TTFT unavailable for non-streaming.
     return ChatResult(
         content=content,
@@ -503,8 +549,8 @@ async def _do_nonstream(
         time_to_first_token=None,
         total_response_time=total,
         retry_count=retry_count,
-        raw={"streamed": False, "generation_diagnostics": generation_diagnostics(content, reasoning, finish_reason)},
+        raw={"streamed": False, "generation_diagnostics": diagnostics},
         reasoning=reasoning,
-        error="No final answer returned; reasoning is retained separately." if not content.strip() else None,
+        error=error,
         server_timings=timings if isinstance(timings, dict) else None,
     )

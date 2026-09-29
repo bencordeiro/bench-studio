@@ -35,6 +35,8 @@ Seven suites ship with the app and load on first run (351 prompts). Six contain 
 
 See [the suite audit](docs/SUITE_AUDIT.md) for revisions, validation evidence, and limitations. Updated bundles upgrade in place on startup; historical runs retain their snapshots. The retired example suite is removed by migration.
 
+The Hermes suite grades literal `<tool_call>` text and requires an endpoint that preserves it. A server-side tool-call parser can reject that text or convert it into native `tool_calls`. Runs containing tool-call checks perform an unscored compatibility probe before questions run; confirmed parser incompatibility stops the run with a clear error. Disable the server parser or use a pass-through endpoint. Native function-calling evaluation requires a separate protocol and is not implemented. See [the compatibility notes](docs/HERMES_ENDPOINT_COMPATIBILITY.md).
+
 Design rules the original items follow (HumanEval keeps the upstream problems as-is):
 
 - **Code answers are checked by execution.** Output predictions are reproduced with CPython / Node; function tasks run reference solutions against edge-case tests. Structured-output items have compliant and violating response controls.

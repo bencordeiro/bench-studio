@@ -285,8 +285,9 @@ function ExecutionDetailModal({ execution, onClose, runStatus }: { execution: Ex
           ))}
         </Section>
 
-        {(execution.generation_diagnostics?.no_final_answer || execution.generation_diagnostics?.possible_repetition || execution.generation_diagnostics?.truncated) && (
+        {(execution.generation_diagnostics?.no_final_answer || execution.generation_diagnostics?.possible_repetition || execution.generation_diagnostics?.truncated || execution.generation_diagnostics?.incomplete_stream) && (
           <p className="text-sm text-warn">
+            {execution.generation_diagnostics.incomplete_stream && "The endpoint stream ended without a completion marker. "}
             {execution.generation_diagnostics.no_final_answer && "No final answer was returned. "}
             {execution.generation_diagnostics.possible_repetition && "Possible repetitive generation detected. "}
             {execution.generation_diagnostics.truncated && "The response reached its token limit. "}

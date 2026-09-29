@@ -37,6 +37,13 @@ const run: RunResponse = {
 };
 
 describe("Active Run progress display", () => {
+  it("retains an inconclusive tool compatibility warning", async () => {
+    mockGet.mockResolvedValue({ ...run, text_tool_compatibility: {
+      status: "inconclusive", message: "Text tool-call compatibility could not be confirmed; benchmark questions will still run.",
+    } });
+    renderPage();
+    await waitFor(() => expect(screen.getByText(/Text tool-call compatibility could not be confirmed/)).toBeInTheDocument());
+  });
   it("shows current progress percentage and prompt counts", async () => {
     mockGet.mockResolvedValue(run);
     renderPage();
