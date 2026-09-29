@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.core.secrets import store_api_key
 from app.core.urls import normalize_base_url
 from app.models import (
+    ApplicationSetting,
     BenchmarkPrompt,
     BenchmarkRun,
     BenchmarkSet,
@@ -330,7 +331,15 @@ def create_run(session: Session, data: dict[str, Any]) -> BenchmarkRun:
     bench_snapshot = snapshot_benchmark(session, benchmark)
     bench_snapshot["target"] = snapshot_endpoint(target) if target else {}
     bench_snapshot["judge"] = snapshot_endpoint(judge) if judge else {}
-    run_config = data.get("run_config", {}) or {}
+    from app.schemas.settings import AppSettings
+
+    row = session.get(ApplicationSetting, "app")
+    global_settings = AppSettings.model_validate(row.value if row else {})
+    run_config = dict(data.get("run_config", {}) or {})
+    run_config.update(
+        max_tokens=global_settings.default_max_tokens,
+        timeout=global_settings.default_timeout,
+    )
     enabled_prompts = [p for p in bench_snapshot.get("prompts", []) if p.get("enabled", True)]
     if not enabled_prompts:
         raise ValueError("Benchmark has no enabled prompts")
@@ -348,13 +357,13 @@ def create_run(session: Session, data: dict[str, Any]) -> BenchmarkRun:
         target_endpoint_id=target.id,
         target_endpoint_name=target.name,
         target_model=data.get("target_model") or target.default_model or "",
-        target_settings=data.get("target_settings", {}) or {},
+        target_settings={**(data.get("target_settings", {}) or {}), "max_tokens": global_settings.default_max_tokens},
         judge_endpoint_id=judge.id if judge else None,
         judge_endpoint_name=judge.name if judge else "",
         judge_model=data.get("judge_model") or (judge.default_model if judge else ""),
         judge_settings={
             "temperature": float(data.get("judge_temperature", 0.0)),
-            "max_tokens": int(data.get("judge_max_tokens", 2048)),
+            "max_tokens": global_settings.default_max_tokens,
         },
         judge_enabled=judge_enabled,
         verifier_enabled=bool(data.get("verifier_enabled", False)),

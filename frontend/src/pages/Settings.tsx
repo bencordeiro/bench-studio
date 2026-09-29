@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/client";
 import { Badge, Card, PageHeader, Spinner } from "@/components/ui";
 import { useToast } from "@/store/toast";
@@ -7,6 +7,7 @@ import type { AppSettings } from "@/types";
 
 export default function SettingsPage() {
   const toast = useToast();
+  const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ["settings"], queryFn: api.getSettings });
   const { data: diag } = useQuery({ queryKey: ["diagnostics"], queryFn: api.diagnostics });
   const [form, setForm] = useState<AppSettings | null>(null);
@@ -26,6 +27,7 @@ export default function SettingsPage() {
     setSaving(true);
     try {
       await api.updateSettings(form);
+      await qc.invalidateQueries({ queryKey: ["settings"] });
       toast("Settings saved", "success");
     } catch (e) {
       toast((e as Error).message, "error");
@@ -38,18 +40,19 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <PageHeader title="Settings" subtitle="Defaults and application configuration." actions={<button className="btn btn-primary" disabled={saving} onClick={save}>{saving ? "Saving…" : "Save"}</button>} />
+      <PageHeader title="Settings" subtitle="Global limits and application configuration." actions={<button className="btn btn-primary" disabled={saving} onClick={save}>{saving ? "Saving…" : "Save"}</button>} />
       <div className="grid md:grid-cols-2 gap-4">
         <Card>
-          <h3 className="font-medium text-white mb-3">Defaults</h3>
+          <h3 className="font-medium text-white mb-3">Global generation settings</h3>
+          <p className="text-xs text-gray-400 mb-3">Token limits and inactivity timeout apply to every new run and are saved with its results. Active generation has no total time limit. Changes apply to subsequent runs.</p>
           <div className="grid grid-cols-2 gap-3">
-            <NumField label="Default timeout (s)" value={form.default_timeout} onChange={(v) => set({ default_timeout: v })} />
+            <NumField label="Inactivity timeout (s)" value={form.default_timeout} onChange={(v) => set({ default_timeout: v })} />
             <NumField label="Retry max attempts" value={form.default_retry_max_attempts} onChange={(v) => set({ default_retry_max_attempts: v })} />
             <NumField label="Retry backoff base (s)" value={form.default_retry_backoff_base} onChange={(v) => set({ default_retry_backoff_base: v })} />
             <NumField label="Retry backoff max (s)" value={form.default_retry_backoff_max} onChange={(v) => set({ default_retry_backoff_max: v })} />
             <NumField label="Default temperature" value={form.default_temperature} onChange={(v) => set({ default_temperature: v })} step={0.1} />
             <NumField label="Default top-p" value={form.default_top_p} onChange={(v) => set({ default_top_p: v })} step={0.05} />
-            <NumField label="Default max tokens (0 = server default)" value={form.default_max_tokens} onChange={(v) => set({ default_max_tokens: v })} />
+            <NumField label="Max tokens per question (0 = server default)" value={form.default_max_tokens} onChange={(v) => set({ default_max_tokens: v })} />
             <div>
               <label className="label">Log level</label>
               <select className="input" value={form.log_level} onChange={(e) => set({ log_level: e.target.value })}>

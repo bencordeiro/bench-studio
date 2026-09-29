@@ -19,16 +19,7 @@ export default function NewRun() {
   const [judgeModel, setJudgeModel] = useState("");
   const [temperature, setTemperature] = useState(0);
   const [topP, setTopP] = useState(1);
-  const [maxTokens, setMaxTokens] = useState(0);
-  const [maxTokensEdited, setMaxTokensEdited] = useState(false);
-  // Default the token budget from Settings (default_max_tokens) unless the user
-  // has typed their own value for this run. 0 = the server's default (no cap) —
-  // a reasoning model then runs until its own stop token lands.
-  useEffect(() => {
-    if (settings && !maxTokensEdited) setMaxTokens(settings.default_max_tokens);
-  }, [settings, maxTokensEdited]);
   const [reasoningEffort, setReasoningEffort] = useState("");
-  const [timeout, setTimeout_] = useState(60);
   const [repetitions, setRepetitions] = useState(1);
   const [shuffle, setShuffle] = useState(false);
   const [warmup, setWarmup] = useState(false);
@@ -110,7 +101,6 @@ export default function NewRun() {
         judge_endpoint_id: judgeEndpointId || undefined,
         judge_model: judgeModel || undefined,
         judge_temperature: 0,
-        judge_max_tokens: 2048,
         verifier_enabled: verifier,
         run_config: {
           repetitions,
@@ -121,9 +111,7 @@ export default function NewRun() {
           judge_verification_enabled: verifier,
           temperature,
           top_p: topP,
-          max_tokens: maxTokens,
           reasoning_effort: reasoningEffort || undefined,
-          timeout,
         },
         notes,
         auto_start: true,
@@ -202,12 +190,11 @@ export default function NewRun() {
         </Card>
         <Card className="md:col-span-2">
           <h3 className="font-medium text-white mb-2">Generation &amp; run settings</h3>
+          <p className="text-xs text-gray-400 mb-3">Global Settings apply to every new run: {settings?.default_max_tokens === 0 ? "server default tokens" : `${settings?.default_max_tokens ?? "…"} max tokens`}, {settings?.default_timeout ?? "…"}s inactivity timeout. Active generation has no time limit.</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div><label className="label">Temperature</label><input type="number" step="0.1" className="input" value={temperature} onChange={(e) => setTemperature(parseFloat(e.target.value))} /></div>
             <div><label className="label">Top-p</label><input type="number" step="0.05" className="input" value={topP} onChange={(e) => setTopP(parseFloat(e.target.value))} /></div>
-            <div><label className="label">Max output tokens</label><input type="number" min="0" step="256" className="input" value={maxTokens} onChange={(e) => { setMaxTokens(parseInt(e.target.value)); setMaxTokensEdited(true); }} /><div className="text-xs text-gray-500 mt-1">0 = server default; long reasoning can use the entire time budget.</div></div>
             <div><label className="label">Reasoning level</label><select className="input" value={reasoningEffort} onChange={(e) => setReasoningEffort(e.target.value)}><option value="">server default</option><option value="low">low</option><option value="medium">medium</option><option value="high">high</option><option value="xhigh">xhigh</option></select><div className="text-xs text-gray-500 mt-1">Sent as chat_template_kwargs.reasoning_effort (llama.cpp / LM Studio).</div></div>
-            <div><label className="label">Request time budget (s)</label><input type="number" min="1" className="input" value={timeout} onChange={(e) => setTimeout_(parseInt(e.target.value))} /><div className="text-xs text-gray-500 mt-1">Total per request, including streaming and retries. Increase for slower reasoning models.</div></div>
             <div><label className="label">Repetitions</label><input type="number" min="1" max="20" className="input" value={repetitions} onChange={(e) => setRepetitions(parseInt(e.target.value))} /></div>
             <label className="flex items-end gap-2 text-sm pb-2"><input type="checkbox" checked={shuffle} onChange={(e) => setShuffle(e.target.checked)} /> Shuffle prompt order</label>
             <label className="flex items-end gap-2 text-sm pb-2"><input type="checkbox" checked={warmup} onChange={(e) => setWarmup(e.target.checked)} /> Warm-up request</label>

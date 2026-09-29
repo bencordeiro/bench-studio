@@ -237,9 +237,6 @@ function GenerationOverridesEditor({ overrides, onChange }: { overrides: Generat
         <Field label="Top-p (blank = inherit)">
           <input className="input" value={num(overrides.top_p)} onChange={(e) => set({ top_p: e.target.value === "" ? null : parseFloat(e.target.value) })} />
         </Field>
-        <Field label="Max tokens (blank or 0 = inherit/server default)">
-          <input className="input" value={num(overrides.max_tokens)} onChange={(e) => set({ max_tokens: e.target.value === "" ? null : parseInt(e.target.value) })} />
-        </Field>
         <Field label="Seed (blank = inherit)">
           <input className="input" value={num(overrides.seed)} onChange={(e) => set({ seed: e.target.value === "" ? null : parseInt(e.target.value) })} />
         </Field>

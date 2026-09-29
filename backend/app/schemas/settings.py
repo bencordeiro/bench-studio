@@ -9,13 +9,13 @@ DEFAULT_COMPOSITE_WEIGHTS = {"quality": 0.85, "reliability": 0.10, "performance"
 class AppSettings(BaseModel):
     local_data_path: str = ""
     log_level: str = "INFO"
-    default_timeout: float = 60.0
+    default_timeout: float = Field(default=60.0, gt=0, allow_inf_nan=False)
     default_retry_max_attempts: int = 3
     default_retry_backoff_base: float = 0.5
     default_retry_backoff_max: float = 30.0
     default_temperature: float = 0.0
     default_top_p: float = 1.0
-    default_max_tokens: int = 0
+    default_max_tokens: int = Field(default=0, ge=0)
     composite_weights: dict[str, float] = Field(default_factory=lambda: dict(DEFAULT_COMPOSITE_WEIGHTS))
     automatic_backup: bool = True
     launch_browser: bool = True

@@ -267,68 +267,36 @@ def test_retryable_status_set():
 
 
 @pytest.mark.parametrize("kind", ["content", "reasoning_content", "keepalive"])
-async def test_total_deadline_stops_continuously_active_stream(kind):
-    """Incoming bytes must not allow a request to outlive its total budget."""
-    closed = asyncio.Event()
-    requests = []
-
-    class EndlessStream(httpx.AsyncByteStream):
+async def test_active_stream_can_exceed_inactivity_timeout(kind):
+    class ActiveStream(httpx.AsyncByteStream):
         async def __aiter__(self):
-            while True:
-                await asyncio.sleep(0.005)
+            for _ in range(12):
+                await asyncio.sleep(0.01)
                 if kind == "keepalive":
                     yield b": keepalive\n\n"
                 else:
-                    chunk = {"choices": [{"delta": {kind: "still generating"}}]}
+                    chunk = {"choices": [{"delta": {kind: "answer"}}]}
                     yield f"data: {json.dumps(chunk)}\n\n".encode()
-
-        async def aclose(self):
-            closed.set()
+            yield b"data: [DONE]\n\n"
 
     def handler(request):
-        requests.append(request)
-        return httpx.Response(200, stream=EndlessStream())
+        assert request.extensions["timeout"]["read"] == 0.05
+        return httpx.Response(200, stream=ActiveStream())
 
     result = await asyncio.wait_for(chat_completion(
         "http://test/v1", api_key=None, model="test", messages=[],
-        timeout=0.05, max_retries=3, transport=httpx.MockTransport(handler),
-    ), timeout=1)
-    assert "total time budget" in result.error
-    assert result.finish_reason == "error"
-    assert result.wall_time < 0.5
-    assert len(requests) == 1  # Never restart expensive generation after the deadline.
-    assert closed.is_set()
+        timeout=0.05, max_retries=0, transport=httpx.MockTransport(handler),
+    ), timeout=2)
+    assert result.error is None
+    assert result.wall_time > 0.05
 
 
-async def test_total_deadline_includes_retry_backoff():
-    requests = []
-
+async def test_inactivity_timeout_returns_failure():
     def handler(request):
-        requests.append(request)
-        return httpx.Response(503, json={"error": "busy"})
+        raise httpx.ReadTimeout("No incoming data", request=request)
 
-    result = await asyncio.wait_for(chat_completion(
+    result = await chat_completion(
         "http://test/v1", api_key=None, model="test", messages=[],
-        timeout=0.05, backoff_base=10, max_retries=3,
-        transport=httpx.MockTransport(handler),
-    ), timeout=1)
-    assert "total time budget" in result.error
-    assert len(requests) == 1
-    assert result.retry_count == 0
-
-
-async def test_total_deadline_stops_nonstream_request():
-    cancelled = asyncio.Event()
-
-    async def handler(request):
-        try:
-            await asyncio.Event().wait()
-        finally:
-            cancelled.set()
-
-    result = await asyncio.wait_for(chat_completion(
-        "http://test/v1", api_key=None, model="test", messages=[],
-        stream=False, timeout=0.05, transport=httpx.MockTransport(handler),
-    ), timeout=1)
-    assert "total time budget" in result.error
-    assert cancelled.is_set()
+        timeout=0.05, max_retries=0, transport=httpx.MockTransport(handler),
+    )
+    assert "No incoming data" in result.error

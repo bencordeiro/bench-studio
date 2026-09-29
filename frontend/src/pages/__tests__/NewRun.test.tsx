@@ -14,6 +14,7 @@ const { mockEndpoints, mockBenchmarks, mockCreate, mockFetchModels } = vi.hoiste
 
 vi.mock("@/api/client", () => ({
   api: {
+    getSettings: async () => ({ default_max_tokens: 4096, default_timeout: 90 }),
     listEndpoints: () => mockEndpoints(),
     listBenchmarks: () => mockBenchmarks(),
     createRun: (data: unknown) => mockCreate(data),
@@ -43,6 +44,13 @@ describe("New Run form validation", () => {
     mockCreate.mockResolvedValue({ id: "r1" });
     // Models probe fails by default -> model field stays empty.
     mockFetchModels.mockResolvedValue({ success: false, error: "nope", models: [] });
+  });
+
+  it("shows global limits without per-run limit controls", async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByText(/4096 max tokens, 90s inactivity timeout/)).toBeInTheDocument());
+    expect(screen.queryByText("Max output tokens")).not.toBeInTheDocument();
+    expect(screen.queryByText("Request time budget (s)")).not.toBeInTheDocument();
   });
 
   it("prevents starting without a target model", async () => {

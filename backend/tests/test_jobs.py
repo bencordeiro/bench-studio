@@ -467,7 +467,7 @@ async def test_parent_cancellation_closes_in_flight_request():
         clear_cancel("parent-cancel")
 
 
-async def test_request_deadline_fails_one_prompt_and_continues(monkeypatch):
+async def test_inactivity_timeout_fails_one_prompt_and_continues(monkeypatch):
     import httpx
 
     from app.services.openai_client import chat_completion
@@ -478,7 +478,7 @@ async def test_request_deadline_fails_one_prompt_and_continues(monkeypatch):
         nonlocal requests
         requests += 1
         if requests == 1:
-            await asyncio.Event().wait()
+            raise httpx.ReadTimeout("No incoming data", request=request)
         return httpx.Response(200, json={
             "choices": [{"message": {"content": "no"}, "finish_reason": "stop"}],
         })
@@ -487,7 +487,7 @@ async def test_request_deadline_fails_one_prompt_and_continues(monkeypatch):
         return await chat_completion(*args, **kwargs, transport=httpx.MockTransport(handler))
 
     monkeypatch.setattr(engine, "chat_completion", bounded_chat)
-    config = {"timeout": 0.05, "streaming_enabled": False}
+    config = {"timeout": 0.05, "streaming_enabled": False, "retry_max_attempts": 0}
     with session_scope() as session:
         bench = _make_benchmark(session)
         ep = _make_endpoint(session)
@@ -507,16 +507,73 @@ async def test_request_deadline_fails_one_prompt_and_continues(monkeypatch):
         assert run.status == RunStatus.COMPLETED_WITH_ERRORS.value
         assert run.completed_prompts == 2
         assert run.failed_prompts == 1
-        assert "total time budget" in executions[0].error_message
+        assert "No incoming data" in executions[0].error_message
         assert executions[1].final_score == 100
         assert requests == 2
 
 
 @pytest.mark.parametrize("timeout", [0, -1, float("inf"), float("nan")])
-def test_run_config_rejects_invalid_time_budget(timeout):
+def test_run_config_rejects_invalid_timeout(timeout):
     from pydantic import ValidationError
 
     from app.schemas.runs import RunConfig
 
     with pytest.raises(ValidationError):
         RunConfig(timeout=timeout)
+
+
+def test_runs_snapshot_global_limits_and_ignore_request_overrides(session):
+    from app.models import ApplicationSetting
+
+    row = ApplicationSetting(key="app", value={"default_timeout": 123, "default_max_tokens": 777})
+    session.add(row)
+    session.flush()
+    bench = _make_benchmark(session)
+    ep = _make_endpoint(session)
+    run = crud.create_run(session, {
+        "benchmark_id": bench.id, "target_endpoint_id": ep.id,
+        "run_config": {"timeout": 1, "max_tokens": 1},
+        "target_settings": {"max_tokens": 2}, "judge_max_tokens": 3,
+    })
+    assert run.run_config["timeout"] == 123
+    assert run.run_config["max_tokens"] == 777
+    assert run.target_settings["max_tokens"] == 777
+    assert run.judge_settings["max_tokens"] == 777
+    row.value = {"default_timeout": 234, "default_max_tokens": 888}
+    session.flush()
+    second = crud.create_run(session, {"benchmark_id": bench.id, "target_endpoint_id": ep.id})
+    assert second.run_config["max_tokens"] == 888
+    assert second.run_config["timeout"] == 234
+    assert run.run_config["max_tokens"] == 777
+
+
+def test_endpoint_token_overrides_cannot_replace_global_limit():
+    assert engine._limit_extra_body({"max_tokens": 999, "max_completion_tokens": 999}, 123) == {"max_completion_tokens": 123}
+    assert engine._limit_extra_body({"max_tokens": 999, "max_completion_tokens": 999}, 0) == {}
+
+
+async def test_global_limit_wins_over_prompt_and_target_settings(monkeypatch):
+    captured = {}
+
+    async def fake_chat(base_url, **kwargs):
+        captured.update(kwargs)
+        return await _fake_target_chat(base_url, **kwargs)
+
+    monkeypatch.setattr(engine, "chat_completion", fake_chat)
+    profile = EndpointProfile(
+        id="limits", base_url="http://test/v1", request_timeout=999,
+        verify_tls=True, custom_headers={}, extra_body_params={"max_tokens": 999},
+        has_api_key=False, api_key_env_var="",
+    )
+    try:
+        await engine._execute_target_prompt(
+            "global-limits", profile, "m", None, {"max_tokens": 888},
+            {"max_tokens": 123, "timeout": 45},
+            {"messages": [{"role": "user", "content": "hi"}],
+             "generation_overrides": {"max_tokens": 777}},
+        )
+        assert captured["max_tokens"] == 123
+        assert captured["timeout"] == 45
+        assert "max_tokens" not in captured["extra_body"]
+    finally:
+        engine.clear_cancel("global-limits")

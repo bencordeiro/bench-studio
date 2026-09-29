@@ -285,7 +285,7 @@ async def _warmup(run_id, profile, model, session_key, settings, run_config):
             max_tokens=8,
             stream=run_config.get("streaming_enabled", True),
             custom_headers=profile.custom_headers,
-            extra_body=profile.extra_body_params,
+            extra_body=_limit_extra_body(profile.extra_body_params, 8),
             timeout=min(profile.request_timeout, 30.0),
             verify_tls=profile.verify_tls,
             max_retries=1,
@@ -348,7 +348,7 @@ async def _execute_target_prompt(run_id, profile, model, session_key, settings, 
     overrides = prompt_snapshot.get("generation_overrides", {}) or {}
     temperature = _pick(overrides, settings, run_config, "temperature")
     top_p = _pick(overrides, settings, run_config, "top_p")
-    max_tokens = _pick(overrides, settings, run_config, "max_tokens")
+    max_tokens = run_config.get("max_tokens", 0)
     reasoning_effort = _pick(overrides, settings, run_config, "reasoning_effort")
     stop = overrides.get("stop")
     seed = overrides.get("seed")
@@ -372,13 +372,24 @@ async def _execute_target_prompt(run_id, profile, model, session_key, settings, 
         seed=seed,
         stream=run_config.get("streaming_enabled", True),
         custom_headers=profile.custom_headers,
-        extra_body=extra_body,
+        extra_body=_limit_extra_body(extra_body, max_tokens),
         timeout=run_config.get("timeout", profile.request_timeout),
         verify_tls=profile.verify_tls,
         max_retries=int(run_config.get("retry_max_attempts", 3)),
         backoff_base=float(run_config.get("retry_backoff_base", 0.5)),
         backoff_max=float(run_config.get("retry_backoff_max", 30.0)),
     ), run_id)
+
+
+def _limit_extra_body(extra_body, max_tokens):
+    """Endpoint parameters cannot replace the global token limit."""
+    body = dict(extra_body or {})
+    body.pop("max_tokens", None)
+    if "max_completion_tokens" in body:
+        body.pop("max_completion_tokens")
+        if max_tokens:
+            body["max_completion_tokens"] = max_tokens
+    return body
 
 
 def _pick(overrides, settings, run_config, key):
@@ -783,10 +794,10 @@ async def _judge_phase(
             model=judge_model,
             messages=messages,
             temperature=judge_settings.get("temperature", 0.0),
-            max_tokens=judge_settings.get("max_tokens", 2048),
+            max_tokens=run_config.get("max_tokens", 0),
             stream=False,
             custom_headers=judge_profile.custom_headers,
-            extra_body=judge_profile.extra_body_params,
+            extra_body=_limit_extra_body(judge_profile.extra_body_params, run_config.get("max_tokens", 0)),
             timeout=run_config.get("timeout", judge_profile.request_timeout),
             verify_tls=judge_profile.verify_tls,
             max_retries=int(run_config.get("retry_max_attempts", 3)),
@@ -833,10 +844,10 @@ async def _store_judge_result(
             model=judge_model,
             messages=repair_messages,
             temperature=judge_settings.get("temperature", 0.0),
-            max_tokens=judge_settings.get("max_tokens", 2048),
+            max_tokens=run_config.get("max_tokens", 0),
             stream=False,
             custom_headers=judge_profile.custom_headers,
-            extra_body=judge_profile.extra_body_params,
+            extra_body=_limit_extra_body(judge_profile.extra_body_params, run_config.get("max_tokens", 0)),
             timeout=run_config.get("timeout", judge_profile.request_timeout),
             verify_tls=judge_profile.verify_tls,
             max_retries=0,
@@ -952,10 +963,10 @@ async def _verifier_phase(run_id, judge_profile, judge_model, judge_session_key,
             model=judge_model,
             messages=messages,
             temperature=judge_settings.get("temperature", 0.0),
-            max_tokens=judge_settings.get("max_tokens", 2048),
+            max_tokens=run_config.get("max_tokens", 0),
             stream=False,
             custom_headers=judge_profile.custom_headers,
-            extra_body=judge_profile.extra_body_params,
+            extra_body=_limit_extra_body(judge_profile.extra_body_params, run_config.get("max_tokens", 0)),
             timeout=run_config.get("timeout", judge_profile.request_timeout),
             verify_tls=judge_profile.verify_tls,
             max_retries=int(run_config.get("retry_max_attempts", 3)),
