@@ -3,7 +3,10 @@
 Code Reasoning & Correctness (Python) 7.0.0 contains **45 questions**:
 29 output traces and 16 complete-function tasks. This review used the prompt
 contracts, actual CPython outputs, and local execution graders. **No endpoint
-requests were made.** The removals below are static duration-risk judgments,
+requests were made for this initial review.** A subsequent authorized
+[Qwen Flash diagnostic](CALIBRATION_QWENFLASH_PYTHON_2026_09_30.md) completed
+45/45 medium/8k responses normally in about 10m 38s. The removals below are
+static duration-risk judgments,
 not measured Qwen Flash failures.
 
 ## Removed questions
@@ -44,9 +47,12 @@ Concise answer contracts reduce requested output but cannot force a reasoning
 model to stop thinking. Global reasoning effort, token budgets and endpoint
 throughput still control duration. Qwen Flash may continue generating until
 its token limit, and that exhausted attempt counts as zero under scoring
-revision 2. There is no guaranteed whole-suite duration yet.
+revision 2. The subsequent medium/8k diagnostic finished normally; 18 xhigh/8k questions
+also finished normally before the user stopped testing. A full xhigh run is
+estimated at about 21 minutes using the requested 2× assumption; a full-suite
+xhigh or 16k-token run remains unmeasured. There is no universal duration guarantee.
 
-When the user releases the endpoint for testing, measure per-question duration,
+For future profiles or endpoints, measure per-question duration,
 completion/reasoning tokens, finish reason, and total suite time under the
 actual global settings. Start with a small targeted sample before spending
 calls on all 45 questions. Retest only outliers or changed prompts. Preserve

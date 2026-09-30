@@ -38,7 +38,7 @@ Nine suites ship with the app and load on first run (382 prompts). Eight contain
 
 See [the suite audit](docs/SUITE_AUDIT.md) for revisions, validation evidence, and limitations. Updated bundles upgrade in place on startup; historical runs retain their snapshots. The retired example suite is removed by migration.
 
-Python 7.0.0 retires five workloads that invite longer reasoning and requests concise outputs or compact function implementations. All remaining answer keys and reference functions are checked locally; Qwen Flash duration validation is pending endpoint availability. See [the Python duration review](docs/PYTHON_SUITE_DURATION_REVIEW.md).
+Python 7.0.0 retires five workloads that invite longer reasoning and requests concise outputs or compact function implementations. All remaining answer keys and reference functions are checked locally. The full Qwen Flash medium/8k diagnostic completed 45/45 normally in about 10m 38s, with no token exhaustion and a longest request of 34 seconds; see [the live measurements and their limits](docs/CALIBRATION_QWENFLASH_PYTHON_2026_09_30.md). See [the Python duration review](docs/PYTHON_SUITE_DURATION_REVIEW.md).
 
 Cyber uses original, self-contained scenarios with fixed policy assumptions and deterministic answer keys. It needs no tool calls, code execution or judge. See [its answer-key review and grading contract](docs/CYBER_SUITE.md). Its difficulty estimates have not been measured against models.
 

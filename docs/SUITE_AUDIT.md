@@ -314,5 +314,8 @@ allocation, and reservation conflict selection. There are now 45 questions
 (29 output traces and 16 functions). Output prompts request only `ANSWER: ...`;
 function prompts request one compact implementation, with no test harness or
 malformed-input validation. Retry budgets and recursive flattening depth are
-explicitly bounded. No model endpoint was called for this revision; actual
-Qwen Flash duration is pending. See [the review](PYTHON_SUITE_DURATION_REVIEW.md).
+explicitly bounded. No model endpoint was called for the initial revision. The subsequent
+[authorized Qwen Flash medium/8k diagnostic](CALIBRATION_QWENFLASH_PYTHON_2026_09_30.md)
+completed all 45 responses normally in about 10m 38s, with no token caps or
+transport errors; 43 answers passed grading. A full-suite xhigh/16k run remains
+unmeasured. See [the review](PYTHON_SUITE_DURATION_REVIEW.md).
