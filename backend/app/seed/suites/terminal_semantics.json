@@ -4,7 +4,7 @@
   "exported_at": "",
   "name": "Terminal Semantics & System Gotchas",
   "description": "Twelve self-contained Linux and systems reasoning tasks. Explicit environments and rules cover ACLs, Git reachability, UTC normalization, logs, GNU sed, SQLite WAL snapshots, cron, Bash pipelines, dependency constraints, locale ordering, filenames, and firewall rule ordering. No live machine state or network access is required. Final ANSWER lines are graded deterministically.",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "tags": [
     "terminal",
     "shell",
@@ -85,7 +85,11 @@
       "grader_config": {
         "type": "exact",
         "canonical_answer": "3,3,1",
-        "accepted_aliases": [],
+        "accepted_aliases": [
+          "3,3, 1",
+          "3, 3,1",
+          "3, 3, 1"
+        ],
         "case_sensitive": true,
         "trim_whitespace": true,
         "normalize_punctuation": false,
@@ -98,7 +102,7 @@
         },
         {
           "role": "user",
-          "content": "In a fresh Git repository with no hooks, make empty commits A, then B, then C on one branch. Create tag saved at C. Run git reset --hard HEAD~1, then create empty commit D. All commands succeed. What are the outputs of git rev-list --count HEAD, git rev-list --count saved, and git rev-list --count HEAD..saved? Give the three counts comma-separated."
+          "content": "In a fresh Git repository with no hooks or pre-existing commits, create three empty commits with distinct commit messages A, B, and C, in that order on one branch. Create tag saved pointing to C. Run git reset --hard HEAD~1, then create an empty commit with message D. No merges or other commits occur, and all commands succeed.\n\nWhat are the outputs of these commands, in order?\ngit rev-list --count HEAD\ngit rev-list --count saved\ngit rev-list --count HEAD..saved\n\nGive the three counts comma-separated. Spaces after commas are allowed."
         }
       ]
     },
@@ -212,7 +216,7 @@
         },
         {
           "role": "user",
-          "content": "Given this exact file page.html:\n<!DOCTYPE html>\n<html>\n<head><title>t</title></head>\n<body>\n<noscript>You need JS enabled. var x = 1;</noscript>\n<script src=\"/legacy.js\"></script>\n<script>\nvar tag = \"</scr\" + \"ipt>\";\ndocument.write(\"hi\");\nif (x) { console.log(42); }\n</script>\n<p>text between blocks</p>\n<script type=\"module\">\nlet s = \"<!-- fake open\"; let t = \"</scr\" + \"ipt>\";\nexport default 7;\nvar closer = \"</script>\";\nmore module code that never prints? no wait it does: console.log(9);\n</script>\n<script id=\"tail\">console.log(\"end\");</script>\n</body>\n</html>\n\nYou run: sed -n '/<script/,/<\\/script>/p' page.html | wc -l\n\nWhat number is printed?\nGive just the integer."
+          "content": "Using GNU sed 4.9, given this exact file page.html (LF line endings and a final newline):\n<!DOCTYPE html>\n<html>\n<head><title>t</title></head>\n<body>\n<noscript>You need JS enabled. var x = 1;</noscript>\n<script src=\"/legacy.js\"></script>\n<script>\nvar tag = \"</scr\" + \"ipt>\";\ndocument.write(\"hi\");\nif (x) { console.log(42); }\n</script>\n<p>text between blocks</p>\n<script type=\"module\">\nlet s = \"<!-- fake open\"; let t = \"</scr\" + \"ipt>\";\nexport default 7;\nvar closer = \"</script>\";\nconsole.log(9);\n</script>\n<script id=\"tail\">console.log(\"end\");</script>\n</body>\n</html>\n\nYou run: sed -n '/<script/,/<\\/script>/p' page.html | wc -l\n\nWhat number is printed?\nGive just the integer."
         }
       ]
     },
@@ -237,7 +241,11 @@
       "grader_config": {
         "type": "exact",
         "canonical_answer": "10,10,30",
-        "accepted_aliases": [],
+        "accepted_aliases": [
+          "10,10, 30",
+          "10, 10,30",
+          "10, 10, 30"
+        ],
         "case_sensitive": true,
         "trim_whitespace": true,
         "normalize_punctuation": false,
@@ -250,7 +258,7 @@
         },
         {
           "role": "user",
-          "content": "SQLite 3 in WAL mode, no errors, two separate connections R and W to the same database. Initially table t(v INTEGER) contains 10. Execute in order: R: BEGIN; R: SELECT sum(v) FROM t; W: BEGIN; W: INSERT INTO t VALUES (20); W: COMMIT; R: SELECT sum(v) FROM t; R: COMMIT; R: SELECT sum(v) FROM t. No other transactions occur. Give the three SELECT results in order, comma-separated."
+          "content": "SQLite 3 in WAL mode. R and W are two separate connections to the same database, with shared-cache mode disabled. Outside the explicit BEGIN/COMMIT transactions shown, each statement runs in autocommit mode. Initially table t(v INTEGER) contains exactly one committed row, with v = 10. All statements succeed, and no other transactions occur.\n\nExecute in this exact order:\nR: BEGIN;\nR: SELECT sum(v) FROM t;\nW: BEGIN;\nW: INSERT INTO t VALUES (20);\nW: COMMIT;\nR: SELECT sum(v) FROM t;\nR: COMMIT;\nR: SELECT sum(v) FROM t;\n\nGive the three SELECT results in order, comma-separated. Spaces after commas are allowed."
         }
       ]
     },

@@ -10,6 +10,52 @@ from app.models import BenchmarkRun, BenchmarkSet, PromptExecution, TargetRespon
 from app.services.scoring_repair import repair_saved_run_scores
 
 
+def test_terminal_spacing_repairs_saved_grades_without_changing_snapshots(session):
+    from app.models import DeterministicGrade
+    from app.services.scoring_repair import repair_terminal_comma_scores
+
+    bench = BenchmarkSet(id=str(uuid.uuid4()), name="Terminal Semantics & System Gotchas", version="2.0.0")
+    session.add(bench)
+    session.flush()
+    run = BenchmarkRun(id=str(uuid.uuid4()), benchmark_id=bench.id, status="completed_with_errors",
+                       benchmark_snapshot={"name": bench.name}, summary={"quality_scoring_version": 2},
+                       run_config={}, total_prompts=4)
+    session.add(run)
+    session.flush()
+    executions = []
+    for i, (sid, canonical, content, status) in enumerate([
+        ("ts-sqlite-wal", "10,10,30", "ANSWER: 10, 10, 30", "completed"),
+        ("ts-git-forensics", "3,3,1", "ANSWER: 3, 3, 1", "completed"),
+        ("ts-sqlite-wal", "10,10,30", "ANSWER: 10, 30, 30", "completed"),
+        ("ts-sqlite-wal", "10,10,30", "ANSWER: 10, 10, 30", "failed"),
+    ]):
+        prompt = {"stable_id": sid, "grading_mode": "deterministic", "importance_weight": 1,
+                  "grader_config": {"type": "exact", "canonical_answer": canonical,
+                                    "accepted_aliases": [], "normalize_punctuation": False}}
+        execution = PromptExecution(id=str(uuid.uuid4()), run_id=run.id, prompt_snapshot_id=sid,
+                                    prompt_snapshot=prompt, status=status, final_score=0, position=i)
+        session.add(execution)
+        session.flush()
+        session.add(TargetResponse(id=str(uuid.uuid4()), execution_id=execution.id, content=content,
+                                   finish_reason="length" if status == "failed" else "stop",
+                                   truncated=status == "failed", raw={"reasoning": "keep"}))
+        session.add(DeterministicGrade(id=str(uuid.uuid4()), execution_id=execution.id,
+                                      grader_type="exact", passed=False, score=0, max_score=100,
+                                      details={"candidate": content}))
+        executions.append((execution.id, prompt, content))
+    session.commit()
+    assert repair_terminal_comma_scores() == 1
+    session.expire_all()
+    assert [session.get(PromptExecution, eid).final_score for eid, _, _ in executions] == [100, 100, 0, 0]
+    assert session.get(BenchmarkRun, run.id).summary["quality_score"] == 50
+    for eid, prompt, content in executions:
+        execution = session.get(PromptExecution, eid)
+        assert execution.prompt_snapshot == prompt
+        assert execution.target_response[0].content == content
+        assert execution.target_response[0].raw == {"reasoning": "keep"}
+    assert repair_terminal_comma_scores() == 0
+
+
 def test_startup_repairs_historical_comparison_without_generation(session, monkeypatch):
     from app.jobs import engine
     from app.main import app

@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from app.graders.deterministic import run_deterministic
 from app.seed.suites_loader import SUITES_DIR
 
 PROMPTS = {
@@ -100,9 +101,13 @@ def test_sed_range(tmp_path):
     if not shutil.which("sed"):
         pytest.skip("sed unavailable")
     text = PROMPTS["ts-html-sed"]["messages"][-1]["content"]
-    html = text.split("page.html:\n", 1)[1].split("\n\nYou run:", 1)[0]
+    html = text.split("\n", 1)[1].split("\n\nYou run:", 1)[0]
     (tmp_path / "page.html").write_text(html + "\n")
     assert shell("sed -n '/<script/,/<\\/script>/p' page.html | wc -l", tmp_path) == answer("ts-html-sed")
+    # The ending regexp isn't tested on the opening line. A literal closing
+    # tag inside a JS string is still a match: sed does not parse HTML or JS.
+    selected = shell("sed -n '/<script/,/<\\/script>/=' page.html", tmp_path)
+    assert list(map(int, selected.splitlines())) == [*range(6, 12), *range(13, 17), 19, 20, 21]
 
 
 def test_wal_snapshot(tmp_path):
@@ -206,3 +211,15 @@ def test_acl_mode_and_effective_permissions_by_rule():
     # chmod 0754 sets owner=7, mask=5, other=4 without removing the named user.
     effective = named_user & 5
     assert f"{mode_before},754,{ {5: 'r-x'}[effective] }" == answer("ts-perm-mask")
+
+
+@pytest.mark.parametrize("sid", ["ts-git-forensics", "ts-sqlite-wal"])
+def test_three_result_answers_accept_comma_spacing_but_reject_wrong_values(sid):
+    config = PROMPTS[sid]["grader_config"]
+    values = answer(sid).split(",")
+    for first in (",", ", ", ",\t"):
+        for second in (",", ", ", ",\t"):
+            response = f"Explanation.\nANSWER: {values[0]}{first}{values[1]}{second}{values[2]}"
+            assert run_deterministic(config, response)["score"] == 100
+    for wrong in ([values[0], values[1], "999"], values[:2], values + ["0"]):
+        assert not run_deterministic(config, "ANSWER: " + ", ".join(wrong))["passed"]

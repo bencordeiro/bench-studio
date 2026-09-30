@@ -14,7 +14,7 @@ offline. No cross-model difficulty calibration has been completed.
 | Master Suite | 56 → 45 | 5.0.0 | Additional five duration-driven removals; concise final answers and disclosed numeric tolerances |
 | Mini Master | 0 → 23 | 2.0.0 | 10 selected Master items, 12 compact variants and one original short Python challenge; three further duration removals |
 | Cyber | 0 → 18 | 1.0.0 | Original defensive-security scenarios, closed JSON schemas, independent answer and error controls |
-| Terminal Semantics & System Gotchas | 12 → 12 | 2.0.0 | Corrected three bad keys; revised four shallow items; specified environment assumptions |
+| Terminal Semantics & System Gotchas | 12 → 12 | 2.1.0 | Corrected three bad keys in 2.0; reverified WAL, sed and Git; clarified setups and accepted comma spacing for WAL/Git |
 | Web Dev Correctness & Debugging (JS) | 46 → 45 | 5.0.0 | Removed `wd-typeof-null`; reproduced every remaining output |
 | Code Reasoning & Correctness (Python) | 55 → 45 | 7.0.0 | 29 short output traces and 16 original function tasks; five higher-risk workloads retired |
 
