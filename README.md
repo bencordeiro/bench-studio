@@ -9,7 +9,7 @@ LocalBench Studio is a **desktop-hosted web application for benchmarking one LLM
 - Save one or more OpenAI-compatible endpoint profiles (with optional API keys stored in the OS credential store).
 - Start from nine bundled suites (382 prompts): eight custom suites with automated validation plus the public **HumanEval** benchmark, or author your own.
 - Grade each prompt one of five ways: **deterministic**, **LLM judge**, **hybrid**, **manual review**, or **execution** (run the generated code against unit tests). Deterministic graders cover exact/numeric/regex/concept/JSON/multiple-choice/count and parsed **tool calls**.
-- Select one or more benchmarks in **New Run**, reorder the selection, and queue them against one target model. Benchmarks execute sequentially with shared settings and separate scores; closing/refreshing the browser does not stop the queue.
+- Select one or more benchmarks in **New Run**, reorder the selection, and queue them against one target model. Runs on different target endpoints execute concurrently; runs sharing the same endpoint URL queue in creation order, with shared settings and separate scores. Closing/refreshing the browser does not stop the queue.
 - Reopen later and see live progress, resume interrupted runs.
 - See **Total time** for each finished run in the Runs history, run detail and Results summary. It uses saved start/finish timestamps, including warm-up, grading, retries and pauses in resumed runs; existing history works too. Runs without both timestamps show “—”.
 - View detailed analytics: quality, reliability, performance, per-prompt scores, latency distributions.

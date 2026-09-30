@@ -43,17 +43,14 @@ def test_delete_failed_run_allowed(temp_data_dir):
         assert c.delete(f"/api/runs/{_make_run('failed')}").status_code == 204
 
 
-def test_cannot_delete_the_in_flight_run(temp_data_dir):
+def test_cannot_delete_the_in_flight_run(temp_data_dir, monkeypatch):
     """The run the job runner is currently executing cannot be deleted."""
     from app.jobs.runner import runner
 
     rid = _make_run("completed")
     with _client() as c:
-        runner._current_run_id = rid  # simulate this run being actively executed
-        try:
-            assert c.delete(f"/api/runs/{rid}").status_code == 409  # must cancel first
-        finally:
-            runner._current_run_id = None
+        monkeypatch.setattr(runner, "is_active", lambda run_id: run_id == rid)
+        assert c.delete(f"/api/runs/{rid}").status_code == 409  # must cancel first
 
 
 def test_delete_missing_run_404(temp_data_dir):

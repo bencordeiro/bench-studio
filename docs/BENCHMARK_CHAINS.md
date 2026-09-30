@@ -10,9 +10,13 @@ empty benchmark rejects the whole selection before anything is queued. Each
 benchmark has its own immutable snapshot, prompts, history row, scores, total
 time and exports. Suites are not merged into one scoring denominator.
 
-The existing single worker processes the persistent queue in creation order.
-Members start one after another, without concurrent requests or the former
-five-second polling gap between queued runs. A failed or cancelled member does
+The runner processes an independent persistent queue for each target endpoint.
+Runs on different target URLs execute concurrently. Runs sharing a target URL
+start in creation order, one after another, without a polling gap between runs.
+Duplicate profiles and different models pointing to the same URL share a queue;
+equivalent URLs such as `http://host` and `http://host:80/v1/` also share it.
+Endpoint identity is based on the target request destination, not the judge.
+A failed or cancelled member does
 not cancel later members. Deferred judge/manual grading also does not block
 the next benchmark. Closing the browser leaves the queue running.
 

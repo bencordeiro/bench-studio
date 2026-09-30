@@ -1,4 +1,4 @@
-"""Ordered benchmark chains are atomic and use the existing single worker."""
+"""Ordered benchmark chains are atomic and serialize within each endpoint."""
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -109,7 +109,7 @@ async def test_worker_executes_in_queue_order_and_continues_after_failure(sessio
     visited = []
 
     async def execute(rid):
-        assert worker.current_run_id == rid
+        assert worker.is_active(rid)
         visited.append(rid)
         if rid == ids[0]:
             raise ValueError("Profile could not be loaded")
@@ -118,11 +118,14 @@ async def test_worker_executes_in_queue_order_and_continues_after_failure(sessio
 
     worker._execute_run = AsyncMock(side_effect=execute)
     assert await worker._process_one()
+    await worker._active[ids[0]][1]
     assert await worker._process_one()
+    await worker._active[ids[1]][1]
     assert await worker._process_one()
+    await worker._active[ids[2]][1]
     assert not await worker._process_one()
     assert visited == ids
-    assert worker.current_run_id is None
+    assert not worker._active
 
     session.expire_all()
     assert session.get(BenchmarkRun, ids[0]).status == "failed"

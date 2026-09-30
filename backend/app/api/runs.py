@@ -247,7 +247,7 @@ def delete_run(run_id: str, session: Session = Depends(get_db)):
     write to rows that are being removed.
     """
     run = get_run_or_404(session, run_id)
-    if run.id == runner.current_run_id or run.status not in DELETABLE_STATUSES:
+    if runner.is_active(run.id) or run.status not in DELETABLE_STATUSES:
         raise HTTPException(
             status_code=409,
             detail="This run is still active. Cancel it before deleting.",
@@ -266,7 +266,7 @@ def clear_failed_runs(session: Session = Depends(get_db)):
     )
     deleted = 0
     for run in runs:
-        if run.id == runner.current_run_id:
+        if runner.is_active(run.id):
             continue
         session.delete(run)
         deleted += 1

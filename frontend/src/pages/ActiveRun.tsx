@@ -150,7 +150,7 @@ export default function ActiveRun() {
       {chain && chain.length > 1 && (
         <Card className="mb-4">
           <h3 className="font-medium text-white mb-2">Benchmark sequence</h3>
-          <p className="text-xs text-gray-400 mb-3">Benchmarks run one at a time. Each has its own results. Errors in one benchmark do not stop the next.</p>
+          <p className="text-xs text-gray-400 mb-3">Benchmarks on this endpoint run one at a time. Other endpoints can run concurrently. Each benchmark has its own results; errors do not stop the next.</p>
           <ol className="space-y-2">
             {chain.map((item, index) => (
               <li key={item.id} className="flex items-center justify-between gap-2 text-sm">

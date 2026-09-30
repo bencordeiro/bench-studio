@@ -57,7 +57,7 @@ async def lifespan(app: FastAPI):
     log.info("Startup complete. Listening on http://%s:%s", settings.host, settings.port)
     yield
     log.info("Shutting down")
-    runner.stop()
+    await runner.shutdown()
 
 
 def create_app() -> FastAPI:
