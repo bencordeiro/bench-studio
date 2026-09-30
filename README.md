@@ -11,6 +11,7 @@ LocalBench Studio is a **desktop-hosted web application for benchmarking one LLM
 - Grade each prompt one of five ways: **deterministic**, **LLM judge**, **hybrid**, **manual review**, or **execution** (run the generated code against unit tests). Deterministic graders cover exact/numeric/regex/concept/JSON/multiple-choice/count and parsed **tool calls**.
 - Run a benchmark against one target model; close/refresh the browser without stopping the run.
 - Reopen later and see live progress, resume interrupted runs.
+- See **Total time** for each finished run in the Runs history, run detail and Results summary. It uses saved start/finish timestamps, including warm-up, grading, retries and pauses in resumed runs; existing history works too. Runs without both timestamps show “—”.
 - View detailed analytics: quality, reliability, performance, per-prompt scores, latency distributions.
 - Compare completed runs. Per-suite leaderboards ranking every tested model. Export JSON / CSV / standalone HTML reports.
 - Keep a separate judge endpoint so the model under test is not grading itself (with a clear warning when it is).

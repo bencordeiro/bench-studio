@@ -90,7 +90,7 @@ function RunListPage() {
 
 import { useQuery as useQ, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { fmtScore, fmtRelative, STATUS_LABELS, statusColor, isTerminal } from "@/lib/format";
+import { fmtScore, fmtRelative, fmtDuration, runDurationSeconds, STATUS_LABELS, statusColor, isTerminal } from "@/lib/format";
 import { Card, PageHeader, Spinner, EmptyState, Badge, ConfirmButton } from "@/components/ui";
 import { useToast } from "@/store/toast";
 import type { RunSummary } from "@/types";
@@ -128,7 +128,7 @@ function ActiveRunList() {
       ) : !data || data.length === 0 ? (
         <EmptyState title="No runs yet" hint="Create a benchmark run from the New Run page." />
       ) : (
-        <Card className="p-0 overflow-hidden">
+        <Card className="p-0 overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-bg-elev text-gray-400 text-xs uppercase">
               <tr>
@@ -138,6 +138,7 @@ function ActiveRunList() {
                 <th className="text-right px-4 py-2">Quality</th>
                 <th className="text-right px-4 py-2">Reliability</th>
                 <th className="text-right px-4 py-2">Performance</th>
+                <th className="text-right px-4 py-2" title="Wall-clock time from run start to finish, including warm-up, grading, retries and any pauses">Total time</th>
                 <th className="text-left px-4 py-2">Created</th>
                 <th className="text-right px-4 py-2"></th>
               </tr>
@@ -149,6 +150,7 @@ function ActiveRunList() {
                     <Link to={`/runs/${r.id}`} className="text-white hover:text-accent">
                       {r.name}
                     </Link>
+                    {r.benchmark_name && <div className="text-xs text-gray-500">{r.benchmark_name}</div>}
                   </td>
                   <td className="px-4 py-2 text-gray-300 mono">{r.target_model}</td>
                   <td className="px-4 py-2">
@@ -157,6 +159,7 @@ function ActiveRunList() {
                   <td className="px-4 py-2 text-right mono">{fmtScore(r.quality_score)}</td>
                   <td className="px-4 py-2 text-right mono">{fmtScore(r.reliability_score)}</td>
                   <td className="px-4 py-2 text-right mono">{fmtScore(r.performance_index)}</td>
+                  <td className="px-4 py-2 text-right mono whitespace-nowrap">{fmtDuration(runDurationSeconds(r))}</td>
                   <td className="px-4 py-2 text-gray-400" title={r.created_at}>
                     {fmtRelative(r.created_at)}
                   </td>

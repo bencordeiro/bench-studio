@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/client";
 import { Badge, Card, ConfirmButton, EmptyState, PageHeader, Spinner } from "@/components/ui";
 import { useToast } from "@/store/toast";
-import { isTerminal, STATUS_LABELS, statusColor } from "@/lib/format";
+import { fmtDuration, runDurationSeconds, isTerminal, STATUS_LABELS, statusColor } from "@/lib/format";
 import type { RunResponse } from "@/types";
 
 export default function ActiveRun() {
@@ -56,8 +56,9 @@ export default function ActiveRun() {
   // Elapsed timer.
   useEffect(() => {
     if (!run?.started_at || isTerminal(run.status)) return;
-    const start = new Date(run.started_at).getTime();
-    const tick = () => setElapsed((Date.now() - start) / 1000);
+    const tick = () => setElapsed(runDurationSeconds({
+      started_at: run.started_at, completed_at: new Date().toISOString(),
+    }) ?? 0);
     tick();
     const intv = setInterval(tick, 1000);
     return () => clearInterval(intv);
@@ -145,7 +146,7 @@ export default function ActiveRun() {
         )}
         {generation && run.status === "running_target" && (
           <div className="mt-3 text-xs text-gray-400 space-y-1">
-            <p>Current request: {fmtElapsed(generation.elapsed_seconds + (Date.now() - generation.receivedAt) / 1000)} · Answer: {generation.answer_chars.toLocaleString()} characters · Reasoning: {generation.reasoning_chars.toLocaleString()} characters · Retries: {generation.retry_count}</p>
+            <p>Current request: {fmtDuration(generation.elapsed_seconds + (Date.now() - generation.receivedAt) / 1000)} · Answer: {generation.answer_chars.toLocaleString()} characters · Reasoning: {generation.reasoning_chars.toLocaleString()} characters · Retries: {generation.retry_count}</p>
             <p>Last stream update: {Math.max(0, Math.floor((Date.now() - generation.receivedAt) / 1000))}s ago</p>
             {generation.possible_repetition && <p className="text-warn">Possible repetitive generation detected. The request continues under your global limits.</p>}
           </div>
@@ -159,8 +160,9 @@ export default function ActiveRun() {
             <div className="h-full bg-accent transition-all" style={{ width: `${Math.min(100, displayProgress * 100)}%` }} />
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-sm">
-            <Metric label="Elapsed" value={fmtElapsed(elapsed)} />
-            <Metric label="Est. remaining" value={eta !== null ? `${fmtElapsed(eta)} (estimate)` : "—"} />
+            <Metric label={isTerminal(run.status) ? "Total time" : "Elapsed"}
+              value={fmtDuration(isTerminal(run.status) ? runDurationSeconds(run) : elapsed)} />
+            <Metric label="Est. remaining" value={eta !== null && !isTerminal(run.status) ? `${fmtDuration(eta)} (estimate)` : "—"} />
             <Metric label="Errors" value={String(run.failed_prompts)} />
             <Metric label="Repetitions" value={String(run.run_config.repetitions ?? 1)} />
           </div>
@@ -192,13 +194,4 @@ function Metric({ label, value }: { label: string; value: string }) {
       <div className="text-lg font-medium text-white mono">{value}</div>
     </div>
   );
-}
-
-function fmtElapsed(s: number): string {
-  const v = Math.max(s, 0);
-  if (v < 60) return `${v.toFixed(0)}s`;
-  const m = Math.floor(v / 60);
-  if (m < 60) return `${m}m ${Math.floor(v % 60)}s`;
-  const h = Math.floor(m / 60);
-  return `${h}h ${m % 60}m`;
 }

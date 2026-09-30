@@ -17,7 +17,7 @@ import {
 import { api } from "@/api/client";
 import { Badge, Card, EmptyState, Modal, PageHeader, Spinner, StatCard } from "@/components/ui";
 import { useToast } from "@/store/toast";
-import { GRADING_MODE_LABELS, fmtScore, fmtMs, fmtTokens, fmtCost, STATUS_LABELS, statusColor, scoreColor } from "@/lib/format";
+import { GRADING_MODE_LABELS, fmtScore, fmtMs, fmtTokens, fmtCost, fmtDuration, runDurationSeconds, STATUS_LABELS, statusColor, scoreColor } from "@/lib/format";
 import type { ExecutionDetail, RunResults } from "@/types";
 
 export default function Results() {
@@ -43,12 +43,13 @@ export default function Results() {
         }
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3 mb-4">
         <StatCard label="Quality" value={fmtScore(summary.quality_score)} sub={coverage.label} />
         <StatCard label="Reliability" value={fmtScore(summary.reliability_score)} />
         <StatCard label="Performance" value={fmtScore(summary.performance_index)} />
         <StatCard label="Composite" value={fmtScore(summary.composite_score)} sub="user-configured utility" />
         <StatCard label="Cost" value={fmtCost(summary.total_cost)} />
+        <StatCard label="Total time" value={fmtDuration(runDurationSeconds(run))} sub="From run start to finish" />
         <StatCard label="Errors" value={String(run.failed_prompts)} />
       </div>
 

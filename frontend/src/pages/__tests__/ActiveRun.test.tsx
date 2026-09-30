@@ -37,6 +37,15 @@ const run: RunResponse = {
 };
 
 describe("Active Run progress display", () => {
+  it("shows saved total time when a finished run is reopened", async () => {
+    mockGet.mockResolvedValue({ ...run, status: "completed", completed_prompts: 10,
+      completed_at: "2026-01-01T00:25:46Z",
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByText("Total time")).toBeInTheDocument());
+    expect(screen.getByText("25m 46s")).toBeInTheDocument();
+  });
+
   it("retains an inconclusive tool compatibility warning", async () => {
     mockGet.mockResolvedValue({ ...run, text_tool_compatibility: {
       status: "inconclusive", message: "Text tool-call compatibility could not be confirmed; benchmark questions will still run.",

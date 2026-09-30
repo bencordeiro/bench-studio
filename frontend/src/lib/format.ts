@@ -22,6 +22,30 @@ export function fmtTime(iso: string | null | undefined): string {
   return d.toLocaleString();
 }
 
+/** End-to-end wall-clock duration; SQLite may serialize UTC without an offset. */
+export function runDurationSeconds(run: {
+  started_at?: string | null;
+  completed_at?: string | null;
+}): number | null {
+  if (!run.started_at || !run.completed_at) return null;
+  const timestamp = (iso: string) => Date.parse(
+    /(?:Z|[+-]\d{2}:?\d{2})$/i.test(iso) ? iso : `${iso}Z`,
+  );
+  const seconds = (timestamp(run.completed_at) - timestamp(run.started_at)) / 1000;
+  return Number.isFinite(seconds) && seconds >= 0 ? seconds : null;
+}
+
+export function fmtDuration(seconds: number | null | undefined): string {
+  if (seconds == null || !Number.isFinite(seconds) || seconds < 0) return "—";
+  const total = Math.floor(seconds);
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor(total / 60) % 60;
+  const remainder = total % 60;
+  if (hours) return `${hours}h ${minutes}m ${remainder}s`;
+  if (minutes) return `${minutes}m ${remainder}s`;
+  return `${remainder}s`;
+}
+
 export function fmtRelative(iso: string | null | undefined): string {
   if (!iso) return "—";
   const d = new Date(iso).getTime();

@@ -63,6 +63,15 @@ const sample: RunResults = {
 };
 
 describe("Results summary and manual override", () => {
+  it("shows the entire recorded run duration in the summary", async () => {
+    mockResults.mockResolvedValue({ ...sample, run: { ...sample.run,
+      started_at: "2026-01-01T00:00:00", completed_at: "2026-01-01T01:02:03",
+    } });
+    renderPage();
+    await waitFor(() => expect(screen.getByText("Total time")).toBeInTheDocument());
+    expect(screen.getByText("1h 2m 3s")).toBeInTheDocument();
+  });
+
   it("shows summary scores and coverage", async () => {
     mockResults.mockResolvedValue(sample);
     renderPage();
