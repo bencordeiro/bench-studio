@@ -8,6 +8,7 @@ import statistics
 from typing import Any
 
 DEFAULT_COMPOSITE_WEIGHTS = {"quality": 0.85, "reliability": 0.10, "performance": 0.05}
+QUALITY_SCORING_VERSION = 2
 
 # Reliability factor weights (documented in SCORING.md).
 RELIABILITY_WEIGHTS = {
@@ -36,22 +37,37 @@ def category_quality_score(scores: list[tuple[float, float]]) -> float | None:
     return clamp(earned / total_w)
 
 
+def prompt_quality_score(prompt: dict[str, Any]) -> float | None:
+    """A failed attempt is zero; an unfinished/ungraded task is still unknown."""
+    if prompt.get("excluded", False):
+        return None
+    status = prompt.get("status")
+    if status == "failed":
+        return 0.0
+    if status in {"completed", "awaiting_manual", "awaiting_judge"} and (
+        prompt.get("truncated") or prompt.get("finish_reason") == "length"
+    ):
+        return 0.0
+    if status in {"completed", "awaiting_manual"} and prompt.get("score") is not None:
+        return float(prompt["score"])
+    return None
+
+
 def overall_quality_score(
     prompts: list[dict[str, Any]],
 ) -> tuple[float | None, int, int]:
     """Weighted overall quality across all auto-scored prompts.
 
     Each prompt dict must include: score (0..100 or None), weight (float),
-    status (str). Manual/pending prompts are excluded from the denominator.
+    status (str). Failed/token-exhausted attempts count as zero with full weight.
+    Pending and ungraded manual/judge prompts are excluded from the denominator.
 
     Returns (quality_score_or_None, scored_count, total_count).
     """
     scored = [
-        (float(p["score"]), float(p.get("weight", 1.0)))
+        (value, float(p.get("weight", 1.0)))
         for p in prompts
-        if p.get("score") is not None
-        and p.get("status") in {"completed", "awaiting_manual"}
-        and not p.get("excluded", False)
+        if (value := prompt_quality_score(p)) is not None
     ]
     total = len(prompts)
     if not scored:

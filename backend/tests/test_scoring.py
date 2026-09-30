@@ -128,3 +128,17 @@ def test_repetition_stats_multiple():
     assert s["min"] == 78
     assert s["max"] == 82
     assert s["consistency"] > 0.9
+
+
+def test_failed_attempts_and_token_exhaustion_count_with_full_weight():
+    prompts = [
+        {"status": "completed", "score": 100, "weight": 1},
+        {"status": "failed", "score": None, "weight": 2},
+        {"status": "completed", "score": 100, "weight": 1, "finish_reason": "length"},
+        {"status": "awaiting_manual", "score": None, "weight": 10},
+        {"status": "pending", "score": None, "weight": 10},
+    ]
+    assert scoring.overall_quality_score(prompts) == (25.0, 3, 5)
+    assert scoring.prompt_quality_score({"status": "failed", "score": 100}) == 0
+    assert scoring.prompt_quality_score({"status": "completed", "score": 100, "truncated": True}) == 0
+    assert scoring.overall_quality_score([{"status": "failed", "score": None, "weight": 1}]) == (0.0, 1, 1)

@@ -398,7 +398,7 @@ async def test_tool_transport_failure_does_not_stop_remaining_questions(monkeypa
         assert run.status == RunStatus.COMPLETED_WITH_ERRORS.value
         executions = session.query(PromptExecution).filter_by(run_id=run_id).order_by(PromptExecution.position).all()
         assert [e.status for e in executions] == [PromptStatus.FAILED.value, PromptStatus.COMPLETED.value]
-        assert executions[0].final_score is None
+        assert executions[0].final_score == 0
         assert executions[1].final_score == 100
 
 
@@ -724,3 +724,24 @@ def test_no_final_answer_retains_diagnostics_and_usage(session):
     assert target.raw["reasoning"] == "private thought"
     assert target.raw["generation_diagnostics"]["no_final_answer"]
     assert metric.completion_tokens == 50
+
+
+def test_token_exhaustion_fails_even_with_a_correct_partial_answer(session):
+    from app.models import TargetResponse
+
+    bench = _make_benchmark(session)
+    ep = _make_endpoint(session)
+    run = crud.create_run(session, {"benchmark_id": bench.id, "target_endpoint_id": ep.id})
+    execution = session.query(PromptExecution).filter_by(run_id=run.id).first()
+    result = ChatResult(content="yes", reasoning="retained", finish_reason="length", truncated=False,
+                        usage={"completion_tokens": 100}, http_status=200,
+                        time_to_first_token=1, total_response_time=20, retry_count=0)
+    engine._store_target_result(session, execution, result)
+    session.flush()
+    assert execution.status == "failed"
+    assert execution.final_score == 0
+    assert "Token limit exhausted" in execution.error_message
+    target = session.query(TargetResponse).filter_by(execution_id=execution.id).one()
+    assert target.content == "yes"
+    assert target.raw["reasoning"] == "retained"
+    assert target.truncated

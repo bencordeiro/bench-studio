@@ -18,6 +18,7 @@ from app.db.session import session_scope
 from app.jobs.engine import mark_interrupted_active_runs
 from app.jobs.runner import runner
 from app.seed.suites_loader import seed_bundled_suites
+from app.services.scoring_repair import repair_saved_run_scores
 
 log = logging.getLogger(__name__)
 
@@ -49,6 +50,9 @@ async def lifespan(app: FastAPI):
             if bundled:
                 log.info("Seeded %d bundled suite(s)", bundled)
 
+    repaired = repair_saved_run_scores()
+    if repaired:
+        log.info("Recalculated %d saved run(s) with failed attempts counted as zero", repaired)
     runner.start()
     log.info("Startup complete. Listening on http://%s:%s", settings.host, settings.port)
     yield

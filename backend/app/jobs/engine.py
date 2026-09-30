@@ -520,6 +520,9 @@ def _server_prompt_rate(timings: dict[str, Any] | None) -> float | None:
 def _store_target_result(session: Session, execution: PromptExecution, result,
                          input_price_per_1m: float = 0.0,
                          output_price_per_1m: float = 0.0) -> None:
+    if result.truncated or result.finish_reason == "length":
+        result.truncated = True
+        result.error = result.error or "Token limit exhausted before generation finished"
     diagnostics = result.raw.get("generation_diagnostics", {})
     response_meta = {
         "reasoning": result.reasoning,
@@ -536,6 +539,7 @@ def _store_target_result(session: Session, execution: PromptExecution, result,
             truncated=result.truncated, raw=response_meta,
         ))
         execution.status = PromptStatus.FAILED.value
+        execution.final_score = 0.0
         execution.error_message = result.error
         execution.completed_at = _now()
         usage = result.usage or {}
@@ -1137,6 +1141,7 @@ def compute_run_summary(run_id: str) -> dict[str, Any]:
                 "status": e.status,
                 "category": e.prompt_snapshot.get("category", "general"),
                 "mode": e.prompt_snapshot.get("grading_mode"),
+                "truncated": bool(metric and (metric.truncated or metric.finish_reason == "length")),
             })
             metrics_rows.append({
                 "time_to_first_token": getattr(metric, "time_to_first_token", None) if metric else None,
@@ -1147,7 +1152,8 @@ def compute_run_summary(run_id: str) -> dict[str, Any]:
                 "empty_response": not (getattr(metric, "response_char_count", 0) or 0) if metric else True,
             })
         quality, scored, total = scoring.overall_quality_score(prompt_rows)
-        repetition_scores = [e.final_score for e in execs if e.final_score is not None]
+        repetition_scores = [value for row in prompt_rows
+                             if (value := scoring.prompt_quality_score(row)) is not None]
         repetition = scoring.repetition_stats(repetition_scores) if repetition_scores else {}
         # Reliability factors. Each must measure something distinct -- an
         # earlier version defined "structure" with the same expression as
@@ -1166,7 +1172,9 @@ def compute_run_summary(run_id: str) -> dict[str, Any]:
             and not m["truncated"]
             and not m["retried"]
         ) / n
-        grade_parsed = scored / n
+        grade_parsed = sum(1 for row in prompt_rows if row["score"] is not None
+                           and row["status"] in {"completed", "awaiting_manual"}
+                           and not row["truncated"]) / n
         truncated_count = sum(1 for m in metrics_rows if m["truncated"])
         no_truncation = 1.0 - (truncated_count / n)
         rel = scoring.reliability_score(
@@ -1191,8 +1199,8 @@ def compute_run_summary(run_id: str) -> dict[str, Any]:
         # Category breakdown.
         categories: dict[str, list[tuple[float, float]]] = {}
         for r in prompt_rows:
-            if r["score"] is not None and r["status"] != PromptStatus.FAILED.value:
-                categories.setdefault(r["category"], []).append((r["score"], r["weight"]))
+            if (value := scoring.prompt_quality_score(r)) is not None:
+                categories.setdefault(r["category"], []).append((value, r["weight"]))
         cat_scores = {c: scoring.category_quality_score(v) for c, v in categories.items()}
         # Aggregate cost across all executions.
         total_cost = None
@@ -1201,6 +1209,7 @@ def compute_run_summary(run_id: str) -> dict[str, Any]:
         if costs and len(costs) == len(execs):
             total_cost = round(sum(costs), 6)
         return {
+            "quality_scoring_version": scoring.QUALITY_SCORING_VERSION,
             "quality_score": round(quality, 2) if quality is not None else None,
             "reliability_score": round(rel, 2),
             "performance_index": round(perf, 2),

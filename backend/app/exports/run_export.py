@@ -12,6 +12,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.core.security import sanitize
+from app.graders.scoring import prompt_quality_score
 from app.models import (
     BenchmarkRun,
     DeterministicGrade,
@@ -76,7 +77,11 @@ def _collect_run(session: Session, run: BenchmarkRun) -> dict[str, Any]:
             "grading_mode": snap.get("grading_mode", ""),
             "weight": snap.get("importance_weight", 1.0),
             "status": e.status,
-            "score": e.final_score,
+            "score": prompt_quality_score({
+                "score": e.final_score, "status": e.status,
+                "truncated": bool((metric and (metric.truncated or metric.finish_reason == "length"))
+                                  or (target and (target.truncated or target.finish_reason == "length"))),
+            }),
             "max_score": e.max_score,
             "error": e.error_message,
             "messages": snap.get("messages", []),

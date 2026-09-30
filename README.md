@@ -231,7 +231,7 @@ A judge is a separate endpoint + model selection. In **New Run**, pick a judge e
 
 ## Understanding scores
 
-- **Quality Score** — weighted average of auto-scored prompt scores (0–100). Manual/pending prompts are excluded from the denominator until scored.
+- **Quality Score** — weighted average of concluded prompt attempts (0–100). Failed generations and token-limit exhaustion count as zero with their full question weight. Pending and ungraded manual/judge prompts are excluded until scored. Saved runs are corrected automatically on backend startup without new model requests.
 - **Reliability Score** — composite of completion, valid response, structure adherence, grade parse success, no truncation, and consistency across repetitions.
 - **Performance Index** — derived from user-configurable TTFT / throughput / failure-rate thresholds. Performance is kept separate from quality by default.
 - **Composite Score** — optional utility score; default weights Quality 85% / Reliability 10% / Performance 5%. This is user-configurable, **not** a universal intelligence score.

@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_execution_or_404, get_run_or_404
 from app.db.session import get_db
 from app.exports.run_export import _collect_run, export_csv, export_html, export_json
+from app.graders.scoring import prompt_quality_score
 from app.jobs.engine import compute_run_summary
 from app.jobs.event_bus import bus
 from app.jobs.runner import enqueue_run, request_cancel, resume_run, runner
@@ -170,9 +171,14 @@ def compare_runs(ids: list[str] = Query(default=[]), session: Session = Depends(
             .order_by(PromptExecution.position)
             .all()
         )
+        metrics = {m.execution_id: m for m in session.query(PerformanceMetric)
+                   .filter(PerformanceMetric.execution_id.in_([e.id for e in execs])).all()}
         for e in execs:
             key = e.prompt_snapshot_id or e.id
-            per_prompt.setdefault(key, {"label": (e.prompt_snapshot or {}).get("title", key), "scores": {}})["scores"][run.id] = e.final_score
+            metric = metrics.get(e.id)
+            score = prompt_quality_score({"score": e.final_score, "status": e.status,
+                                          "truncated": bool(metric and (metric.truncated or metric.finish_reason == "length"))})
+            per_prompt.setdefault(key, {"label": (e.prompt_snapshot or {}).get("title", key), "scores": {}})["scores"][run.id] = score
     # Warnings when configurations differ.
     versions = {r["benchmark_version"] for r in runs if r["benchmark_version"]}
     if len(versions) > 1:
@@ -387,7 +393,11 @@ def _build_execution_detail(e: PromptExecution, related: dict):
         "position": e.position,
         "repetition": e.repetition,
         "status": e.status,
-        "final_score": e.final_score,
+        "final_score": prompt_quality_score({
+            "score": e.final_score, "status": e.status,
+            "truncated": bool((metric and (metric.truncated or metric.finish_reason == "length"))
+                              or (target and (target.truncated or target.finish_reason == "length"))),
+        }),
         "max_score": e.max_score,
         "error_message": e.error_message,
         "title": snap.get("title", ""),

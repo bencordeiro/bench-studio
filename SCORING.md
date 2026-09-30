@@ -20,7 +20,9 @@ Weighted across prompts by each prompt's `importance_weight`:
 Overall Quality = Σ(prompt_score × prompt_weight) / Σ(prompt_weight)
 ```
 
-over all **auto-scored** prompts. Manual and pending-judge prompts are **excluded from the denominator** until a human scores them (or they are judged later). The UI shows coverage, e.g. `Automatic scoring coverage: 18 of 22 prompts`. Unscored prompts are **never treated as zero** unless the user explicitly chooses that policy.
+over all **concluded prompt attempts**, including failures. Failed generations and token-limit exhaustion are **zero scores with full question weight**; they cannot disappear from the denominator and inflate a model's result. Token-limit exhaustion is a failed attempt even if a partial answer was retained. Pending tasks and ungraded manual/judge answers remain **excluded from the denominator** until scored. The UI shows coverage, e.g. `18 of 22 prompts`, with failures included as evaluated zero scores.
+
+Scoring revision 2 automatically corrects saved run summaries and failed/exhausted attempt scores when the backend starts. It uses existing responses, finish reasons, metrics and question weights; it makes no model requests. Historical prompt snapshots and retained answers/reasoning are preserved. Corrected quality, category, repetition and composite scores propagate to history, comparisons, leaderboards and exports. Stored completed summaries without any execution data are preserved because there is nothing to recalculate.
 
 Category scores use the same weighted formula scoped to prompts in a category.
 
