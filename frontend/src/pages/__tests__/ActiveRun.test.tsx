@@ -10,10 +10,10 @@ vi.mock("react-router-dom", async () => {
   return { ...actual, useParams: () => ({ id: "r1" }) };
 });
 
-const { mockGet } = vi.hoisted(() => ({ mockGet: vi.fn() }));
+const { mockGet, mockChain } = vi.hoisted(() => ({ mockGet: vi.fn(), mockChain: vi.fn() }));
 
 vi.mock("@/api/client", () => ({
-  api: { getRun: () => mockGet() },
+  api: { getRun: () => mockGet(), getRunChain: () => mockChain() },
 }));
 
 function renderPage() {
@@ -37,6 +37,18 @@ const run: RunResponse = {
 };
 
 describe("Active Run progress display", () => {
+  it("shows sequence progress and links to the next benchmark", async () => {
+    mockGet.mockResolvedValue({ ...run, status: "completed", run_config: { ...run.run_config, chain_id: "c1" } });
+    mockChain.mockResolvedValue([
+      { ...run, benchmark_name: "Python", status: "completed" },
+      { ...run, id: "r2", benchmark_name: "Mini Master", status: "running_target" },
+    ]);
+    renderPage();
+    await waitFor(() => expect(screen.getByText("Benchmark sequence")).toBeInTheDocument());
+    expect(screen.getByRole("link", { name: "2. Mini Master" })).toHaveAttribute("href", "/runs/r2");
+    expect(screen.getByRole("link", { name: "1. Python" })).toHaveAttribute("aria-current", "page");
+  });
+
   it("shows saved total time when a finished run is reopened", async () => {
     mockGet.mockResolvedValue({ ...run, status: "completed", completed_prompts: 10,
       completed_at: "2026-01-01T00:25:46Z",

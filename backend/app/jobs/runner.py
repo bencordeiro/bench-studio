@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from datetime import datetime, timezone
 
 from app.db.session import session_scope
-from app.jobs.engine import run_job, signal_cancel
+from app.jobs.engine import TERMINAL_STATUSES, run_job, signal_cancel
 from app.models import BenchmarkRun, EndpointProfile, PromptExecution, PromptStatus, RunStatus
 
 log = logging.getLogger(__name__)
@@ -53,7 +54,8 @@ class JobRunner:
         log.info("Job runner loop active")
         while True:
             try:
-                await self._process_one()
+                if await self._process_one():
+                    continue  # Drain the queue without a five-second gap between suites.
             except asyncio.CancelledError:
                 raise
             except Exception:
@@ -65,7 +67,7 @@ class JobRunner:
             except asyncio.TimeoutError:
                 continue
 
-    async def _process_one(self) -> None:
+    async def _process_one(self) -> bool:
         with session_scope() as session:
             run = (
                 session.query(BenchmarkRun)
@@ -74,13 +76,22 @@ class JobRunner:
                 .first()
             )
             if run is None:
-                return
+                return False
             run_id = run.id
         self._current_run_id = run_id
         try:
             await self._execute_run(run_id)
+        except Exception as exc:
+            log.exception("Queued run %s failed before execution could finish", run_id)
+            with session_scope() as session:
+                run = session.get(BenchmarkRun, run_id)
+                if run is not None and run.status not in TERMINAL_STATUSES:
+                    run.status = RunStatus.FAILED.value
+                    run.error_message = str(exc)[:2000]
+                    run.completed_at = datetime.now(timezone.utc)
         finally:
             self._current_run_id = None
+        return True
 
     async def _execute_run(self, run_id: str) -> None:
         # Load everything needed, resolving endpoint profiles (which may have
@@ -88,7 +99,7 @@ class JobRunner:
         # values inside the session so nothing is accessed after it closes.
         with session_scope() as session:
             run = session.get(BenchmarkRun, run_id)
-            if run is None:
+            if run is None or run.status != RunStatus.QUEUED.value:
                 return
             target_profile = (
                 session.get(EndpointProfile, run.target_endpoint_id)
@@ -187,6 +198,14 @@ def request_cancel(run_id: str) -> bool:
             RunStatus.FAILED.value,
         }:
             return False
+        if run.status in {RunStatus.QUEUED.value, RunStatus.INTERRUPTED.value} and runner.current_run_id != run_id:
+            run.status = RunStatus.CANCELLED.value
+            run.completed_at = datetime.now(timezone.utc)
+            session.query(PromptExecution).filter(
+                PromptExecution.run_id == run_id,
+                PromptExecution.status == PromptStatus.PENDING.value,
+            ).update({PromptExecution.status: PromptStatus.CANCELLED.value}, synchronize_session=False)
+            return True
         run.status = RunStatus.CANCEL_REQUESTED.value
     if runner._loop and runner._loop.is_running():
         runner._loop.call_soon_threadsafe(signal_cancel, run_id)

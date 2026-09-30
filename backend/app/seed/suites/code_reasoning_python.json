@@ -3,8 +3,8 @@
   "format_version": "1.0",
   "exported_at": "",
   "name": "Code Reasoning & Correctness (Python)",
-  "description": "A compact 50-question Python test: 30 output-reasoning items covering mutation, scoping, iterators, exceptions and the data model, plus 20 original complete-function tasks inspired by HumanEval's executable-contract format. Practical tasks cover scheduling, configuration, logs, caching, pagination and data processing. Execution tests check edge cases and non-mutation. New difficulty weights are predicted, not model-calibrated. Python 3.10+; no third-party packages or network required.",
-  "version": "6.0.0",
+  "description": "A compact 45-question Python test: 29 output-reasoning items covering mutation, scoping, iterators, exceptions and the data model, plus 16 original complete-function tasks inspired by HumanEval's executable-contract format. Practical tasks cover logs, caching, pagination and data processing. Execution tests check edge cases and non-mutation. Five higher-risk reasoning workloads have been retired; remaining tasks use short output traces or compact function contracts. Difficulty and duration are not model-calibrated; token budgets and model reasoning still affect runtime. Python 3.10+; no third-party packages or network required.",
+  "version": "7.0.0",
   "tags": [
     "coding",
     "python",
@@ -56,7 +56,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -98,7 +98,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -138,7 +138,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -178,7 +178,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -218,7 +218,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -258,7 +258,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -298,7 +298,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -338,7 +338,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -380,7 +380,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -421,7 +421,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -462,7 +462,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -503,7 +503,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -544,7 +544,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -585,7 +585,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -626,7 +626,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -667,7 +667,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -708,7 +708,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -749,7 +749,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -790,7 +790,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -831,7 +831,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -872,7 +872,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -913,53 +913,12 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
           "role": "user",
           "content": "class A:\n    def __add__(self, other): return 'A.add'\n    def __radd__(self, other): return 'A.radd'\n\nclass B(A):\n    def __radd__(self, other): return 'B.radd'\n\na, b = A(), B()\nprint(a + b, b + a, a + a, [type(x).__name__ for x in (a, b)])",
-          "position": 1
-        }
-      ]
-    },
-    {
-      "stable_id": "cr3-super-kwargs-chain",
-      "title": "Cooperative super() through a diamond with kwargs",
-      "description": "Each __init__ must pass the remaining kwargs along the MRO.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 22,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "['Both', 'L', 'R', ('Base', ['c'])]",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "order = []\nclass Base:\n    def __init__(self, **kw): order.append(('Base', sorted(kw)))\nclass L(Base):\n    def __init__(self, a=None, **kw): order.append('L'); super().__init__(**kw)\nclass R(Base):\n    def __init__(self, b=None, **kw): order.append('R'); super().__init__(**kw)\nclass Both(L, R):\n    def __init__(self, **kw): order.append('Both'); super().__init__(**kw)\n\nBoth(a=1, b=2, c=3)\nprint(order)",
           "position": 1
         }
       ]
@@ -977,7 +936,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 23,
+      "position": 22,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -995,7 +954,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -1018,7 +977,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 24,
+      "position": 23,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1036,7 +995,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -1059,7 +1018,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 25,
+      "position": 24,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1077,7 +1036,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -1100,7 +1059,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 26,
+      "position": 25,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1118,7 +1077,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -1141,7 +1100,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 27,
+      "position": 26,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1159,7 +1118,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -1182,7 +1141,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 28,
+      "position": 27,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1200,7 +1159,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -1223,7 +1182,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 29,
+      "position": 28,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1241,7 +1200,7 @@
       "messages": [
         {
           "role": "system",
-          "content": "You are given a short, self-contained Python 3 program. Determine exactly what it writes to standard output. You may reason briefly first, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what the program prints (one line), with no quotes, no code fences, and no extra words.",
+          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
           "position": 0
         },
         {
@@ -1279,16 +1238,16 @@
       "messages": [
         {
           "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature. A compact implementation that satisfies the contract is sufficient; do not add a test harness, commentary, or alternative implementations.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "def merge_windows(windows):\n    \"\"\"windows is a list of integer (start, end) pairs with start <= end. Return a sorted list of tuples merging overlapping OR touching closed intervals. Preserve disjoint intervals. Empty input returns [].\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "content": "def merge_windows(windows):\n    \"\"\"windows is a list of integer (start, end) pairs with start <= end. Return a sorted list of tuples merging overlapping OR touching closed intervals. Preserve disjoint intervals. Empty input returns [].\n    Do not mutate any input. Use only the Python standard library.\n    Inputs satisfy the stated preconditions; no malformed-input validation is required.\n    \"\"\"\n",
           "position": 1
         }
       ],
-      "position": 30
+      "position": 29
     },
     {
       "stable_id": "cr-fn-latest-records",
@@ -1318,55 +1277,16 @@
       "messages": [
         {
           "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature. A compact implementation that satisfies the contract is sufficient; do not add a test harness, commentary, or alternative implementations.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "def latest_records(records):\n    \"\"\"records is a list of dicts with string id, integer timestamp and arbitrary payload. Return one dict per id: highest timestamp wins; on ties the last input record wins. Order output by each id's FIRST appearance, even when its winner is replaced. Empty input returns [].\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "content": "def latest_records(records):\n    \"\"\"records is a list of dicts with string id, integer timestamp and arbitrary payload. Return one dict per id: highest timestamp wins; on ties the last input record wins. Order output by each id's FIRST appearance, even when its winner is replaced. Empty input returns [].\n    Do not mutate any input. Use only the Python standard library.\n    Inputs satisfy the stated preconditions; no malformed-input validation is required.\n    \"\"\"\n",
           "position": 1
         }
       ],
-      "position": 31
-    },
-    {
-      "stable_id": "cr-fn-dependency-batches",
-      "title": "Schedule dependencies in deterministic batches",
-      "description": "dependencies maps every task name (string) to a list of prerequisite names; all referenced names exist as keys. Return batches of runnable tasks, each batch sorted lexicographically. A task may run only after ALL prerequisites completed in earlier batches. Duplicate prerequisites count once. Return None for any cycle (even if some tasks can run), and [] for an empty graph.",
-      "category": "code-generation/python",
-      "tags": [
-        "python",
-        "execution-graded",
-        "original",
-        "unmeasured"
-      ],
-      "difficulty": "hard",
-      "importance_weight": 3.0,
-      "enabled": true,
-      "grading_mode": "execution",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "language": "python",
-        "completion_mode": "full_function",
-        "entry_point": "dependency_batches",
-        "timeout_seconds": 3.0,
-        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ({},)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n    args = ({'b': ['a', 'a'], 'a': [], 'c': [], 'd': ['b', 'c']},)\n    original = deepcopy(args)\n    assert candidate(*args) == [['a', 'c'], ['b'], ['d']]\n    assert args == original, \"inputs mutated\"\n    args = ({'a': ['a']},)\n    original = deepcopy(args)\n    assert candidate(*args) == None\n    assert args == original, \"inputs mutated\"\n    args = ({'a': [], 'b': ['c'], 'c': ['b']},)\n    original = deepcopy(args)\n    assert candidate(*args) == None\n    assert args == original, \"inputs mutated\"\n    args = ({'c': ['b'], 'b': ['a'], 'a': []},)\n    original = deepcopy(args)\n    assert candidate(*args) == [['a'], ['b'], ['c']]\n    assert args == original, \"inputs mutated\"\n"
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "def dependency_batches(dependencies):\n    \"\"\"dependencies maps every task name (string) to a list of prerequisite names; all referenced names exist as keys. Return batches of runnable tasks, each batch sorted lexicographically. A task may run only after ALL prerequisites completed in earlier batches. Duplicate prerequisites count once. Return None for any cycle (even if some tasks can run), and [] for an empty graph.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
-          "position": 1
-        }
-      ],
-      "position": 32
+      "position": 30
     },
     {
       "stable_id": "cr-fn-resolve-path",
@@ -1396,55 +1316,16 @@
       "messages": [
         {
           "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature. A compact implementation that satisfies the contract is sufficient; do not add a test harness, commentary, or alternative implementations.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "def resolve_path(path):\n    \"\"\"path is an absolute POSIX path string beginning with /. Return its lexical normalization: collapse repeated slashes, remove . components, and apply .. by removing a previous component if one exists. Going above root stays at root. Remove trailing slash except for /. Do not access the filesystem; dot-prefixed names other than . and .. remain literal.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "content": "def resolve_path(path):\n    \"\"\"path is an absolute POSIX path string beginning with /. Return its lexical normalization: collapse repeated slashes, remove . components, and apply .. by removing a previous component if one exists. Going above root stays at root. Remove trailing slash except for /. Do not access the filesystem; dot-prefixed names other than . and .. remain literal.\n    Do not mutate any input. Use only the Python standard library.\n    Inputs satisfy the stated preconditions; no malformed-input validation is required.\n    \"\"\"\n",
           "position": 1
         }
       ],
-      "position": 33
-    },
-    {
-      "stable_id": "cr-fn-apply-patch",
-      "title": "Apply a recursive configuration patch",
-      "description": "base and patch are JSON-like dicts. Return a patched dict. In patch, null (None) deletes a key; a dict recursively patches the corresponding base value (use {} if it is not a dict); other values replace it. Lists replace wholesale. Neither input may mutate, including nested objects.",
-      "category": "code-generation/python",
-      "tags": [
-        "python",
-        "execution-graded",
-        "original",
-        "unmeasured"
-      ],
-      "difficulty": "hard",
-      "importance_weight": 3.0,
-      "enabled": true,
-      "grading_mode": "execution",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "language": "python",
-        "completion_mode": "full_function",
-        "entry_point": "apply_patch",
-        "timeout_seconds": 3.0,
-        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ({}, {})\n    original = deepcopy(args)\n    assert candidate(*args) == {}\n    assert args == original, \"inputs mutated\"\n    args = ({'a': {'b': 1, 'c': 2}, 'x': [1, 2]}, {'a': {'b': None, 'd': 0}, 'x': []})\n    original = deepcopy(args)\n    assert candidate(*args) == {'a': {'c': 2, 'd': 0}, 'x': []}\n    assert args == original, \"inputs mutated\"\n    args = ({'a': 7}, {'a': {'b': 1}, 'z': None})\n    original = deepcopy(args)\n    assert candidate(*args) == {'a': {'b': 1}}\n    assert args == original, \"inputs mutated\"\n    args = ({'x': True}, {'x': False})\n    original = deepcopy(args)\n    assert candidate(*args) == {'x': False}\n    assert args == original, \"inputs mutated\"\n"
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "def apply_patch(base, patch):\n    \"\"\"base and patch are JSON-like dicts. Return a patched dict. In patch, null (None) deletes a key; a dict recursively patches the corresponding base value (use {} if it is not a dict); other values replace it. Lists replace wholesale. Neither input may mutate, including nested objects.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
-          "position": 1
-        }
-      ],
-      "position": 34
+      "position": 31
     },
     {
       "stable_id": "cr-fn-inventory-ledger",
@@ -1474,16 +1355,16 @@
       "messages": [
         {
           "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature. A compact implementation that satisfies the contract is sufficient; do not add a test harness, commentary, or alternative implementations.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "def inventory_ledger(events):\n    \"\"\"events is a list of (event_id, sku, delta) tuples; IDs and SKUs are strings, delta is integer. First occurrence of an event_id wins globally, even if a later duplicate differs. Sum accepted deltas by SKU, omit zero balances, and return a list of (sku, balance) tuples sorted by SKU. Negative balances are allowed.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "content": "def inventory_ledger(events):\n    \"\"\"events is a list of (event_id, sku, delta) tuples; IDs and SKUs are strings, delta is integer. First occurrence of an event_id wins globally, even if a later duplicate differs. Sum accepted deltas by SKU, omit zero balances, and return a list of (sku, balance) tuples sorted by SKU. Negative balances are allowed.\n    Do not mutate any input. Use only the Python standard library.\n    Inputs satisfy the stated preconditions; no malformed-input validation is required.\n    \"\"\"\n",
           "position": 1
         }
       ],
-      "position": 35
+      "position": 32
     },
     {
       "stable_id": "cr-fn-rolling-totals",
@@ -1513,21 +1394,21 @@
       "messages": [
         {
           "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature. A compact implementation that satisfies the contract is sufficient; do not add a test harness, commentary, or alternative implementations.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "def rolling_totals(events, width):\n    \"\"\"events is a timestamp-nondecreasing list of (integer timestamp, integer value) pairs and width is a positive integer. For each event at time t, return the sum of values seen so far with timestamps in (t-width, t]. Later events, including later ties, must not be included yet. Return a list of integers in input order. Aim for linear time.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "content": "def rolling_totals(events, width):\n    \"\"\"events is a timestamp-nondecreasing list of (integer timestamp, integer value) pairs and width is a positive integer. For each event at time t, return the sum of values seen so far with timestamps in (t-width, t]. Later events, including later ties, must not be included yet. Return a list of integers in input order. Aim for linear time.\n    Do not mutate any input. Use only the Python standard library.\n    Inputs satisfy the stated preconditions; no malformed-input validation is required.\n    \"\"\"\n",
           "position": 1
         }
       ],
-      "position": 36
+      "position": 33
     },
     {
       "stable_id": "cr-fn-retry-delays",
       "title": "Build a bounded exponential retry schedule",
-      "description": "All arguments are positive integers. Proposed delays are min(initial * factor**k, cap) for k starting at 0. Return the longest prefix of delays whose sum is <= budget. Stop before the first delay that exceeds remaining budget; do not shorten it. factor >= 1.",
+      "description": "All arguments are positive integers and budget <= 10000. Proposed delays are min(initial * factor**k, cap) for k starting at 0. Return the longest prefix of delays whose sum is <= budget. Stop before the first delay that exceeds remaining budget; do not shorten it. factor >= 1.",
       "category": "code-generation/python",
       "tags": [
         "python",
@@ -1552,16 +1433,16 @@
       "messages": [
         {
           "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature. A compact implementation that satisfies the contract is sufficient; do not add a test harness, commentary, or alternative implementations.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "def retry_delays(initial, factor, cap, budget):\n    \"\"\"All arguments are positive integers. Proposed delays are min(initial * factor**k, cap) for k starting at 0. Return the longest prefix of delays whose sum is <= budget. Stop before the first delay that exceeds remaining budget; do not shorten it. factor >= 1.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "content": "def retry_delays(initial, factor, cap, budget):\n    \"\"\"All arguments are positive integers and budget <= 10000. Proposed delays are min(initial * factor**k, cap) for k starting at 0. Return the longest prefix of delays whose sum is <= budget. Stop before the first delay that exceeds remaining budget; do not shorten it. factor >= 1.\n    Do not mutate any input. Use only the Python standard library.\n    Inputs satisfy the stated preconditions; no malformed-input validation is required.\n    \"\"\"\n",
           "position": 1
         }
       ],
-      "position": 37
+      "position": 34
     },
     {
       "stable_id": "cr-fn-parse-query",
@@ -1591,16 +1472,16 @@
       "messages": [
         {
           "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature. A compact implementation that satisfies the contract is sufficient; do not add a test harness, commentary, or alternative implementations.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "def parse_query(query):\n    \"\"\"Parse a query string, optionally beginning with ?. Split on &, ignoring empty segments. Split each segment at the first =; a missing = means an empty value. Decode percent escapes as UTF-8 and + as space in both keys and values, using urllib.parse.unquote_plus behavior. Return a dict mapping decoded keys to lists of values in occurrence order. Preserve blank keys and values.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "content": "def parse_query(query):\n    \"\"\"Parse a query string, optionally beginning with ?. Split on &, ignoring empty segments. Split each segment at the first =; a missing = means an empty value. Decode percent escapes as UTF-8 and + as space in both keys and values, using urllib.parse.unquote_plus behavior. Return a dict mapping decoded keys to lists of values in occurrence order. Preserve blank keys and values.\n    Do not mutate any input. Use only the Python standard library.\n    Inputs satisfy the stated preconditions; no malformed-input validation is required.\n    \"\"\"\n",
           "position": 1
         }
       ],
-      "position": 38
+      "position": 35
     },
     {
       "stable_id": "cr-fn-diff-records",
@@ -1630,55 +1511,16 @@
       "messages": [
         {
           "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature. A compact implementation that satisfies the contract is sufficient; do not add a test harness, commentary, or alternative implementations.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "def diff_records(before, after):\n    \"\"\"Each input is a list of dicts with unique string id within that input. Return a dict with keys added, removed, changed; each value is a sorted list of IDs. changed contains shared IDs whose whole dict differs under Python equality. Input order is irrelevant.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "content": "def diff_records(before, after):\n    \"\"\"Each input is a list of dicts with unique string id within that input. Return a dict with keys added, removed, changed; each value is a sorted list of IDs. changed contains shared IDs whose whole dict differs under Python equality. Input order is irrelevant.\n    Do not mutate any input. Use only the Python standard library.\n    Inputs satisfy the stated preconditions; no malformed-input validation is required.\n    \"\"\"\n",
           "position": 1
         }
       ],
-      "position": 39
-    },
-    {
-      "stable_id": "cr-fn-allocate-cents",
-      "title": "Allocate cents using largest remainders",
-      "description": "total is a nonnegative integer number of cents. weights is a nonempty list of nonnegative integers with positive sum. Allocate total proportionally: floor every exact share, then distribute remaining cents to descending fractional remainders, ties by lower input index. Return integer allocations in input order. Use exact integer arithmetic.",
-      "category": "code-generation/python",
-      "tags": [
-        "python",
-        "execution-graded",
-        "original",
-        "unmeasured"
-      ],
-      "difficulty": "hard",
-      "importance_weight": 3.0,
-      "enabled": true,
-      "grading_mode": "execution",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "language": "python",
-        "completion_mode": "full_function",
-        "entry_point": "allocate_cents",
-        "timeout_seconds": 3.0,
-        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = (10, [1, 1, 1])\n    original = deepcopy(args)\n    assert candidate(*args) == [4, 3, 3]\n    assert args == original, \"inputs mutated\"\n    args = (2, [0, 1, 1, 1])\n    original = deepcopy(args)\n    assert candidate(*args) == [0, 1, 1, 0]\n    assert args == original, \"inputs mutated\"\n    args = (0, [2, 3])\n    original = deepcopy(args)\n    assert candidate(*args) == [0, 0]\n    assert args == original, \"inputs mutated\"\n    args = (7, [1, 2])\n    original = deepcopy(args)\n    assert candidate(*args) == [2, 5]\n    assert args == original, \"inputs mutated\"\n    args = (1000000000000000001, [1, 1])\n    original = deepcopy(args)\n    assert candidate(*args) == [500000000000000001, 500000000000000000]\n    assert args == original, \"inputs mutated\"\n"
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "def allocate_cents(total, weights):\n    \"\"\"total is a nonnegative integer number of cents. weights is a nonempty list of nonnegative integers with positive sum. Allocate total proportionally: floor every exact share, then distribute remaining cents to descending fractional remainders, ties by lower input index. Return integer allocations in input order. Use exact integer arithmetic.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
-          "position": 1
-        }
-      ],
-      "position": 40
+      "position": 36
     },
     {
       "stable_id": "cr-fn-longest-streak",
@@ -1708,21 +1550,21 @@
       "messages": [
         {
           "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature. A compact implementation that satisfies the contract is sufficient; do not add a test harness, commentary, or alternative implementations.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "def longest_streak(days):\n    \"\"\"days is an unsorted list of integer day numbers, possibly duplicated or negative. Return (start, length) of the longest run of consecutive distinct days. Break ties by smallest start. For no days return (None, 0).\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "content": "def longest_streak(days):\n    \"\"\"days is an unsorted list of integer day numbers, possibly duplicated or negative. Return (start, length) of the longest run of consecutive distinct days. Break ties by smallest start. For no days return (None, 0).\n    Do not mutate any input. Use only the Python standard library.\n    Inputs satisfy the stated preconditions; no malformed-input validation is required.\n    \"\"\"\n",
           "position": 1
         }
       ],
-      "position": 41
+      "position": 37
     },
     {
       "stable_id": "cr-fn-flatten-records",
       "title": "Flatten nested dictionaries without losing empty objects",
-      "description": "data is a nested dict. Keys are nonempty strings without dots. Return a flat dict with dot-separated key paths. Only dicts are expanded: lists and other values are leaves. Preserve empty nested dicts as {} at their path. Empty root returns {}.",
+      "description": "data is a finite, acyclic nested dict with depth at most 8. Keys are nonempty strings without dots. Return a flat dict with dot-separated key paths. Only dicts are expanded: lists and other values are leaves. Preserve empty nested dicts as {} at their path. Empty root returns {}.",
       "category": "code-generation/python",
       "tags": [
         "python",
@@ -1747,16 +1589,16 @@
       "messages": [
         {
           "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature. A compact implementation that satisfies the contract is sufficient; do not add a test harness, commentary, or alternative implementations.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "def flatten_records(data):\n    \"\"\"data is a nested dict. Keys are nonempty strings without dots. Return a flat dict with dot-separated key paths. Only dicts are expanded: lists and other values are leaves. Preserve empty nested dicts as {} at their path. Empty root returns {}.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "content": "def flatten_records(data):\n    \"\"\"data is a finite, acyclic nested dict with depth at most 8. Keys are nonempty strings without dots. Return a flat dict with dot-separated key paths. Only dicts are expanded: lists and other values are leaves. Preserve empty nested dicts as {} at their path. Empty root returns {}.\n    Do not mutate any input. Use only the Python standard library.\n    Inputs satisfy the stated preconditions; no malformed-input validation is required.\n    \"\"\"\n",
           "position": 1
         }
       ],
-      "position": 42
+      "position": 38
     },
     {
       "stable_id": "cr-fn-missing-ranges",
@@ -1786,16 +1628,16 @@
       "messages": [
         {
           "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature. A compact implementation that satisfies the contract is sufficient; do not add a test harness, commentary, or alternative implementations.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "def missing_ranges(ids, low, high):\n    \"\"\"low <= high are integers. ids is an unsorted list of integers, with duplicates and possible values outside [low, high]. Return sorted inclusive (start, end) tuples covering exactly the missing integers within that interval. Do not enumerate every integer in the interval; it may span billions.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "content": "def missing_ranges(ids, low, high):\n    \"\"\"low <= high are integers. ids is an unsorted list of integers, with duplicates and possible values outside [low, high]. Return sorted inclusive (start, end) tuples covering exactly the missing integers within that interval. Do not enumerate every integer in the interval; it may span billions.\n    Do not mutate any input. Use only the Python standard library.\n    Inputs satisfy the stated preconditions; no malformed-input validation is required.\n    \"\"\"\n",
           "position": 1
         }
       ],
-      "position": 43
+      "position": 39
     },
     {
       "stable_id": "cr-fn-lru-misses",
@@ -1825,16 +1667,16 @@
       "messages": [
         {
           "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature. A compact implementation that satisfies the contract is sufficient; do not add a test harness, commentary, or alternative implementations.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "def lru_misses(keys, capacity):\n    \"\"\"keys is a list of hashable strings; capacity is a nonnegative integer. Starting empty, access each key. A hit refreshes its recency. A miss inserts it and, if necessary, evicts the least recently used key. Capacity zero stores nothing. Return (miss_count, final_keys), with final_keys ordered least to most recently used.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "content": "def lru_misses(keys, capacity):\n    \"\"\"keys is a list of hashable strings; capacity is a nonnegative integer. Starting empty, access each key. A hit refreshes its recency. A miss inserts it and, if necessary, evicts the least recently used key. Capacity zero stores nothing. Return (miss_count, final_keys), with final_keys ordered least to most recently used.\n    Do not mutate any input. Use only the Python standard library.\n    Inputs satisfy the stated preconditions; no malformed-input validation is required.\n    \"\"\"\n",
           "position": 1
         }
       ],
-      "position": 44
+      "position": 40
     },
     {
       "stable_id": "cr-fn-sessionize",
@@ -1864,16 +1706,16 @@
       "messages": [
         {
           "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature. A compact implementation that satisfies the contract is sufficient; do not add a test harness, commentary, or alternative implementations.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "def sessionize(timestamps, timeout):\n    \"\"\"timestamps is a nondecreasing list of integer timestamps. timeout is a nonnegative integer. Consecutive timestamps belong to one session iff their difference is <= timeout. Return (first_time, last_time, event_count) tuples for each session, including duplicates in counts.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "content": "def sessionize(timestamps, timeout):\n    \"\"\"timestamps is a nondecreasing list of integer timestamps. timeout is a nonnegative integer. Consecutive timestamps belong to one session iff their difference is <= timeout. Return (first_time, last_time, event_count) tuples for each session, including duplicates in counts.\n    Do not mutate any input. Use only the Python standard library.\n    Inputs satisfy the stated preconditions; no malformed-input validation is required.\n    \"\"\"\n",
           "position": 1
         }
       ],
-      "position": 45
+      "position": 41
     },
     {
       "stable_id": "cr-fn-expand-template",
@@ -1903,16 +1745,16 @@
       "messages": [
         {
           "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature. A compact implementation that satisfies the contract is sufficient; do not add a test harness, commentary, or alternative implementations.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "def expand_template(text, values):\n    \"\"\"Replace ${name} placeholders with values[name] (all values are strings). Names match [A-Za-z_][A-Za-z0-9_]*. Leave unknown or malformed placeholders unchanged. Expansion is one pass: never re-expand inserted values. There is no escape syntax.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "content": "def expand_template(text, values):\n    \"\"\"Replace ${name} placeholders with values[name] (all values are strings). Names match [A-Za-z_][A-Za-z0-9_]*. Leave unknown or malformed placeholders unchanged. Expansion is one pass: never re-expand inserted values. There is no escape syntax.\n    Do not mutate any input. Use only the Python standard library.\n    Inputs satisfy the stated preconditions; no malformed-input validation is required.\n    \"\"\"\n",
           "position": 1
         }
       ],
-      "position": 46
+      "position": 42
     },
     {
       "stable_id": "cr-fn-match-route",
@@ -1942,55 +1784,16 @@
       "messages": [
         {
           "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature. A compact implementation that satisfies the contract is sufficient; do not add a test harness, commentary, or alternative implementations.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "def match_route(pattern, path):\n    \"\"\"Both strings begin with /. Split into slash-separated segments after removing at most one trailing slash (except root). A pattern segment starting with : captures one NONEMPTY segment by its remaining name. Capture names are nonempty and unique. Other segments are literal and case-sensitive. Return a dict of captures on full match, {} for a literal match, or None on mismatch. Do not URL-decode.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "content": "def match_route(pattern, path):\n    \"\"\"Both strings begin with /. Split into slash-separated segments after removing at most one trailing slash (except root). A pattern segment starting with : captures one NONEMPTY segment by its remaining name. Capture names are nonempty and unique. Other segments are literal and case-sensitive. Return a dict of captures on full match, {} for a literal match, or None on mismatch. Do not URL-decode.\n    Do not mutate any input. Use only the Python standard library.\n    Inputs satisfy the stated preconditions; no malformed-input validation is required.\n    \"\"\"\n",
           "position": 1
         }
       ],
-      "position": 47
-    },
-    {
-      "stable_id": "cr-fn-first-conflict",
-      "title": "Find the earliest conflicting reservation pair",
-      "description": "bookings is a list of (resource, start, end) tuples, with string resource and integers start <= end. Intervals are half-open [start,end); empty intervals never conflict. Return the lexicographically smallest pair of input indices (i,j), i<j, whose intervals overlap on the same resource, or None. Endpoint touching is not overlap.",
-      "category": "code-generation/python",
-      "tags": [
-        "python",
-        "execution-graded",
-        "original",
-        "unmeasured"
-      ],
-      "difficulty": "hard",
-      "importance_weight": 3.0,
-      "enabled": true,
-      "grading_mode": "execution",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "language": "python",
-        "completion_mode": "full_function",
-        "entry_point": "first_conflict",
-        "timeout_seconds": 3.0,
-        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([],)\n    original = deepcopy(args)\n    assert candidate(*args) == None\n    assert args == original, \"inputs mutated\"\n    args = ([('a', 1, 3), ('a', 3, 5)],)\n    original = deepcopy(args)\n    assert candidate(*args) == None\n    assert args == original, \"inputs mutated\"\n    args = ([('a', 1, 5), ('b', 2, 4), ('a', 3, 3), ('a', 4, 6)],)\n    original = deepcopy(args)\n    assert candidate(*args) == (0, 3)\n    assert args == original, \"inputs mutated\"\n    args = ([('a', 5, 9), ('a', 1, 3), ('a', 2, 6)],)\n    original = deepcopy(args)\n    assert candidate(*args) == (0, 2)\n    assert args == original, \"inputs mutated\"\n    args = ([('x', 1, 2), ('x', 1, 2)],)\n    original = deepcopy(args)\n    assert candidate(*args) == (0, 1)\n    assert args == original, \"inputs mutated\"\n"
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "def first_conflict(bookings):\n    \"\"\"bookings is a list of (resource, start, end) tuples, with string resource and integers start <= end. Intervals are half-open [start,end); empty intervals never conflict. Return the lexicographically smallest pair of input indices (i,j), i<j, whose intervals overlap on the same resource, or None. Endpoint touching is not overlap.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
-          "position": 1
-        }
-      ],
-      "position": 48
+      "position": 43
     },
     {
       "stable_id": "cr-fn-paginate",
@@ -2020,16 +1823,16 @@
       "messages": [
         {
           "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature.",
+          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature. A compact implementation that satisfies the contract is sufficient; do not add a test harness, commentary, or alternative implementations.",
           "position": 0
         },
         {
           "role": "user",
-          "content": "def paginate(records, cursor, limit):\n    \"\"\"records is a list of dicts with unique integer id, in arbitrary order. cursor is an integer or None; limit is a positive integer. Sort ascending by id, keep ids strictly greater than cursor (all if None), and take up to limit records. Return {\"items\": page, \"next_cursor\": last returned id IF additional eligible records remain, otherwise None}. The cursor need not correspond to a record.\n    Do not mutate any input. Use only the Python standard library.\n    \"\"\"\n",
+          "content": "def paginate(records, cursor, limit):\n    \"\"\"records is a list of dicts with unique integer id, in arbitrary order. cursor is an integer or None; limit is a positive integer. Sort ascending by id, keep ids strictly greater than cursor (all if None), and take up to limit records. Return {\"items\": page, \"next_cursor\": last returned id IF additional eligible records remain, otherwise None}. The cursor need not correspond to a record.\n    Do not mutate any input. Use only the Python standard library.\n    Inputs satisfy the stated preconditions; no malformed-input validation is required.\n    \"\"\"\n",
           "position": 1
         }
       ],
-      "position": 49
+      "position": 44
     }
   ]
 }

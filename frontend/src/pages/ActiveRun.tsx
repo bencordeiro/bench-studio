@@ -21,6 +21,12 @@ export default function ActiveRun() {
       return r && !isTerminal(r.status) ? 1500 : false;
     },
   });
+  const { data: chain } = useQuery({
+    queryKey: ["run-chain", id],
+    queryFn: () => api.getRunChain(id!),
+    enabled: !!id && !!run?.run_config.chain_id,
+    refetchInterval: (q) => q.state.data?.some((r) => !isTerminal(r.status)) ? 1500 : false,
+  });
 
   const [progress, setProgress] = useState(0);
   const [phase, setPhase] = useState<string>("");
@@ -30,6 +36,13 @@ export default function ActiveRun() {
     elapsed_seconds: number; answer_chars: number; reasoning_chars: number;
     possible_repetition: boolean; retry_count: number; receivedAt: number;
   } | null>(null);
+  useEffect(() => {
+    setProgress(0);
+    setPhase("");
+    setCurrentPrompt("");
+    setElapsed(0);
+    setGeneration(null);
+  }, [id]);
 
   // SSE subscription while running.
   useEffect(() => {
@@ -134,6 +147,23 @@ export default function ActiveRun() {
           </>
         }
       />
+      {chain && chain.length > 1 && (
+        <Card className="mb-4">
+          <h3 className="font-medium text-white mb-2">Benchmark sequence</h3>
+          <p className="text-xs text-gray-400 mb-3">Benchmarks run one at a time. Each has its own results. Errors in one benchmark do not stop the next.</p>
+          <ol className="space-y-2">
+            {chain.map((item, index) => (
+              <li key={item.id} className="flex items-center justify-between gap-2 text-sm">
+                <Link to={`/runs/${item.id}`} aria-current={item.id === id ? "page" : undefined}
+                  className={item.id === id ? "text-white font-medium" : "text-accent"}>
+                  {index + 1}. {item.benchmark_name || item.name}
+                </Link>
+                <span className="text-xs text-gray-400">{STATUS_LABELS[item.status] || item.status} · {item.completed_prompts}/{item.total_prompts}</span>
+              </li>
+            ))}
+          </ol>
+        </Card>
+      )}
       <Card className="mb-4">
         <div className="flex items-center justify-between">
           <Badge className={statusColor(run.status)}>{STATUS_LABELS[run.status] || run.status}</Badge>

@@ -7,9 +7,9 @@ LocalBench Studio is a **desktop-hosted web application for benchmarking one LLM
 ## What it does
 
 - Save one or more OpenAI-compatible endpoint profiles (with optional API keys stored in the OS credential store).
-- Start from nine bundled suites (387 prompts): eight custom suites with automated validation plus the public **HumanEval** benchmark, or author your own.
+- Start from nine bundled suites (382 prompts): eight custom suites with automated validation plus the public **HumanEval** benchmark, or author your own.
 - Grade each prompt one of five ways: **deterministic**, **LLM judge**, **hybrid**, **manual review**, or **execution** (run the generated code against unit tests). Deterministic graders cover exact/numeric/regex/concept/JSON/multiple-choice/count and parsed **tool calls**.
-- Run a benchmark against one target model; close/refresh the browser without stopping the run.
+- Select one or more benchmarks in **New Run**, reorder the selection, and queue them against one target model. Benchmarks execute sequentially with shared settings and separate scores; closing/refreshing the browser does not stop the queue.
 - Reopen later and see live progress, resume interrupted runs.
 - See **Total time** for each finished run in the Runs history, run detail and Results summary. It uses saved start/finish timestamps, including warm-up, grading, retries and pauses in resumed runs; existing history works too. Runs without both timestamps show “—”.
 - View detailed analytics: quality, reliability, performance, per-prompt scores, latency distributions.
@@ -22,11 +22,11 @@ Choose **Endpoint Profiles → New Endpoint → Provider preset** to fill the AP
 
 ## Bundled benchmark suites
 
-Nine suites ship with the app and load on first run (387 prompts). Eight contain custom items designed to reduce reliance on familiar public benchmark questions. Mini Master intentionally shares some questions with Master. Originality does not guarantee freedom from training-data contamination. The ninth is the public **HumanEval** benchmark, included for numbers that stay comparable to the published literature.
+Nine suites ship with the app and load on first run (382 prompts). Eight contain custom items designed to reduce reliance on familiar public benchmark questions. Mini Master intentionally shares some questions with Master. Originality does not guarantee freedom from training-data contamination. The ninth is the public **HumanEval** benchmark, included for numbers that stay comparable to the published literature.
 
 | Suite | Prompts | What it measures |
 |---|---|---|
-| Code Reasoning (Python) | 50 | 30 output-reasoning questions and 20 original executable function tasks covering practical data processing and edge cases |
+| Code Reasoning (Python) | 45 | 29 output-reasoning questions and 16 original executable function tasks covering practical data processing and edge cases |
 | Web Dev Correctness (JS) | 45 | Coercion, the event loop and microtask ordering, prototypes, async semantics, JSON edge cases |
 | Agentic Tool-Use (Hermes) | 15 | Function calling in BFCL categories: simple, tool selection, parallel, argument precision, relevance |
 | Instruction-Following | 15 | IFEval-style stacked constraints: exact counts, forbidden vocabulary, strict JSON, custom markup |
@@ -37,6 +37,8 @@ Nine suites ship with the app and load on first run (387 prompts). Eight contain
 | **HumanEval (OpenAI)** | 164 | Code generation: complete the function, executed against its unit tests — see below |
 
 See [the suite audit](docs/SUITE_AUDIT.md) for revisions, validation evidence, and limitations. Updated bundles upgrade in place on startup; historical runs retain their snapshots. The retired example suite is removed by migration.
+
+Python 7.0.0 retires five workloads that invite longer reasoning and requests concise outputs or compact function implementations. All remaining answer keys and reference functions are checked locally; Qwen Flash duration validation is pending endpoint availability. See [the Python duration review](docs/PYTHON_SUITE_DURATION_REVIEW.md).
 
 Cyber uses original, self-contained scenarios with fixed policy assumptions and deterministic answer keys. It needs no tool calls, code execution or judge. See [its answer-key review and grading contract](docs/CYBER_SUITE.md). Its difficulty estimates have not been measured against models.
 

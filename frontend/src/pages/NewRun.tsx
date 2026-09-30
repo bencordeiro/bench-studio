@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api/client";
-import { Badge, Card, EmptyState, PageHeader, Spinner } from "@/components/ui";
+import { Card, EmptyState, PageHeader } from "@/components/ui";
 import { useToast } from "@/store/toast";
-import type { BenchmarkSet, EndpointProfile } from "@/types";
 
 export default function NewRun() {
   const navigate = useNavigate();
@@ -12,7 +11,7 @@ export default function NewRun() {
   const { data: endpoints } = useQuery({ queryKey: ["endpoints"], queryFn: api.listEndpoints });
   const { data: benchmarks } = useQuery({ queryKey: ["benchmarks"], queryFn: api.listBenchmarks });
   const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: api.getSettings });
-  const [benchmarkId, setBenchmarkId] = useState("");
+  const [benchmarkIds, setBenchmarkIds] = useState<string[]>([]);
   const [targetEndpointId, setTargetEndpointId] = useState("");
   const [targetModel, setTargetModel] = useState("");
   const [judgeEndpointId, setJudgeEndpointId] = useState("");
@@ -29,8 +28,8 @@ export default function NewRun() {
   const [submitting, setSubmitting] = useState(false);
 
   const enabledEndpoints = (endpoints || []).filter((e) => e.enabled);
-  const selectedBenchmark = benchmarks?.find((b) => b.id === benchmarkId);
-  const needsJudge = selectedBenchmark ? (selectedBenchmark.enabled_prompt_count > 0) : false;
+  const selectedBenchmarks = benchmarkIds.flatMap((id) => benchmarks?.find((b) => b.id === id) || []);
+  const promptCount = selectedBenchmarks.reduce((sum, b) => sum + b.enabled_prompt_count, 0) * repetitions;
   const targetEndpoint = endpoints?.find((e) => e.id === targetEndpointId);
   const sameModel = targetModel && judgeModel && targetEndpointId === judgeEndpointId && targetModel === judgeModel;
 
@@ -80,7 +79,7 @@ export default function NewRun() {
   }, [judgeEndpointId, judgeModels, endpoints]);
 
   const validate = (): string | null => {
-    if (!benchmarkId) return "Select a benchmark.";
+    if (!benchmarkIds.length) return "Select a benchmark.";
     if (!targetEndpointId) return "Select a target endpoint.";
     if (!targetModel.trim()) return "Enter or select a target model.";
     return null;
@@ -94,8 +93,7 @@ export default function NewRun() {
     }
     setSubmitting(true);
     try {
-      const run = await api.createRun({
-        benchmark_id: benchmarkId,
+      const data = {
         target_endpoint_id: targetEndpointId,
         target_model: targetModel,
         judge_endpoint_id: judgeEndpointId || undefined,
@@ -115,9 +113,16 @@ export default function NewRun() {
         },
         notes,
         auto_start: true,
-      });
-      toast("Run started", "success");
-      navigate(`/runs/${run.id}`);
+      };
+      if (benchmarkIds.length === 1) {
+        const run = await api.createRun({ ...data, benchmark_id: benchmarkIds[0] });
+        toast("Run queued", "success");
+        navigate(`/runs/${run.id}`);
+      } else {
+        const runs = await api.createRunChain({ ...data, benchmark_ids: benchmarkIds });
+        toast(`${runs.length} benchmarks queued in sequence`, "success");
+        navigate(`/runs/${runs[0].id}`);
+      }
     } catch (e) {
       toast((e as Error).message, "error");
     } finally {
@@ -127,28 +132,50 @@ export default function NewRun() {
 
   return (
     <div>
-      <PageHeader title="New Benchmark Run" subtitle="Configure a run against one target model. Defaults to sequential execution so latency/throughput are not distorted by concurrency." />
+      <PageHeader title="New Benchmark Run" subtitle="Select one or more benchmarks for one target model. Benchmarks run one after another with separate results and the same settings." />
       <div className="grid md:grid-cols-2 gap-4">
         <Card>
-          <label className="label">Benchmark set</label>
+          <div className="label" id="benchmark-selection-label">Benchmark sets</div>
           {!benchmarks || benchmarks.length === 0 ? (
             <EmptyState title="No benchmarks available" />
           ) : (
-            <select className="input" value={benchmarkId} onChange={(e) => setBenchmarkId(e.target.value)}>
-              <option value="">— select —</option>
+            <div role="group" aria-labelledby="benchmark-selection-label" className="max-h-64 overflow-y-auto space-y-2">
               {benchmarks.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name} ({b.enabled_prompt_count} prompts) v{b.version}
-                </option>
+                <label key={b.id} className="flex items-start gap-2 text-sm">
+                  <input type="checkbox" className="mt-1" checked={benchmarkIds.includes(b.id)}
+                    disabled={b.enabled_prompt_count === 0 || submitting}
+                    onChange={(e) => setBenchmarkIds((ids) => e.target.checked ? [...ids, b.id] : ids.filter((id) => id !== b.id))} />
+                  <span>{b.name} ({b.enabled_prompt_count} prompts) v{b.version}</span>
+                </label>
               ))}
-            </select>
+            </div>
           )}
-          {selectedBenchmark && (
-            <p className="text-xs text-gray-500 mt-1">
-              {needsJudge ? "Includes judge/hybrid prompts — configure a judge below or defer judging." : "Deterministic/manual only — no judge required."}
-            </p>
+          {selectedBenchmarks.length > 0 && (
+            <div className="mt-3 border-t border-gray-700 pt-3">
+              <p className="text-xs text-gray-400 mb-2">{selectedBenchmarks.length} benchmark(s) · {promptCount} prompts including repetitions. Run order:</p>
+              <ol className="space-y-2">
+                {selectedBenchmarks.map((b, index) => (
+                  <li key={b.id} className="flex items-center gap-2 text-sm">
+                    <span className="flex-1">{index + 1}. {b.name}</span>
+                    <button className="btn text-xs" aria-label={`Move ${b.name} up`} disabled={index === 0 || submitting}
+                      onClick={() => setBenchmarkIds((ids) => {
+                        const reordered = [...ids];
+                        [reordered[index - 1], reordered[index]] = [reordered[index], reordered[index - 1]];
+                        return reordered;
+                      })}>↑</button>
+                    <button className="btn text-xs" aria-label={`Move ${b.name} down`} disabled={index === selectedBenchmarks.length - 1 || submitting}
+                      onClick={() => setBenchmarkIds((ids) => {
+                        const reordered = [...ids];
+                        [reordered[index], reordered[index + 1]] = [reordered[index + 1], reordered[index]];
+                        return reordered;
+                      })}>↓</button>
+                  </li>
+                ))}
+              </ol>
+              <p className="text-xs text-gray-500 mt-2">Judge/hybrid prompts wait for grading if no judge is configured. Closing the browser does not stop the queue.</p>
+            </div>
           )}
-          {selectedBenchmark?.tags?.includes("hermes") && (
+          {selectedBenchmarks.some((b) => b.tags?.includes("hermes")) && (
             <p className="text-xs text-warn mt-2">
               Tool questions automatically use native API calls when the endpoint rejects Hermes text blocks.
               Tool schemas, arguments and supplied history are preserved. The selected protocol is recorded with the run.
@@ -212,7 +239,7 @@ export default function NewRun() {
       <div className="flex justify-end gap-2 mt-4">
         <button className="btn" onClick={() => navigate(-1)}>Cancel</button>
         <button className="btn btn-primary" disabled={submitting} onClick={start}>
-          {submitting ? "Starting…" : "Start run"}
+          {submitting ? "Starting…" : benchmarkIds.length > 1 ? `Start ${benchmarkIds.length} benchmarks` : "Start run"}
         </button>
       </div>
     </div>

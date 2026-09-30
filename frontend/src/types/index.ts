@@ -181,6 +181,9 @@ export interface LeaderboardResponse {
 }
 
 export interface RunConfig {
+  chain_id?: string;
+  chain_position?: number;
+  chain_size?: number;
   repetitions: number;
   sequential_execution: boolean;
   shuffle_prompt_order: boolean;

@@ -103,6 +103,9 @@ export const api = {
   getRun: (id: string) => request<RunResponse>(`/api/runs/${id}`),
   createRun: (data: Record<string, unknown>) =>
     request<RunResponse>("/api/runs", { method: "POST", body: JSON.stringify(data) }),
+  createRunChain: (data: Record<string, unknown>) =>
+    request<RunResponse[]>("/api/runs/chain", { method: "POST", body: JSON.stringify(data) }),
+  getRunChain: (id: string) => request<RunSummary[]>(`/api/runs/${id}/chain`),
   startRun: (id: string) => request<RunResponse>(`/api/runs/${id}/start`, { method: "POST" }),
   cancelRun: (id: string) => request<RunResponse>(`/api/runs/${id}/cancel`, { method: "POST" }),
   resumeRun: (id: string) => request<RunResponse>(`/api/runs/${id}/resume`, { method: "POST" }),

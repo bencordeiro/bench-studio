@@ -1,7 +1,7 @@
 # Curated suite audit — September 2026
 
-This revision contains 223 custom prompts, plus the unchanged 164-question
-HumanEval suite (387 total). Mini Master intentionally overlaps with Master.
+This revision contains 218 custom prompts, plus the unchanged 164-question
+HumanEval suite (382 total). Mini Master intentionally overlaps with Master.
 It emphasizes clear contracts and reproducible
 scoring. Difficulty is a design judgment until measured against models. The
 Qwen Flash duration observations are documented separately; Cyber was validated
@@ -16,7 +16,7 @@ offline. No cross-model difficulty calibration has been completed.
 | Cyber | 0 → 18 | 1.0.0 | Original defensive-security scenarios, closed JSON schemas, independent answer and error controls |
 | Terminal Semantics & System Gotchas | 12 → 12 | 2.0.0 | Corrected three bad keys; revised four shallow items; specified environment assumptions |
 | Web Dev Correctness & Debugging (JS) | 46 → 45 | 5.0.0 | Removed `wd-typeof-null`; reproduced every remaining output |
-| Code Reasoning & Correctness (Python) | 55 → 50 | 6.0.0 | Retained 30 reasoning items; replaced 25 with 20 original complete-function execution tasks |
+| Code Reasoning & Correctness (Python) | 55 → 45 | 7.0.0 | 29 short output traces and 16 original function tasks; five higher-risk workloads retired |
 
 ## Instruction following
 
@@ -56,27 +56,24 @@ Every item has a positive control and a spurious-call negative control.
 
 ## Python
 
-The 30 retained output tasks cover aliasing, closures, exception behavior,
+The 29 retained output tasks cover aliasing, closures, exception behavior,
 iterators, generators, descriptors, inheritance, and data aggregation. All
 canonical outputs are reproduced by executing their actual prompt snippets.
 The exact retained IDs live in `scripts/build_python_suite.py`.
 
-The 20 new tasks use HumanEval's short function-contract/completion approach,
+The 16 active function tasks use HumanEval's short function-contract/completion approach,
 with original scenarios and tests (no copied HumanEval questions):
 
 | Function | Main failure modes checked |
 |---|---|
 | `merge_windows` | Touching/nested intervals, duplicates, negative bounds |
 | `latest_records` | Timestamp ties, first-ID order, older later arrivals |
-| `dependency_batches` | Duplicate edges, cycles, partial acyclic components |
 | `resolve_path` | Above-root traversal, repeated slashes, literal dot names |
-| `apply_patch` | Nested deletion, replacement of scalars, falsey values |
 | `inventory_ledger` | Global event-ID deduplication, zero/negative balances |
 | `rolling_totals` | Open left boundary, repeated timestamps, negative values |
 | `retry_delays` | Cap below initial delay, exact budget, factor one |
 | `parse_query` | Repeated/blank keys, encoded plus, embedded equals, Unicode |
 | `diff_records` | Missing versus null, order-independent records |
-| `allocate_cents` | Remainder ties, zero weights, integers beyond float precision |
 | `longest_streak` | Duplicates, negative days, deterministic tie breaking |
 | `flatten_records` | Empty nested dicts and lists treated as leaves |
 | `missing_ranges` | Huge domains, duplicates, out-of-range IDs |
@@ -84,7 +81,6 @@ with original scenarios and tests (no copied HumanEval questions):
 | `sessionize` | Exact timeout boundary, duplicate timestamps |
 | `expand_template` | Unknown/malformed placeholders, one-pass expansion |
 | `match_route` | Full match, empty captures, literal casing, root |
-| `first_conflict` | Half-open intervals, zero length, lexicographic index priority |
 | `paginate` | Missing cursor, strict boundary, exact final page |
 
 Each task tests unchanged inputs and multiple calls to the same implementation.
@@ -304,8 +300,19 @@ rollback interpretation and a mistaken alias-preservation interpretation.
 Mini Master now has 23 questions and a new version for automatic startup upgrades.
 The other 22 prompt bodies, graders and weights are unchanged; positions are
 renumbered. No endpoint calls were made and the replacement's live runtime remains
-unmeasured. Full Master is unchanged. Nine suites now contain 387 prompts.
+unmeasured. Full Master is unchanged. At that revision, nine suites contained 387 prompts.
 
 Local validation passed 33 Mini Master/seed tests and 21 upgrade/count/structural
 suite-quality tests, plus builder parity, Ruff and whitespace checks. A direct
 comparison verified that the remaining 22 items differ only in their positions.
+
+## Python duration revision (September 30)
+
+Python 7.0.0 removes the cooperative `super()` kwargs trace and four function
+workloads: dependency batching, recursive patches, largest-remainder cent
+allocation, and reservation conflict selection. There are now 45 questions
+(29 output traces and 16 functions). Output prompts request only `ANSWER: ...`;
+function prompts request one compact implementation, with no test harness or
+malformed-input validation. Retry budgets and recursive flattening depth are
+explicitly bounded. No model endpoint was called for this revision; actual
+Qwen Flash duration is pending. See [the review](PYTHON_SUITE_DURATION_REVIEW.md).

@@ -15,8 +15,10 @@ from app.seed.suites_loader import SUITES_DIR
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
-from build_python_suite import execution_prompt  # noqa: E402 -- scripts are outside the app package
-from python_tasks import TASKS  # noqa: E402
+from build_python_suite import (  # noqa: E402 -- scripts are outside the app package
+    ACTIVE_TASKS,
+    execution_prompt,
+)
 
 
 def suite(name):
@@ -33,7 +35,7 @@ def suite(name):
         ("cyber", 18),
         ("terminal_semantics", 12),
         ("web_dev_js", 45),
-        ("code_reasoning_python", 50),
+        ("code_reasoning_python", 45),
     ],
 )
 def test_requested_suite_counts(name, count):
@@ -43,7 +45,7 @@ def test_requested_suite_counts(name, count):
     assert [p["position"] for p in prompts] == list(range(count))
 
 
-@pytest.mark.parametrize("task", TASKS, ids=lambda t: t["name"])
+@pytest.mark.parametrize("task", ACTIVE_TASKS, ids=lambda t: t["name"])
 def test_python_function_contract(task):
     p = execution_prompt(task)
     prefix = p["messages"][-1]["content"]
@@ -233,3 +235,45 @@ def test_json_rejects_duplicate_keys_and_nonfinite_numbers():
     gc = {"type": "json", "expected_field_values": {"value": 1}}
     for text in ['{"value":0,"value":1}', '{"value":1,"other":NaN}', '{"value":1,"other":Infinity}']:
         assert run_deterministic(gc, text)["score"] == 0
+
+
+def test_python_suite_builder_and_retired_workloads():
+    result = subprocess.run([sys.executable, str(ROOT / "scripts/build_python_suite.py"), "--check"],
+                            capture_output=True, text=True, timeout=10)
+    assert result.returncode == 0, result.stdout + result.stderr
+    python_suite = suite("code_reasoning_python")
+    assert python_suite["version"] == "7.0.0"
+    retired = {"cr3-super-kwargs-chain", "cr-fn-dependency-batches", "cr-fn-apply-patch",
+               "cr-fn-allocate-cents", "cr-fn-first-conflict"}
+    assert not retired.intersection(p["stable_id"] for p in python_suite["prompts"])
+    assert sum(p["grading_mode"] == "execution" for p in python_suite["prompts"]) == 16
+
+
+def test_python_upgrade_keeps_historical_run_snapshot(session):
+    import uuid
+    from copy import deepcopy
+
+    from app.exports.benchmark_format import build_models_from_export, parse_benchmark_export
+    from app.models import BenchmarkRun, BenchmarkSet
+    from app.seed.suites_loader import seed_bundled_suites
+
+    old = deepcopy(suite("code_reasoning_python"))
+    old["version"] = "6.0.0"
+    retired = deepcopy(old["prompts"][0])
+    retired.update(stable_id="cr3-super-kwargs-chain", title="Retired", position=45)
+    old["prompts"].append(retired)
+    export, errors = parse_benchmark_export(old)
+    assert not errors
+    bench, prompts = build_models_from_export(export)
+    session.add(bench)
+    session.add_all(prompts)
+    session.flush()
+    run = BenchmarkRun(id=str(uuid.uuid4()), benchmark_id=bench.id, status="completed",
+                       benchmark_snapshot=old, run_config={})
+    session.add(run)
+    session.flush()
+    original_id = bench.id
+    seed_bundled_suites(session)
+    assert session.get(BenchmarkSet, original_id).version == "7.0.0"
+    assert len(session.get(BenchmarkSet, original_id).prompts) == 45
+    assert run.benchmark_snapshot == old

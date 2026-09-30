@@ -186,7 +186,7 @@ task(
     "retry_delays",
     "Build a bounded exponential retry schedule",
     "initial, factor, cap, budget",
-    "All arguments are positive integers. Proposed delays are min(initial * factor**k, cap) for k starting at 0. Return the longest prefix of delays whose sum is <= budget. Stop before the first delay that exceeds remaining budget; do not shorten it. factor >= 1.",
+    "All arguments are positive integers and budget <= 10000. Proposed delays are min(initial * factor**k, cap) for k starting at 0. Return the longest prefix of delays whose sum is <= budget. Stop before the first delay that exceeds remaining budget; do not shorten it. factor >= 1.",
     """out = []
 delay = min(initial, cap)
 while delay <= budget:
@@ -289,7 +289,7 @@ task(
     "flatten_records",
     "Flatten nested dictionaries without losing empty objects",
     "data",
-    "data is a nested dict. Keys are nonempty strings without dots. Return a flat dict with dot-separated key paths. Only dicts are expanded: lists and other values are leaves. Preserve empty nested dicts as {} at their path. Empty root returns {}.",
+    "data is a finite, acyclic nested dict with depth at most 8. Keys are nonempty strings without dots. Return a flat dict with dot-separated key paths. Only dicts are expanded: lists and other values are leaves. Preserve empty nested dicts as {} at their path. Empty root returns {}.",
     """out = {}
 def visit(node, prefix):
     for key,value in node.items():

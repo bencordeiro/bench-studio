@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
@@ -35,6 +36,7 @@ from app.schemas import (
     RunResults,
     RunSummary,
 )
+from app.schemas.runs import RunChainCreateRequest
 from app.services import crud
 
 router = APIRouter(prefix="/api/runs", tags=["runs"])
@@ -134,6 +136,25 @@ def create_run(payload: RunCreateRequest, session: Session = Depends(get_db)):
     return _run_to_response(run, session)
 
 
+@router.post("/chain", response_model=list[RunResponse], status_code=201)
+def create_run_chain(payload: RunChainCreateRequest, session: Session = Depends(get_db)):
+    """Queue an ordered selection atomically; each suite retains its own results."""
+    chain_id = str(uuid.uuid4())
+    data = payload.model_dump(exclude_unset=True, exclude={"benchmark_ids"})
+    runs = []
+    try:
+        for position, benchmark_id in enumerate(payload.benchmark_ids):
+            config = {**data.get("run_config", {}), "chain_id": chain_id,
+                      "chain_position": position, "chain_size": len(payload.benchmark_ids)}
+            runs.append(crud.create_run(session, {**data, "benchmark_id": benchmark_id, "run_config": config}))
+        session.commit()
+    except ValueError as exc:
+        session.rollback()
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    enqueue_run()
+    return [_run_to_response(run, session) for run in runs]
+
+
 # --------------------------------------------------------------------------- #
 # Comparison (declared before /{run_id} so the static path is not swallowed)
 # --------------------------------------------------------------------------- #
@@ -195,6 +216,17 @@ def compare_runs(ids: list[str] = Query(default=[]), session: Session = Depends(
 @router.get("/{run_id}", response_model=RunResponse)
 def get_run(run_id: str, session: Session = Depends(get_db)):
     return _run_to_response(get_run_or_404(session, run_id), session)
+
+
+@router.get("/{run_id}/chain", response_model=list[RunSummary])
+def get_run_chain(run_id: str, session: Session = Depends(get_db)):
+    run = get_run_or_404(session, run_id)
+    chain_id = (run.run_config or {}).get("chain_id")
+    if not chain_id:
+        return []
+    runs = session.query(BenchmarkRun).filter(BenchmarkRun.run_config["chain_id"].as_string() == chain_id).all()
+    runs.sort(key=lambda r: (r.run_config or {}).get("chain_position", 0))
+    return [_summary(r) for r in runs]
 
 
 # Terminal states a run may be deleted from (in-flight runs must be cancelled first).

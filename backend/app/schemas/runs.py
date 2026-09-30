@@ -29,10 +29,9 @@ class RunConfig(ORMModel):
     retry_backoff_max: float = 30.0
 
 
-class RunCreateRequest(ORMModel):
+class RunCreateSettings(ORMModel):
     name: str = ""
     notes: str = ""
-    benchmark_id: str
     target_endpoint_id: str
     target_model: str = ""
     target_session_key: str | None = Field(default=None, exclude=True)
@@ -50,8 +49,24 @@ class RunCreateRequest(ORMModel):
     def _check(self):
         if not self.target_endpoint_id:
             raise ValueError("target_endpoint_id is required")
-        if not self.benchmark_id:
-            raise ValueError("benchmark_id is required")
+        return self
+
+
+class RunCreateRequest(RunCreateSettings):
+    benchmark_id: str = Field(min_length=1)
+
+
+class RunChainCreateRequest(RunCreateSettings):
+    benchmark_ids: list[str] = Field(min_length=1, max_length=50)
+
+    @model_validator(mode="after")
+    def _check_benchmarks(self):
+        if any(not bid for bid in self.benchmark_ids):
+            raise ValueError("benchmark_ids must contain nonempty IDs")
+        if len(set(self.benchmark_ids)) != len(self.benchmark_ids):
+            raise ValueError("Select each benchmark only once")
+        if not self.auto_start:
+            raise ValueError("Benchmark chains must be queued to start")
         return self
 
 
