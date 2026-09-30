@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import benchmarks, endpoints, health, leaderboards, runs
+from app.api import benchmarks, endpoints, health, index, leaderboards, runs
 from app.core.config import APP_NAME, APP_VERSION, get_settings
 from app.core.security import configure_logging
 from app.db.session import session_scope
@@ -83,6 +83,7 @@ def create_app() -> FastAPI:
     app.include_router(benchmarks.router)
     app.include_router(runs.router)
     app.include_router(leaderboards.router)
+    app.include_router(index.router)
 
     # Serve compiled frontend if present.
     if FRONTEND_DIR.exists():

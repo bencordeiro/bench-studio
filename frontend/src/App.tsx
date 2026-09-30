@@ -10,6 +10,7 @@ import ActiveRun from "@/pages/ActiveRun";
 import Results from "@/pages/Results";
 import Compare from "@/pages/Compare";
 import Leaderboards from "@/pages/Leaderboards";
+import IndexPage from "@/pages/Index";
 import SettingsPage from "@/pages/Settings";
 
 const navItems = [
@@ -20,6 +21,7 @@ const navItems = [
   { to: "/runs", label: "Runs" },
   { to: "/compare", label: "Compare" },
   { to: "/leaderboards", label: "Leaderboards" },
+  { to: "/index", label: "Index" },
   { to: "/settings", label: "Settings" },
 ];
 
@@ -76,6 +78,7 @@ export default function App() {
           <Route path="/compare" element={<Compare />} />
           <Route path="/leaderboards" element={<Leaderboards />} />
           <Route path="/leaderboards/:suiteId" element={<Leaderboards />} />
+          <Route path="/index" element={<IndexPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </main>

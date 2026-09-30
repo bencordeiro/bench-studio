@@ -6,6 +6,8 @@ import type {
   EndpointProfile,
   FetchModelsResult,
   HealthResponse,
+  IndexConfig,
+  IndexLeaderboard,
   LeaderboardBasis,
   LeaderboardResponse,
   LeaderboardSort,
@@ -42,6 +44,8 @@ export const api = {
 
   // Settings
   getSettings: () => request<AppSettings>("/api/settings"),
+  getIndexConfig: () => request<IndexConfig>("/api/index/config"),
+  getIndex: (basis: LeaderboardBasis = "latest") => request<IndexLeaderboard>(`/api/index?basis=${basis}`),
   updateSettings: (s: AppSettings) =>
     request<AppSettings>("/api/settings", { method: "PUT", body: JSON.stringify(s) }),
 

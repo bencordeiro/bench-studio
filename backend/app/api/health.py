@@ -52,6 +52,7 @@ def _load_settings(session: Session) -> AppSettings:
         default_temperature=stored.get("default_temperature", 0.0),
         default_top_p=stored.get("default_top_p", 1.0),
         default_max_tokens=stored.get("default_max_tokens", AppSettings().default_max_tokens),
+        index_suite_ids=stored.get("index_suite_ids"),
         composite_weights=weights,
         automatic_backup=stored.get("automatic_backup", True),
         launch_browser=stored.get("launch_browser", True),
@@ -78,6 +79,9 @@ def _save_settings(session: Session, data: AppSettings) -> AppSettings:
         "theme": data.theme,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
+    # Older clients must not erase a configured Index when saving other settings.
+    value["index_suite_ids"] = (data.index_suite_ids if "index_suite_ids" in data.model_fields_set
+                                else (row.value or {}).get("index_suite_ids") if row else None)
     if row is None:
         row = ApplicationSetting(key="app", value=value)
     else:

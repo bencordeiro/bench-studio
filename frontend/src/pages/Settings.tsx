@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/client";
 import { Badge, Card, PageHeader, Spinner } from "@/components/ui";
@@ -8,14 +9,20 @@ import type { AppSettings } from "@/types";
 export default function SettingsPage() {
   const toast = useToast();
   const qc = useQueryClient();
+  const { hash } = useLocation();
   const { data, isLoading } = useQuery({ queryKey: ["settings"], queryFn: api.getSettings });
   const { data: diag } = useQuery({ queryKey: ["diagnostics"], queryFn: api.diagnostics });
+  const { data: benchmarks } = useQuery({ queryKey: ["benchmarks"], queryFn: api.listBenchmarks });
+  const { data: indexConfig } = useQuery({ queryKey: ["index-config"], queryFn: api.getIndexConfig });
   const [form, setForm] = useState<AppSettings | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (data) setForm(data);
   }, [data]);
+  useEffect(() => {
+    if (form && hash === "#index-settings") document.getElementById("index-settings")?.scrollIntoView?.();
+  }, [!!form, hash]);
 
   if (isLoading || !form) return <Spinner label="Loading settings…" />;
 
@@ -28,6 +35,8 @@ export default function SettingsPage() {
     try {
       await api.updateSettings(form);
       await qc.invalidateQueries({ queryKey: ["settings"] });
+      await qc.invalidateQueries({ queryKey: ["index"] });
+      await qc.invalidateQueries({ queryKey: ["index-config"] });
       toast("Settings saved", "success");
     } catch (e) {
       toast((e as Error).message, "error");
@@ -37,6 +46,10 @@ export default function SettingsPage() {
   };
 
   const weightTotal = form.composite_weights.quality + form.composite_weights.reliability + form.composite_weights.performance;
+  const indexIds = form.index_suite_ids ?? indexConfig?.default_suite_ids ?? [];
+  const toggleIndex = (id: string, checked: boolean) => set({
+    index_suite_ids: checked ? [...indexIds, id] : indexIds.filter((sid) => sid !== id),
+  });
 
   return (
     <div>
@@ -74,6 +87,31 @@ export default function SettingsPage() {
           <div className="mt-4 space-y-2">
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.automatic_backup} onChange={(e) => set({ automatic_backup: e.target.checked })} /> Automatic backup</label>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.launch_browser} onChange={(e) => set({ launch_browser: e.target.checked })} /> Launch browser on start</label>
+          </div>
+        </Card>
+        <Card className="md:col-span-2">
+          <div id="index-settings" className="scroll-mt-4">
+            <h3 className="font-medium text-white mb-2">Index benchmarks</h3>
+            <p className="text-xs text-gray-400 mb-3">Choose the benchmarks for the Index leaderboard. Each contributes equally to the average quality score. Models appear only after completing and scoring every selected benchmark. Save to apply.</p>
+            {!benchmarks || !indexConfig ? <Spinner label="Loading Index configuration…" /> : (
+              <div className="grid sm:grid-cols-2 gap-2">
+                {benchmarks.map((bench) => <label key={bench.id} className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={indexIds.includes(bench.id)} disabled={saving}
+                    onChange={(e) => toggleIndex(bench.id, e.target.checked)} />
+                  {bench.name}
+                </label>)}
+                {indexIds.filter((id) => !benchmarks.some((b) => b.id === id)).map((id) => (
+                  <label key={id} className="flex items-center gap-2 text-sm text-warn">
+                    <input type="checkbox" checked disabled={saving} onChange={() => toggleIndex(id, false)} />
+                    Missing benchmark ({id}) — uncheck to remove
+                  </label>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-3 mt-3">
+              <button className="btn text-xs" disabled={saving} onClick={() => set({ index_suite_ids: null })}>Restore seven defaults</button>
+              <span className="text-xs text-gray-500">{indexIds.length} selected{indexIds.length === 0 ? " — Index is empty" : ""}</span>
+            </div>
           </div>
         </Card>
         <Card className="md:col-span-2">

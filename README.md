@@ -14,6 +14,7 @@ LocalBench Studio is a **desktop-hosted web application for benchmarking one LLM
 - See **Total time** for each finished run in the Runs history, run detail and Results summary. It uses saved start/finish timestamps, including warm-up, grading, retries and pauses in resumed runs; existing history works too. Runs without both timestamps show “—”.
 - View detailed analytics: quality, reliability, performance, per-prompt scores, latency distributions.
 - Compare completed runs. Per-suite leaderboards ranking every tested model. Export JSON / CSV / standalone HTML reports.
+- [Index](docs/INDEX.md): rank models across seven favorite benchmarks, with equal weight per suite. Only models that have completed every selected suite appear; customize the selection in Settings.
 - Keep a separate judge endpoint so the model under test is not grading itself (with a clear warning when it is).
 
 ## Endpoint setup

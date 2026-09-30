@@ -355,6 +355,7 @@ export interface RunResults {
 }
 
 export interface AppSettings {
+  index_suite_ids: string[] | null;
   local_data_path: string;
   log_level: string;
   default_timeout: number;
@@ -370,4 +371,36 @@ export interface AppSettings {
   theme: string;
   allow_plaintext_key_fallback: boolean;
   keyring_available: boolean;
+}
+
+export interface IndexSuite {
+  id: string | null;
+  name: string;
+  version: string | null;
+  missing: boolean;
+}
+
+export interface IndexConfig {
+  uses_defaults: boolean;
+  default_suite_ids: string[];
+  suites: IndexSuite[];
+}
+
+export interface IndexEntry {
+  rank: number;
+  model: string;
+  index_score: number;
+  completed_suites: number;
+  required_suites: number;
+  run_count: number;
+  last_run_at: string | null;
+  target_endpoint_names: string[];
+  suite_scores: { suite_id: string | null; score: number | null; run_count: number; representative_run_id: string | null }[];
+}
+
+export interface IndexLeaderboard extends IndexConfig {
+  scoring_basis: LeaderboardBasis;
+  entries: IndexEntry[];
+  warnings: string[];
+  incomplete_model_count: number;
 }
