@@ -32,14 +32,15 @@ describe("Index leaderboard", () => {
   beforeEach(() => { vi.clearAllMocks(); mockIndex.mockResolvedValue(board); });
   it("places Index immediately below Leaderboards and shows aggregate and run links", async () => {
     renderPage();
-    await waitFor(() => expect(screen.getByText("complete-model")).toBeInTheDocument());
+    await waitFor(() => expect(within(screen.getByRole("table")).getByText("complete-model")).toBeInTheDocument());
     const links = within(screen.getByRole("navigation")).getAllByRole("link");
     const leaderboard = links.findIndex((link) => link.textContent === "Leaderboards");
     expect(links[leaderboard + 1]).toHaveTextContent("Index");
     expect(links[leaderboard + 1]).toHaveAttribute("href", "/index");
     expect(screen.getByRole("link", { name: "Configure Index" })).toHaveAttribute("href", "/settings#index-settings");
     expect(screen.getByRole("link", { name: "100.0" })).toHaveAttribute("href", "/runs/r1/results");
-    expect(screen.getByText("80.0")).toBeInTheDocument();
+    expect(within(screen.getByRole("table")).getByText("80.0")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Index score comparison chart" })).toBeInTheDocument();
     expect(screen.getByText(/models are excluded until all selected benchmarks/)).toBeInTheDocument();
   });
   it("switches the per-suite scoring basis", async () => {
@@ -54,5 +55,6 @@ describe("Index leaderboard", () => {
     await waitFor(() => expect(screen.getByText("No models have completed the full Index yet")).toBeInTheDocument());
     expect(screen.queryByText("complete-model")).not.toBeInTheDocument();
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: "Index score comparison chart" })).not.toBeInTheDocument();
   });
 });

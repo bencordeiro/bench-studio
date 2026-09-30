@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api/client";
+import IndexChart from "@/components/IndexChart";
 import { Card, EmptyState, PageHeader, Spinner } from "@/components/ui";
 import { fmtRelative, fmtScore, scoreColor } from "@/lib/format";
 import type { LeaderboardBasis } from "@/types";
@@ -53,6 +54,7 @@ export default function IndexPage() {
         title={data.suites.length ? "No models have completed the full Index yet" : "No Index benchmarks selected"}
         hint={data.suites.length ? "Complete all selected benchmarks for a model to include it here." : "Choose benchmarks in Settings."} />}
       {data && data.entries.length > 0 && (
+        <>
         <Card className="p-0 overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-bg-elev text-gray-400 text-xs uppercase">
@@ -84,6 +86,8 @@ export default function IndexPage() {
             </tbody>
           </table>
         </Card>
+        <IndexChart entries={data.entries} />
+        </>
       )}
     </div>
   );

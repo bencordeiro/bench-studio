@@ -2,6 +2,8 @@
 
 The Index tab sits directly below Leaderboards. It ranks models by the equal-weight average of their selected benchmark quality scores, on a 0–100 scale. Each suite contributes equally regardless of its question count. A model appears only when it has a completed, fully scored run for every selected suite.
 
+Below the ranking table, a colored bar chart compares scores from highest to lowest, with diagonal model labels and a fixed 0–100 scale. Choose the top 10, top 25 (default), or all eligible models. Wide charts scroll horizontally; hover or focus a bar for its full model name and score. The chart follows the selected scoring basis.
+
 The seven defaults are:
 
 1. Code Reasoning & Correctness (Python)
