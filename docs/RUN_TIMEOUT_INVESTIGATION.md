@@ -36,3 +36,31 @@ Cancellation cleanup and the current-question progress fix are retained. Restart
 the backend to load changes. Tests cover active streams exceeding the inactivity
 interval, inactivity failures, cancellation, progression after a failed request,
 and global-limit snapshots that reject per-run overrides.
+
+## Settings persistence and first-question check (2026-09-29)
+
+The settings PUT handler previously returned the edited settings without
+committing its database transaction. A subsequent GET returned the defaults,
+including `default_max_tokens = 0`; runs created afterward therefore did not
+receive the token cap the user thought they had saved. The handler now commits
+before returning the stored settings. A regression test reproduces the former
+failure and checks refresh, application/database restart, new-run snapshots,
+and preservation of existing runs when settings change.
+
+The current first Master item, `ms-py-class-scope-comprehension`, was tested
+against `qwenflash` at `http://10.0.0.10:8000/v1` with temperature zero, streaming,
+no retries, and a temporary 1,024-token diagnostic cap. With the original prompt
+and `xhigh` reasoning effort, it spent 33.14 seconds and the entire budget on
+reasoning, repeatedly rechecking an already-correct answer without returning
+final content. With `low` effort, the original prompt spent 25.84 seconds and
+the entire budget on reasoning plus an explanation, ending before its required
+answer line. Neither sample showed a connection failure or retry.
+
+With the same `low` effort and an answer-only introduction, the endpoint returned
+the correct answer in 16.25 seconds using 626 completion tokens. Master 4.1.0
+uses that concise instruction for its 18 output-prediction questions. The code,
+answer keys, weights, and 50-question count are unchanged. This is a single-item
+diagnostic, not a full-suite duration estimate or proof of what happened in the
+user's separate six-minute run. The experimental time/token caps were not made
+application defaults. Inactivity timeout still measures network silence, and
+an active stream has no total generation deadline.

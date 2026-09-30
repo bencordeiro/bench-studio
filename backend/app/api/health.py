@@ -93,7 +93,11 @@ def get_app_settings(session: Session = Depends(get_db)):
 
 @router.put("/settings", response_model=AppSettings)
 def update_app_settings(payload: AppSettings, session: Session = Depends(get_db)):
-    return _save_settings(session, payload)
+    _save_settings(session, payload)
+    # get_db closes the session without committing. Only report success once
+    # the settings are durable and visible to subsequent requests and runs.
+    session.commit()
+    return _load_settings(session)
 
 
 @router.get("/diagnostics", response_model=DiagnosticsReport)

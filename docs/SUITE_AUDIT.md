@@ -9,7 +9,7 @@ paid provider calls or cross-model calibration were performed during this audit.
 |---|---:|---|---|
 | Instruction-Following & Format Adherence | 12 → 15 | 6.0.0 | Reviewed all constraints; added untrusted-data extraction, CSV escaping, conditional redaction |
 | Agentic Tool-Use & Structured Output (Hermes) | 14 → 15 | 4.0.0 | Exact envelopes and types; harder argument derivation, cross-year dates, filtered fan-out, retry state |
-| Master Suite | 56 → 50 | 4.0.0 | Original revisions plus five duration/problem-item removals after calibration |
+| Master Suite | 56 → 50 | 4.1.0 | Five duration/problem-item removals; output-prediction prompts now request only the answer |
 | Terminal Semantics & System Gotchas | 12 → 12 | 2.0.0 | Corrected three bad keys; revised four shallow items; specified environment assumptions |
 | Web Dev Correctness & Debugging (JS) | 46 → 45 | 5.0.0 | Removed `wd-typeof-null`; reproduced every remaining output |
 | Code Reasoning & Correctness (Python) | 55 → 50 | 6.0.0 | Retained 30 reasoning items; replaced 25 with 20 original complete-function execution tasks |

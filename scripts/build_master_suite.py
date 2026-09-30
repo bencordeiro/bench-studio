@@ -71,7 +71,7 @@ def _load_grader():
 GRADER = _load_grader()
 
 SUITE_NAME = "Master Suite"
-SUITE_VERSION = "4.0.0"
+SUITE_VERSION = "4.1.0"
 
 # Tier -> (difficulty label, importance weight). The declared difficulty and the
 # weight must stay ordered together: test_declared_difficulty_matches_weight_ordering
@@ -150,12 +150,8 @@ def run_node(src: str) -> str:
 
 
 CODE_PREAMBLE = (
-    "You are given a short, self-contained {lang} program. Determine exactly what it "
-    "writes to standard output. You MUST end "
-    "your reply with a single final line in exactly this form:\n"
-    "ANSWER: <output>\n"
-    "where <output> is precisely what the program prints (one line), with no quotes, no "
-    "code fences, and no extra words."
+    "Determine exactly what this self-contained {lang} program prints. Reply with "
+    "exactly one line: ANSWER: <output>. No explanation, Markdown, or other text."
 )
 
 NUMERIC_PREAMBLE = (
