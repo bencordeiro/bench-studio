@@ -1,7 +1,8 @@
 # Curated suite audit — September 2026
 
-This revision contains 200 custom questions, plus the unchanged 164-question
-HumanEval suite (364 total). It emphasizes clear contracts and reproducible
+This revision contains 225 custom prompts, plus the unchanged 164-question
+HumanEval suite (389 total). Mini Master intentionally overlaps with Master.
+It emphasizes clear contracts and reproducible
 scoring. Difficulty is a design judgment until measured against models. The
 Qwen Flash duration observations are documented separately; Cyber was validated
 offline. No cross-model difficulty calibration has been completed.
@@ -11,6 +12,7 @@ offline. No cross-model difficulty calibration has been completed.
 | Instruction-Following & Format Adherence | 12 → 15 | 6.0.0 | Reviewed all constraints; added untrusted-data extraction, CSV escaping, conditional redaction |
 | Agentic Tool-Use & Structured Output (Hermes) | 14 → 15 | 4.0.0 | Exact envelopes and types; harder argument derivation, cross-year dates, filtered fan-out, retry state |
 | Master Suite | 56 → 45 | 5.0.0 | Additional five duration-driven removals; concise final answers and disclosed numeric tolerances |
+| Mini Master | 0 → 25 | 1.0.0 | 13 selected Master items plus 12 compact variants; class-scope/comprehension item excluded |
 | Cyber | 0 → 18 | 1.0.0 | Original defensive-security scenarios, closed JSON schemas, independent answer and error controls |
 | Terminal Semantics & System Gotchas | 12 → 12 | 2.0.0 | Corrected three bad keys; revised four shallow items; specified environment assumptions |
 | Web Dev Correctness & Debugging (JS) | 46 → 45 | 5.0.0 | Removed `wd-typeof-null`; reproduced every remaining output |
@@ -248,10 +250,32 @@ including authorization versus SQL binding, redirects, browser sinks, JWT and
 CIDR boundaries, explicit denial, filesystem permissions, cryptography, distinct
 users in alert windows, process ancestry, patch policy and HTTP framing. It uses
 no tool calls, code execution or judge, and inherits global generation limits.
-No live model calibration was performed for Cyber. Eight bundled suites now
-contain 364 questions (200 custom and 164 upstream HumanEval).
+No live model calibration was performed for Cyber. At that revision, eight bundled
+suites contained 364 questions (200 custom and 164 upstream HumanEval).
 
 Local validation passed 49 Master/Cyber/seed tests and 449 suite-quality/revision
 tests (498 total), plus builder parity, Ruff and whitespace checks. The Cyber
 seeding test confirms automatic discovery and idempotence; the existing loader
 upgrades Master by its new version while preserving historical run snapshots.
+
+## Mini Master 1.0.0
+
+[Mini Master](MINI_MASTER_SUITE.md) adds 25 deterministic prompts derived from
+Master 5.0.0: ten selected code-output questions, three stateful tool questions,
+and twelve compact variants. The class-scope/comprehension question is explicitly
+excluded. The variants reduce enumeration and state-trace sizes, omit iterative
+physical transitions and exponent calculation, use short evidence sets, and give
+false-premise tasks closed JSON answers. Source IDs remain in the prompt tags.
+Retained code keys are re-executed in CPython/Node; quantitative keys are computed
+and counting/probability keys have independent checks. The builder grades a
+correct response and non-answer controls for every item, plus Master's negative
+tool controls. Separate tests pin reference answers, incorrect policy decisions,
+output formats, exclusion, provenance, loading and native tool histories.
+
+No endpoint calls were made for this addition. Weights and duration remain
+unmeasured. Mini and full Master scores measure different question mixes and
+should be compared within their respective suites. The full Master remains at
+45 questions. Nine bundled suites now contain 389 prompts.
+
+Validation passed 61 Mini Master/seed/native-tool tests and 475 suite-quality/
+revision tests (536 total), plus fresh-build parity, Ruff and whitespace checks.
