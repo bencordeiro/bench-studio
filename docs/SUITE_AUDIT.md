@@ -1,15 +1,17 @@
 # Curated suite audit — September 2026
 
-This revision contains 187 custom questions, plus the unchanged 164-question
-HumanEval suite (351 total). It emphasizes clear contracts and reproducible
-scoring. Difficulty is a design judgment until measured against models; no
-paid provider calls or cross-model calibration were performed during this audit.
+This revision contains 200 custom questions, plus the unchanged 164-question
+HumanEval suite (364 total). It emphasizes clear contracts and reproducible
+scoring. Difficulty is a design judgment until measured against models. The
+Qwen Flash duration observations are documented separately; Cyber was validated
+offline. No cross-model difficulty calibration has been completed.
 
 | Suite | Before → after | Version | Changes |
 |---|---:|---|---|
 | Instruction-Following & Format Adherence | 12 → 15 | 6.0.0 | Reviewed all constraints; added untrusted-data extraction, CSV escaping, conditional redaction |
 | Agentic Tool-Use & Structured Output (Hermes) | 14 → 15 | 4.0.0 | Exact envelopes and types; harder argument derivation, cross-year dates, filtered fan-out, retry state |
-| Master Suite | 56 → 50 | 4.1.0 | Five duration/problem-item removals; output-prediction prompts now request only the answer |
+| Master Suite | 56 → 45 | 5.0.0 | Additional five duration-driven removals; concise final answers and disclosed numeric tolerances |
+| Cyber | 0 → 18 | 1.0.0 | Original defensive-security scenarios, closed JSON schemas, independent answer and error controls |
 | Terminal Semantics & System Gotchas | 12 → 12 | 2.0.0 | Corrected three bad keys; revised four shallow items; specified environment assumptions |
 | Web Dev Correctness & Debugging (JS) | 46 → 45 | 5.0.0 | Removed `wd-typeof-null`; reproduced every remaining output |
 | Code Reasoning & Correctness (Python) | 55 → 50 | 6.0.0 | Retained 30 reasoning items; replaced 25 with 20 original complete-function execution tasks |
@@ -212,7 +214,7 @@ source-parity tests remain part of the full backend test run.
 
 The [qwen27b diagnostic pilot](CALIBRATION_QWEN27B_2026_09_29.md) documents measured formatting failures, repetition loops and prompt variants behind the Python 6.0.0 and Master 3.0.0 follow-up. It is a targeted pilot, not full cross-model calibration.
 
-## Master reduced to 50 questions
+## Historical Master reduction to 50 questions
 
 Version 4.0.0 removes five items without replacements: class-creation hook ordering
 (`ms-py-class-creation-order`), minimal DFA counting (`ms-cs-minimal-dfa`), weak-acid
@@ -224,8 +226,32 @@ lasting at least 271/300 seconds. The acid and entropy items passed but took
 older saved Master run; it was not rerun in the pilot. These are targeted duration
 choices rather than a statistically established ranking across all questions or
 models. The remaining 50 questions retain their keys and weights. The bundled
-total is now 351 prompts; historical runs retain their original suite snapshots.
+total at that revision was 351 prompts; historical runs retain their original suite snapshots.
 
 The 50-question revision passed 25 Master, suite-loading and count tests, plus
 Ruff and whitespace checks. A direct comparison confirmed that retained prompts,
 grader configurations and weights match version 3.0.0.
+
+## Master 5.0.0 and Cyber 1.0.0
+
+The [Qwen Flash duration investigation](CALIBRATION_QWENFLASH_MASTER_2026_09_29.md)
+records a full 50-request baseline and two completed concise-prompt trials.
+Five lengthy manual workloads were retired, leaving 45 Master questions. The
+remaining graders and weights are unchanged; numeric prompts disclose their
+existing tolerances and ask for a single final answer. The user stopped endpoint
+testing to conserve tokens, so the revised full-suite duration remains unmeasured.
+The 15–30 minute goal is not a verified guarantee.
+
+[Cyber](CYBER_SUITE.md) adds 18 original defensive-security questions with raw
+JSON answers. Independent correct-response and error controls cover every item,
+including authorization versus SQL binding, redirects, browser sinks, JWT and
+CIDR boundaries, explicit denial, filesystem permissions, cryptography, distinct
+users in alert windows, process ancestry, patch policy and HTTP framing. It uses
+no tool calls, code execution or judge, and inherits global generation limits.
+No live model calibration was performed for Cyber. Eight bundled suites now
+contain 364 questions (200 custom and 164 upstream HumanEval).
+
+Local validation passed 49 Master/Cyber/seed tests and 449 suite-quality/revision
+tests (498 total), plus builder parity, Ruff and whitespace checks. The Cyber
+seeding test confirms automatic discovery and idempotence; the existing loader
+upgrades Master by its new version while preserving historical run snapshots.

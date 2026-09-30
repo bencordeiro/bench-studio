@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 
 import pytest
+
 from app.seed.suites_loader import SUITES_DIR
 
 REPO = Path(__file__).resolve().parents[2]
@@ -29,7 +30,7 @@ def _suite() -> dict:
 
 def test_master_suite_is_present():
     assert MASTER.exists(), "master_suite.json is missing; run scripts/build_master_suite.py"
-    assert len(_suite()["prompts"]) == 50
+    assert len(_suite()["prompts"]) == 45
 
 
 def test_committed_suite_matches_a_fresh_build():
@@ -124,5 +125,8 @@ def test_duration_problem_items_are_retired():
         "ms-py-class-creation-order", "ms-cs-minimal-dfa",
         "ms-sci-coupled-diprotic-mixture", "ms-sci-cycle-entropy",
         "ms-sci-nested-velocity-legs",
+        "ms-math-multiplicative-order", "ms-math-lcm-matrix-determinant",
+        "ms-cs-natural-mergesort", "ms-cs-dynamic-array-copies",
+        "ms-abs-false-output-claim",
     }
     assert not retired.intersection(p["stable_id"] for p in _suite()["prompts"])

@@ -26,7 +26,7 @@ failed. The server reported `stop`; token counts alone do not prove truncation.
 No Python-suite run was present in the inspected history.
 
 Questions execute sequentially, so long generation times accumulate. The current
-Master suite now has 50 deterministic questions; Python has 30 deterministic and 20
+Master suite now has 45 deterministic questions; Python has 30 deterministic and 20
 execution questions. Each Python execution test already has a three-second
 subprocess timeout. Neither suite needs a judge. Streaming keepalives also count
 as network activity; an inactivity timeout does not detect a model stuck thinking
@@ -64,3 +64,15 @@ diagnostic, not a full-suite duration estimate or proof of what happened in the
 user's separate six-minute run. The experimental time/token caps were not made
 application defaults. Inactivity timeout still measures network silence, and
 an active stream has no total generation deadline.
+
+## Master 5.0.0 duration follow-up
+
+The [Qwen Flash follow-up](CALIBRATION_QWENFLASH_MASTER_2026_09_29.md) observed
+all 50 requests in Master 4.1.0 completing in approximately 25 minutes 46 seconds
+under a temporary 2,048-token, low-effort diagnostic profile. Fifteen responses
+hit the token cap; request completion therefore did not mean a usable final
+answer for every question. Five lengthy manual workloads were retired, leaving
+45 questions. Numeric answers now use an answer-only contract and disclose
+the existing accepted tolerances. Endpoint testing stopped at the user's request;
+the revised full suite's duration is unmeasured. No diagnostic cap or observation
+deadline was installed as an application default.

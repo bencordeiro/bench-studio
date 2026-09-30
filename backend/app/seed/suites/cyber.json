@@ -1,0 +1,746 @@
+{
+  "format": "localbench-benchmark",
+  "format_version": "1.0",
+  "exported_at": "2026-09-29T00:00:00+00:00",
+  "name": "Cyber",
+  "version": "1.0.0",
+  "description": "18 original deterministic defensive-security scenarios: vulnerability identification, authorization, browser and HTTP security, cryptography, cloud and network policy, host hardening, alert analysis, containment and patch triage. All answers are closed-schema JSON; no judge, tools or code execution required. Difficulty and weights are design estimates, not model-calibrated results.",
+  "tags": [
+    "cyber",
+    "blue-team",
+    "defense",
+    "deterministic"
+  ],
+  "scoring_config": {},
+  "performance_thresholds": {
+    "desired_ttft": 1.0,
+    "max_ttft": 15.0,
+    "desired_tps": 25.0,
+    "min_tps": 3.0,
+    "max_failure_rate": 0.1
+  },
+  "composite_weights": {
+    "quality": 0.85,
+    "reliability": 0.1,
+    "performance": 0.05
+  },
+  "prompts": [
+    {
+      "stable_id": "cy-tenant-object",
+      "title": "Tenant isolation despite parameterized SQL",
+      "description": "Client-supplied tenant filters do not enforce object authorization; bound SQL is a separate control.",
+      "category": "cyber/authorization",
+      "difficulty": "hard",
+      "tags": [
+        "cyber",
+        "defense",
+        "deterministic",
+        "unmeasured"
+      ],
+      "importance_weight": 2.0,
+      "position": 0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "json",
+        "require_valid_json": true,
+        "allow_code_fences": false,
+        "allow_extra_fields": false,
+        "expected_field_values": {
+          "vulnerable": [
+            "A",
+            "B"
+          ],
+          "issue": "IDOR"
+        },
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "user",
+          "position": 0,
+          "content": "A billing API authenticates users and binds all SQL values as parameters.\nInvoice IDs are global. A user may read invoices only in their authenticated\nsession's tenant. The client can alter invoice_id and the query's tenant value.\nCompare these query predicates; there are no other authorization checks:\n  A: invoice_id = :request.invoice_id\n  B: invoice_id = :request.invoice_id AND tenant = :request.query.tenant\n  C: invoice_id = :request.invoice_id AND tenant = :session.tenant\nList the vulnerable handlers in alphabetical order. For issue choose one label:\nIDOR, SQL_INJECTION, or SSRF. Evaluate authorization, not SQL syntax.\n\nReturn exactly one JSON object with only these fields: vulnerable (array), issue (string). Use the labels and ordering specified above. No explanation or Markdown."
+        }
+      ]
+    },
+    {
+      "stable_id": "cy-sql-identifier",
+      "title": "An ORDER BY column is not a bound value",
+      "description": "Distinguishes parameterized values from identifiers and rejects cosmetic normalization as protection.",
+      "category": "cyber/injection",
+      "difficulty": "hard",
+      "tags": [
+        "cyber",
+        "defense",
+        "deterministic",
+        "unmeasured"
+      ],
+      "importance_weight": 2.0,
+      "position": 1,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "json",
+        "require_valid_json": true,
+        "allow_code_fences": false,
+        "allow_extra_fields": false,
+        "expected_field_values": {
+          "vulnerable": [
+            "A",
+            "C"
+          ],
+          "fix": "ALLOWLIST_COLUMN_MAP"
+        },
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "user",
+          "position": 0,
+          "content": "An authorized report query binds its tenant and date filters. Its sort query\nparameter is attacker-controlled. Compare these ORDER BY constructions:\n  A: append the raw sort string directly to SQL\n  B: look up sort in {name: customer_name, created: created_at}; reject unknown\n     keys and append only the mapped constant identifier\n  C: uppercase the sort string, then append that string directly to SQL\nNo other escaping or SQL validation occurs. List the vulnerable variants in\nalphabetical order. Choose the fix that supports either allowed sort column:\nALLOWLIST_COLUMN_MAP, BIND_IDENTIFIER_AS_VALUE, or UPPERCASE_INPUT.\n\nReturn exactly one JSON object with only these fields: vulnerable (array), fix (string). Use the labels and ordering specified above. No explanation or Markdown."
+        }
+      ]
+    },
+    {
+      "stable_id": "cy-ssrf-redirect",
+      "title": "A redirect crosses an SSRF allowlist",
+      "description": "Checks every redirected destination, rather than treating initial URL validation as sufficient.",
+      "category": "cyber/request-security",
+      "difficulty": "hard",
+      "tags": [
+        "cyber",
+        "defense",
+        "deterministic",
+        "unmeasured"
+      ],
+      "importance_weight": 2.0,
+      "position": 2,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "json",
+        "require_valid_json": true,
+        "allow_code_fences": false,
+        "allow_extra_fields": false,
+        "expected_field_values": {
+          "issue": "SSRF",
+          "fix": "VALIDATE_EVERY_REDIRECT_HOP"
+        },
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "user",
+          "position": 0,
+          "content": "A server fetches a user-selected image URL. It accepts HTTPS URLs only at\nimages.example.test, checks that the initial DNS answers are public, and pins\nthe connection to a checked address. The initial response redirects to\nhttp://169.254.169.254/latest/meta-data/. The HTTP client follows that redirect\nwithout checking its scheme, hostname or resolved address. There are no\ncredentials sent to the image server; DNS rebinding on the initial connection\nis excluded. Choose issue from SSRF, CSRF, XSS. Choose the complete fix from\nVALIDATE_EVERY_REDIRECT_HOP, RECHECK_INITIAL_HOST_ONLY, or HTML_ESCAPE_URL.\nThe fix must permit redirects that still meet the original destination policy.\n\nReturn exactly one JSON object with only these fields: issue (string), fix (string). Use the labels and ordering specified above. No explanation or Markdown."
+        }
+      ]
+    },
+    {
+      "stable_id": "cy-csrf-get",
+      "title": "State-changing GET with a Lax session cookie",
+      "description": "Separates cookie confidentiality flags and CORS from CSRF prevention.",
+      "category": "cyber/request-security",
+      "difficulty": "medium",
+      "tags": [
+        "cyber",
+        "defense",
+        "deterministic",
+        "unmeasured"
+      ],
+      "importance_weight": 1.5,
+      "position": 3,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "json",
+        "require_valid_json": true,
+        "allow_code_fences": false,
+        "allow_extra_fields": false,
+        "expected_field_values": {
+          "issue": "CSRF",
+          "fix": "POST_WITH_VALIDATED_CSRF_TOKEN"
+        },
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "user",
+          "position": 0,
+          "content": "A bank authenticates with a Secure, HttpOnly, SameSite=Lax session cookie.\nGET /change-payee?account=... changes the current user's payee immediately.\nOwnership checks are correct, but there is no CSRF token or Origin check.\nA different site can cause a top-level navigation to that HTTPS URL. Assume\nLax sends the cookie on cross-site top-level GET navigations. There is no XSS.\nChoose issue from CSRF, IDOR, SESSION_FIXATION and fix from:\nPOST_WITH_VALIDATED_CSRF_TOKEN, DISABLE_CORS, ADD_HTTPONLY.\nThe POST fix also removes the mutation from GET; all writes require the token.\n\nReturn exactly one JSON object with only these fields: issue (string), fix (string). Use the labels and ordering specified above. No explanation or Markdown."
+        }
+      ]
+    },
+    {
+      "stable_id": "cy-dom-text-sink",
+      "title": "Choose a plain-text DOM sink",
+      "description": "Tests output context: escaping quotes does not make an HTML text sink safe.",
+      "category": "cyber/injection",
+      "difficulty": "medium",
+      "tags": [
+        "cyber",
+        "defense",
+        "deterministic",
+        "unmeasured"
+      ],
+      "importance_weight": 1.5,
+      "position": 4,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "json",
+        "require_valid_json": true,
+        "allow_code_fences": false,
+        "allow_extra_fields": false,
+        "expected_field_values": {
+          "unsafe": [
+            "A",
+            "C"
+          ],
+          "fix": "TEXT_CONTENT"
+        },
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "user",
+          "position": 0,
+          "content": "A profile's display name is untrusted and must be rendered as literal text.\nNo HTML markup is required. Compare browser assignments:\n  A: label.innerHTML = displayName\n  B: label.textContent = displayName\n  C: label.innerHTML = displayName.replaceAll('\"', '&quot;')\nNo sanitizer or CSP is present. List the unsafe variants in alphabetical order.\nChoose the appropriate fix from TEXT_CONTENT, ENCODE_QUOTES_ONLY, EVAL_STRING.\n\nReturn exactly one JSON object with only these fields: unsafe (array), fix (string). Use the labels and ordering specified above. No explanation or Markdown."
+        }
+      ]
+    },
+    {
+      "stable_id": "cy-path-boundary",
+      "title": "Path containment is not a string prefix",
+      "description": "Uses path-component containment and explicitly excludes symlink and race ambiguities.",
+      "category": "cyber/filesystem",
+      "difficulty": "hard",
+      "tags": [
+        "cyber",
+        "defense",
+        "deterministic",
+        "unmeasured"
+      ],
+      "importance_weight": 2.0,
+      "position": 5,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "json",
+        "require_valid_json": true,
+        "allow_code_fences": false,
+        "allow_extra_fields": false,
+        "expected_field_values": {
+          "contained": [
+            "P1",
+            "P3"
+          ],
+          "fix": "COMMONPATH_EQUALS_ROOT"
+        },
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "user",
+          "position": 0,
+          "content": "A Linux download service resolves paths to canonical absolute paths, then\nallows a path whenever path.startswith('/srv/uploads'). Assume no symlinks,\nraces, bind mounts or ACLs; the issue is the check itself. Candidate paths:\n  P1: /srv/uploads/a.txt\n  P2: /srv/uploads_archive/a.txt\n  P3: /srv/uploads/team/b.txt\nWhich paths are genuinely inside /srv/uploads? Return their IDs in order.\nChoose the repair from COMMONPATH_EQUALS_ROOT, COMMONPREFIX_EQUALS_ROOT,\nLOWERCASE_THEN_PREFIX. All inputs to commonpath are canonical absolute paths.\n\nReturn exactly one JSON object with only these fields: contained (array), fix (string). Use the labels and ordering specified above. No explanation or Markdown."
+        }
+      ]
+    },
+    {
+      "stable_id": "cy-jwt-claims",
+      "title": "JWT audience and time boundaries",
+      "description": "Combines verified identity, service audience and strict expiration/not-before boundaries.",
+      "category": "cyber/authentication",
+      "difficulty": "hard",
+      "tags": [
+        "cyber",
+        "defense",
+        "deterministic",
+        "unmeasured"
+      ],
+      "importance_weight": 2.0,
+      "position": 6,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "json",
+        "require_valid_json": true,
+        "allow_code_fences": false,
+        "allow_extra_fields": false,
+        "expected_field_values": {
+          "accepted": [
+            "T1",
+            "T6"
+          ]
+        },
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "user",
+          "position": 0,
+          "content": "At Unix time 1700000100, the reports API accepts a token only if its\nsignature is valid, iss is corp, aud contains reports, nbf <= now, and now < exp.\nNo clock skew is allowed. The signature field below is the independently\nverified signature result, not an untrusted claim. All other fields are actual\nverified claims. Return the accepted token IDs in ascending order.\n\n[\n  {\n    \"id\": \"T1\",\n    \"signature\": true,\n    \"iss\": \"corp\",\n    \"aud\": [\n      \"reports\"\n    ],\n    \"exp\": 1700000130,\n    \"nbf\": 1700000099\n  },\n  {\n    \"id\": \"T2\",\n    \"signature\": true,\n    \"iss\": \"corp\",\n    \"aud\": [\n      \"billing\"\n    ],\n    \"exp\": 1700000130,\n    \"nbf\": 1700000099\n  },\n  {\n    \"id\": \"T3\",\n    \"signature\": true,\n    \"iss\": \"corp\",\n    \"aud\": [\n      \"reports\"\n    ],\n    \"exp\": 1700000100,\n    \"nbf\": 1700000099\n  },\n  {\n    \"id\": \"T4\",\n    \"signature\": false,\n    \"iss\": \"corp\",\n    \"aud\": [\n      \"reports\"\n    ],\n    \"exp\": 1700000130,\n    \"nbf\": 1700000099\n  },\n  {\n    \"id\": \"T5\",\n    \"signature\": true,\n    \"iss\": \"corp\",\n    \"aud\": [\n      \"reports\",\n      \"billing\"\n    ],\n    \"exp\": 1700000130,\n    \"nbf\": 1700000101\n  },\n  {\n    \"id\": \"T6\",\n    \"signature\": true,\n    \"iss\": \"corp\",\n    \"aud\": [\n      \"reports\",\n      \"billing\"\n    ],\n    \"exp\": 1700000130,\n    \"nbf\": 1700000100\n  }\n]\n\nReturn exactly one JSON object with only these fields: accepted (array). Use the labels and ordering specified above. No explanation or Markdown."
+        }
+      ]
+    },
+    {
+      "stable_id": "cy-tls-hostname",
+      "title": "A trusted certificate for the wrong host",
+      "description": "A trusted certificate chain does not authenticate a different requested hostname.",
+      "category": "cyber/authentication",
+      "difficulty": "medium",
+      "tags": [
+        "cyber",
+        "defense",
+        "deterministic",
+        "unmeasured"
+      ],
+      "importance_weight": 1.5,
+      "position": 7,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "json",
+        "require_valid_json": true,
+        "allow_code_fences": false,
+        "allow_extra_fields": false,
+        "expected_field_values": {
+          "accept": false,
+          "missing_check": "HOSTNAME_MATCH"
+        },
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "user",
+          "position": 0,
+          "content": "A client connects to https://payroll.example.test. The leaf certificate is\nunexpired, its chain is valid under a trusted CA, and revocation checks pass.\nIts DNS subjectAltName is only files.example.test. The client verifies the\nchain but has disabled hostname verification. No wildcard or name constraint\nis involved. Would complete certificate validation accept this connection?\nReturn accept as a JSON boolean and missing_check from HOSTNAME_MATCH,\nCERTIFICATE_EXPIRY, TRUSTED_CA. Treat the SAN as authoritative for DNS identity.\n\nReturn exactly one JSON object with only these fields: accept (boolean), missing_check (string). Use the labels and ordering specified above. No explanation or Markdown."
+        }
+      ]
+    },
+    {
+      "stable_id": "cy-egress-cidr",
+      "title": "First-match egress rules and subnet boundaries",
+      "description": "Exercises CIDR membership, specific ports and an earlier internal-address deny.",
+      "category": "cyber/network-policy",
+      "difficulty": "hard",
+      "tags": [
+        "cyber",
+        "defense",
+        "deterministic",
+        "unmeasured"
+      ],
+      "importance_weight": 2.0,
+      "position": 8,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "json",
+        "require_valid_json": true,
+        "allow_code_fences": false,
+        "allow_extra_fields": false,
+        "expected_field_values": {
+          "allowed": [
+            "F1",
+            "F4"
+          ]
+        },
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "user",
+          "position": 0,
+          "content": "Evaluate NEW TCP flows with this first-match firewall; unmatched traffic is denied.\nThere is no connection tracking, NAT, DNS or IPv6. Rules in order:\n  1. DENY  source 10.42.0.0/16  destination 10.0.0.0/8      any port\n  2. ALLOW source 10.42.16.0/20 destination 203.0.113.10/32 port 8443\n  3. ALLOW source 10.42.0.0/16  destination 0.0.0.0/0       port 443\nFlows (ID, source, destination, destination port):\n  F1 10.42.18.9 203.0.113.10 8443\n  F2 10.42.32.9 203.0.113.10 8443\n  F3 10.42.18.9 10.9.0.7 443\n  F4 10.42.32.9 198.51.100.7 443\n  F5 10.43.18.9 198.51.100.7 443\nReturn only the allowed flow IDs in ascending order.\n\nReturn exactly one JSON object with only these fields: allowed (array). Use the labels and ordering specified above. No explanation or Markdown."
+        }
+      ]
+    },
+    {
+      "stable_id": "cy-iam-deny",
+      "title": "Explicit deny across multiple identity policies",
+      "description": "A more specific allow cannot override an applicable explicit deny; absent allows remain denied.",
+      "category": "cyber/cloud-policy",
+      "difficulty": "hard",
+      "tags": [
+        "cyber",
+        "defense",
+        "deterministic",
+        "unmeasured"
+      ],
+      "importance_weight": 2.0,
+      "position": 9,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "json",
+        "require_valid_json": true,
+        "allow_code_fences": false,
+        "allow_extra_fields": false,
+        "expected_field_values": {
+          "allowed": [
+            "R1",
+            "R5"
+          ],
+          "r2_rule": "EXPLICIT_DENY"
+        },
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "user",
+          "position": 0,
+          "content": "An AWS IAM role in one account has these identity policies:\n  Policy A: Allow s3:GetObject on arn:aws:s3:::ops-logs/*\n  Policy B: Deny s3:GetObject on arn:aws:s3:::ops-logs/private/*\n  Policy C: Allow s3:GetObject on arn:aws:s3:::ops-logs/private/incident.json\nThere are no other policies, resource policies, conditions, ACL grants, SCPs,\npermissions boundaries, session policies or additional service restrictions.\nEvaluate these requests (ID, action, resource):\n  R1 GetObject ops-logs/public/a.json\n  R2 GetObject ops-logs/private/incident.json\n  R3 GetObject ops-logs/private/archive.json\n  R4 PutObject ops-logs/public/a.json\n  R5 GetObject ops-logs/archive/b.json\nAll resources above refer to their usual S3 object ARNs. Return allowed request\nIDs in ascending order and the decisive rule for R2 from EXPLICIT_DENY,\nLAST_POLICY_WINS, MORE_SPECIFIC_ALLOW.\n\nReturn exactly one JSON object with only these fields: allowed (array), r2_rule (string). Use the labels and ordering specified above. No explanation or Markdown."
+        }
+      ]
+    },
+    {
+      "stable_id": "cy-linux-directory",
+      "title": "A protected file in a writable directory",
+      "description": "Replacement depends on directory write/search permissions, not the existing file's write bits.",
+      "category": "cyber/host-hardening",
+      "difficulty": "hard",
+      "tags": [
+        "cyber",
+        "defense",
+        "deterministic",
+        "unmeasured"
+      ],
+      "importance_weight": 2.0,
+      "position": 10,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "json",
+        "require_valid_json": true,
+        "allow_code_fences": false,
+        "allow_extra_fields": false,
+        "expected_field_values": {
+          "can_replace": true,
+          "fix": "REMOVE_GROUP_DIRECTORY_WRITE"
+        },
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "user",
+          "position": 0,
+          "content": "On a Linux filesystem, a root service reopens /etc/agent/agent.conf by pathname\nevery minute. /etc/agent is owned by root:developers with mode 0775; the regular\nconfig file is owned by root:root with mode 0644. User alex is in developers.\nAll ancestor directories are searchable by alex.\nThere is no sticky bit, immutable flag, ACL, SELinux/AppArmor restriction,\nread-only mount, symlink or integrity check. Alex cannot write the existing\nfile's contents. Can alex nevertheless replace the directory entry with a\nnew file? Return can_replace as a JSON boolean and the corrective permission\nchange from REMOVE_GROUP_DIRECTORY_WRITE, REMOVE_FILE_OTHER_READ,\nADD_FILE_OWNER_WRITE. Preserve the service's ability to read the configuration.\n\nReturn exactly one JSON object with only these fields: can_replace (boolean), fix (string). Use the labels and ordering specified above. No explanation or Markdown."
+        }
+      ]
+    },
+    {
+      "stable_id": "cy-container-volume",
+      "title": "Read-only root versus writable mounted volumes",
+      "description": "A read-only container root does not make a separately mounted writable volume read-only.",
+      "category": "cyber/host-hardening",
+      "difficulty": "hard",
+      "tags": [
+        "cyber",
+        "defense",
+        "deterministic",
+        "unmeasured"
+      ],
+      "importance_weight": 2.0,
+      "position": 11,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "json",
+        "require_valid_json": true,
+        "allow_code_fences": false,
+        "allow_extra_fields": false,
+        "expected_field_values": {
+          "writable": [
+            "P2"
+          ]
+        },
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "user",
+          "position": 0,
+          "content": "A Kubernetes container has readOnlyRootFilesystem: true. Its only mounted\nvolume is an emptyDir at /work with volumeMount.readOnly: false. UID 1000 owns\n/work with mode 0700, and the application runs as UID 1000. /etc and /tmp are\nordinary directories in the root filesystem, not mounts or symlinks. Ignore\ndisk exhaustion, MAC policies and capabilities; no other filesystems are mounted.\nWhich new file paths can the application create? Return IDs in order:\n  P1 /etc/new.conf\n  P2 /work/cache.bin\n  P3 /tmp/new.log\n\nReturn exactly one JSON object with only these fields: writable (array). Use the labels and ordering specified above. No explanation or Markdown."
+        }
+      ]
+    },
+    {
+      "stable_id": "cy-gcm-nonce",
+      "title": "Counter reset under a persistent GCM key",
+      "description": "Nonce uniqueness is per key; restarting a process does not reset the cryptographic requirement.",
+      "category": "cyber/cryptography",
+      "difficulty": "hard",
+      "tags": [
+        "cyber",
+        "defense",
+        "deterministic",
+        "unmeasured"
+      ],
+      "importance_weight": 2.0,
+      "position": 12,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "json",
+        "require_valid_json": true,
+        "allow_code_fences": false,
+        "allow_extra_fields": false,
+        "expected_field_values": {
+          "issue": "GCM_NONCE_REUSE",
+          "affected": [
+            "confidentiality",
+            "integrity"
+          ],
+          "fix": "PERSIST_COUNTER_OR_ROTATE_KEY"
+        },
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "user",
+          "position": 0,
+          "content": "A service uses AES-GCM with a persistent key K and a 96-bit counter nonce.\nThe nonce increments per message but is held only in memory. After a restart\nthe counter returns to zero while K remains unchanged, and different new\nplaintexts are encrypted with nonce values used before the restart.\nChoose issue from GCM_NONCE_REUSE, WEAK_KEY_LENGTH, MISSING_PASSWORD_SALT.\nList affected guarantees in alphabetical order from confidentiality, integrity.\nChoose fix from PERSIST_COUNTER_OR_ROTATE_KEY, INCREASE_TAG_LENGTH,\nBASE64_ENCODE_CIPHERTEXT. Assume the counter never wraps and only one instance\nuses K; a persistent counter is reserved durably before each encryption.\n\nReturn exactly one JSON object with only these fields: issue (string), affected (array), fix (string). Use the labels and ordering specified above. No explanation or Markdown."
+        }
+      ]
+    },
+    {
+      "stable_id": "cy-password-storage",
+      "title": "Salted fast hashes and adaptive password storage",
+      "description": "Salts defeat shared precomputation but do not add the cost of a password KDF.",
+      "category": "cyber/cryptography",
+      "difficulty": "medium",
+      "tags": [
+        "cyber",
+        "defense",
+        "deterministic",
+        "unmeasured"
+      ],
+      "importance_weight": 1.5,
+      "position": 13,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "json",
+        "require_valid_json": true,
+        "allow_code_fences": false,
+        "allow_extra_fields": false,
+        "expected_field_values": {
+          "replacement": "B",
+          "issue": "FAST_OFFLINE_GUESSING"
+        },
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "user",
+          "position": 0,
+          "content": "A database stores each password as one SHA-256 hash with a fresh random per-user\nsalt. The database can be stolen, exposing salts and hashes. The company requires\na deliberately expensive memory-hard password KDF for new records.\nCandidate replacements, all with independent random per-user salts:\n  A: SHA-256, one iteration\n  B: Argon2id, 64 MiB memory, 3 iterations, parallelism 1\n  C: reversible AES encryption using a key stored alongside the database\nChoose the suitable replacement's ID and the weakness of the original from\nFAST_OFFLINE_GUESSING, SALT_COLLISION, SQL_INJECTION. Assume B has passed the\nservice's resource/load tests and the hash implementation is otherwise correct.\n\nReturn exactly one JSON object with only these fields: replacement (string), issue (string). Use the labels and ordering specified above. No explanation or Markdown."
+        }
+      ]
+    },
+    {
+      "stable_id": "cy-alert-window",
+      "title": "Password-spray alert with a distinct-user threshold",
+      "description": "Combines a time-window boundary, failure filtering and distinct accounts rather than raw event count.",
+      "category": "cyber/detection",
+      "difficulty": "hard",
+      "tags": [
+        "cyber",
+        "defense",
+        "deterministic",
+        "unmeasured"
+      ],
+      "importance_weight": 2.0,
+      "position": 14,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "json",
+        "require_valid_json": true,
+        "allow_code_fences": false,
+        "allow_extra_fields": false,
+        "expected_field_values": {
+          "alert_ips": [
+            "203.0.113.61"
+          ]
+        },
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "user",
+          "position": 0,
+          "content": "At 12:05:00 UTC, alert on each source IP with failed logins for at least five\nDISTINCT usernames in the window (12:00:00, 12:05:00]. Include the right boundary\nand exclude the left boundary. Count only result=fail, not successes; repeated\nfailures for the same username count once. All entries are on the same day.\nReturn alert_ips in ascending textual order. Log columns: time, IP, user, result.\n\n12:00:00 203.0.113.60 a fail\n12:01:00 203.0.113.60 b fail\n12:02:00 203.0.113.60 c fail\n12:03:00 203.0.113.60 d fail\n12:04:00 203.0.113.60 e fail\n12:01:00 203.0.113.61 a fail\n12:02:00 203.0.113.61 b fail\n12:03:00 203.0.113.61 c fail\n12:04:00 203.0.113.61 d fail\n12:05:00 203.0.113.61 e fail\n12:02:00 203.0.113.62 a fail\n12:03:00 203.0.113.62 a fail\n12:04:00 203.0.113.62 b success\n12:05:00 203.0.113.62 c fail\n\nReturn exactly one JSON object with only these fields: alert_ips (array). Use the labels and ordering specified above. No explanation or Markdown."
+        }
+      ]
+    },
+    {
+      "stable_id": "cy-process-lineage",
+      "title": "Scope containment by process ancestry",
+      "description": "Builds the complete containment scope without treating an unrelated shell as part of the incident.",
+      "category": "cyber/incident-response",
+      "difficulty": "hard",
+      "tags": [
+        "cyber",
+        "defense",
+        "deterministic",
+        "unmeasured"
+      ],
+      "importance_weight": 2.0,
+      "position": 15,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "json",
+        "require_valid_json": true,
+        "allow_code_fences": false,
+        "allow_extra_fields": false,
+        "expected_field_values": {
+          "terminate_pids": [
+            100,
+            110,
+            120,
+            130
+          ]
+        },
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "user",
+          "position": 0,
+          "content": "EDR has confirmed process 100 on web-02 was compromised. The containment playbook\nrequires terminating that process and ALL of its current descendants, while\nleaving unrelated process trees intact. This is a complete process snapshot;\nthere is no PID reuse, reparenting or already-exited process. Do not terminate\nancestors. Return terminate_pids as JSON integers in ascending numerical order.\nColumns below: PID, parent PID, executable.\n\n100 1 web\n110 100 python\n120 110 sh\n130 120 curl\n200 1 cron\n210 200 sh\n220 210 backup\n\nReturn exactly one JSON object with only these fields: terminate_pids (array). Use the labels and ordering specified above. No explanation or Markdown."
+        }
+      ]
+    },
+    {
+      "stable_id": "cy-patch-priority",
+      "title": "Exposure and exploitation outrank raw CVSS",
+      "description": "Applies a stated defensive triage policy; priority is not an unstated subjective judgment.",
+      "category": "cyber/vulnerability-management",
+      "difficulty": "hard",
+      "tags": [
+        "cyber",
+        "defense",
+        "deterministic",
+        "unmeasured"
+      ],
+      "importance_weight": 2.0,
+      "position": 16,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "json",
+        "require_valid_json": true,
+        "allow_code_fences": false,
+        "allow_extra_fields": false,
+        "expected_field_values": {
+          "priority": [
+            "V3",
+            "V1",
+            "V4",
+            "V2"
+          ]
+        },
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "user",
+          "position": 0,
+          "content": "All four findings are confirmed, affected, unpatched, and have deployable fixes.\nUse this organization's deterministic patch ordering: first, findings BOTH\nexternally reachable and known exploited; then all other findings. Within each\ngroup, order by descending CVSS, then ascending ID for ties. Flags below are\nverified inventory facts, not a request to look up current CVEs. Return priority\nas the complete ordered list of finding IDs.\n\n[\n  {\n    \"id\": \"V1\",\n    \"reachable\": true,\n    \"known_exploited\": false,\n    \"cvss\": 9.8\n  },\n  {\n    \"id\": \"V2\",\n    \"reachable\": false,\n    \"known_exploited\": false,\n    \"cvss\": 7.0\n  },\n  {\n    \"id\": \"V3\",\n    \"reachable\": true,\n    \"known_exploited\": true,\n    \"cvss\": 8.1\n  },\n  {\n    \"id\": \"V4\",\n    \"reachable\": false,\n    \"known_exploited\": true,\n    \"cvss\": 9.4\n  }\n]\n\nReturn exactly one JSON object with only these fields: priority (array). Use the labels and ordering specified above. No explanation or Markdown."
+        }
+      ]
+    },
+    {
+      "stable_id": "cy-http-framing",
+      "title": "Different HTTP message boundaries at two hops",
+      "description": "Detects framing disagreement across a proxy boundary without constructing an exploit request.",
+      "category": "cyber/protocol-security",
+      "difficulty": "hard",
+      "tags": [
+        "cyber",
+        "defense",
+        "deterministic",
+        "unmeasured"
+      ],
+      "importance_weight": 2.0,
+      "position": 17,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "json",
+        "require_valid_json": true,
+        "allow_code_fences": false,
+        "allow_extra_fields": false,
+        "expected_field_values": {
+          "issue": "HTTP_REQUEST_SMUGGLING",
+          "fix": "REJECT_AMBIGUOUS_FRAMING_AND_CLOSE"
+        },
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "user",
+          "position": 0,
+          "content": "An HTTP/1.1 reverse proxy and backend reuse the same persistent upstream\nconnection. Requests containing BOTH Content-Length and Transfer-Encoding are\nforwarded unchanged. The proxy uses Content-Length to locate the request end;\nthe backend uses chunked Transfer-Encoding. Assume neither rejects the request\nand the two interpretations can yield different boundaries.\nChoose issue from HTTP_REQUEST_SMUGGLING, CSRF, CERTIFICATE_EXPIRY. Choose the\ndefensive fix from REJECT_AMBIGUOUS_FRAMING_AND_CLOSE, ADD_COOKIE_HTTPONLY,\nALLOW_BOTH_HEADERS_UNCHANGED. The reject fix occurs before forwarding.\n\nReturn exactly one JSON object with only these fields: issue (string), fix (string). Use the labels and ordering specified above. No explanation or Markdown."
+        }
+      ]
+    }
+  ]
+}

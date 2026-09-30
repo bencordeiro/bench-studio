@@ -8,6 +8,7 @@ from pathlib import Path
 from textwrap import indent
 
 import pytest
+
 from app.graders.deterministic import run_deterministic
 from app.graders.execution import run_execution
 from app.seed.suites_loader import SUITES_DIR
@@ -27,7 +28,8 @@ def suite(name):
     [
         ("instruction_following", 15),
         ("agentic_tool_use", 15),
-        ("master_suite", 50),
+        ("master_suite", 45),
+        ("cyber", 18),
         ("terminal_semantics", 12),
         ("web_dev_js", 45),
         ("code_reasoning_python", 50),

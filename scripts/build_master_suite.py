@@ -71,7 +71,7 @@ def _load_grader():
 GRADER = _load_grader()
 
 SUITE_NAME = "Master Suite"
-SUITE_VERSION = "4.1.0"
+SUITE_VERSION = "5.0.0"
 
 # Tier -> (difficulty label, importance weight). The declared difficulty and the
 # weight must stay ordered together: test_declared_difficulty_matches_weight_ordering
@@ -81,6 +81,16 @@ TIERS = {
     "hard": ("hard", 2.0),
     "extreme": ("hard", 3.0),
     "frontier": ("hard", 4.0),
+}
+
+# Retain the source computations as an archive, but omit these lengthy manual
+# workloads from the timed suite. Selection follows the qwenflash duration sweep.
+RETIRED_DURATION_IDS = {
+    "ms-math-multiplicative-order",
+    "ms-math-lcm-matrix-determinant",
+    "ms-cs-natural-mergesort",
+    "ms-cs-dynamic-array-copies",
+    "ms-abs-false-output-claim",
 }
 
 PROMPTS: list[dict] = []
@@ -96,6 +106,8 @@ def add_prompt(
     messages: list[dict],
     tags: list[str] | None = None,
 ) -> None:
+    if stable_id in RETIRED_DURATION_IDS:
+        return
     difficulty, weight = TIERS[tier]
     PROMPTS.append(
         {
@@ -155,10 +167,10 @@ CODE_PREAMBLE = (
 )
 
 NUMERIC_PREAMBLE = (
-    "You "
-    "MUST end your reply with a single final line in exactly this form:\n"
-    "ANSWER: <number>\n"
-    "giving only the number -- no units, no thousands separators, no extra words."
+    "Reply with exactly one line: ANSWER: <number>. "
+    "No explanation, Markdown, units, thousands separators, or other text. "
+    "Use one derivation; once you have a result, submit your best answer without "
+    "trying alternative derivations."
 )
 
 
@@ -197,9 +209,11 @@ def numeric_item(
     *, decimals=None, rel_tol=0.0, abs_tol=0.0, tags=None,
 ):
     rounding = ""
+    if rel_tol:
+        rounding += f" An approximation within {rel_tol * 100:g}% of the true value is sufficient."
     if decimals is not None:
-        rounding = (
-            f" Round your final answer to {decimals} decimal places."
+        rounding += (
+            f" You may round to {decimals} decimal places."
             if decimals > 0
             else " Give your final answer as an exact integer."
         )
@@ -1127,11 +1141,10 @@ def build_cs_items() -> None:
                     "The events happen in this global order:\n\n"
                     + "\n".join(lines)
                     + "\n\nGive the vector clock of P4 immediately after event 24.\n\n"
-                    "You MUST end your reply "
-                    "with a single final line in exactly this form:\n"
+                    "Reply with exactly one line in this form:\n"
                     "ANSWER: a,b,c,d\n"
                     "giving the four components in order, comma separated, with no "
-                    "spaces, brackets or extra words."
+                    "spaces, brackets, explanation or extra words."
                 ),
             }
         ],
@@ -1362,7 +1375,8 @@ def abstention_item(
                 }
             ]
         },
-        [{"role": "user", "content": textwrap.dedent(body).strip()}],
+        [{"role": "user", "content": textwrap.dedent(body).strip()
+          + "\n\nKeep your reply brief. Do not repeat completed calculations or enumerate alternative derivations."}],
         tags=(tags or []) + ["abstention"],
     )
 
@@ -2793,12 +2807,15 @@ def verify_winnable(prompts: list[dict]) -> None:
 
     by_id = {p["stable_id"]: p for p in prompts}
     # "<id>/<label>" registers a second wrong answer for the same item.
-    resolved = {sid: sid.split("/")[0] for sid in NEGATIVE_CONTROLS}
+    resolved = {sid: sid.split("/")[0] for sid in NEGATIVE_CONTROLS
+                if sid.split("/")[0] not in RETIRED_DURATION_IDS}
     missing = sorted(set(resolved.values()) - set(by_id))
     if missing:
         raise SystemExit(f"negative control for unknown item(s): {missing}")
     too_generous = []
     for sid, wrong in NEGATIVE_CONTROLS.items():
+        if sid not in resolved:
+            continue
         score = GRADER.run_deterministic(by_id[resolved[sid]]["grader_config"], wrong)["score"]
         if score > NEGATIVE_CONTROL_CEILING:
             too_generous.append(f"{sid}: wrong answer scored {score:.1f}")
@@ -2865,7 +2882,8 @@ def build_transaction_item() -> None:
           "9. k5: B->A 10; retry, commit if allowed.\n"
           "10. k4: C->A 15; normal retry.\n\n"
           "Give final balances A,B,C, then |, then committed keys sorted lexicographically. "
-          "End with ANSWER: <A>,<B>,<C>|<keys>, no spaces inside the value."}],
+          "Reply with exactly one line: ANSWER: <A>,<B>,<C>|<keys>, "
+          "no spaces inside the value and no explanation."}],
         tags=["computed-answer", "idempotency", "rollback"],
     )
 
@@ -2887,7 +2905,7 @@ def build() -> dict:
     build_long_context_items()
     build_anchor_items()
 
-    assert len(PROMPTS) == 50, f"Expected 50 Master questions, got {len(PROMPTS)}"
+    assert len(PROMPTS) == 45, f"Expected 45 Master questions, got {len(PROMPTS)}"
     total_weight = sum(p["importance_weight"] for p in PROMPTS)
     heavy = sum(p["importance_weight"] for p in PROMPTS if p["importance_weight"] >= 3.0)
     assert heavy / total_weight >= 0.10, heavy / total_weight
