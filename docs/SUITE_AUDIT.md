@@ -9,7 +9,7 @@ offline. No cross-model difficulty calibration has been completed.
 
 | Suite | Before → after | Version | Changes |
 |---|---:|---|---|
-| Instruction-Following & Format Adherence | 12 → 15 | 6.0.0 | Reviewed all constraints; added untrusted-data extraction, CSV escaping, conditional redaction |
+| Instruction-Following & Format Adherence | 12 → 15 | 6.0.1 | Reviewed all constraints; added untrusted-data extraction, CSV escaping, conditional redaction; disclosed the bullet item's 15-word minimum |
 | Agentic Tool-Use & Structured Output (Hermes) | 14 → 15 | 4.0.0 | Exact envelopes and types; harder argument derivation, cross-year dates, filtered fan-out, retry state |
 | Master Suite | 56 → 45 | 5.0.0 | Additional five duration-driven removals; concise final answers and disclosed numeric tolerances |
 | Mini Master | 0 → 25 | 1.0.0 | 13 selected Master items plus 12 compact variants; class-scope/comprehension item excluded |
@@ -279,3 +279,13 @@ should be compared within their respective suites. The full Master remains at
 
 Validation passed 61 Mini Master/seed/native-tool tests and 475 suite-quality/
 revision tests (536 total), plus fresh-build parity, Ruff and whitespace checks.
+
+## Instruction-Following 6.0.1
+
+The three-benefits bullet prompt now explicitly requires at least 15 words total
+across its bullets and closing sentence. Its grader already required this minimum;
+the original wording omitted it and could reject an otherwise compliant 14-word
+answer. Grading and question count are unchanged. A regression covers the supplied
+14-word response and a valid 15-word response. The version bump delivers the new
+wording to existing installations on startup; historical run snapshots retain
+their original prompts.

@@ -4,7 +4,7 @@
   "exported_at": "",
   "name": "Instruction-Following & Format Adherence",
   "description": "Verifiable instruction-following in the style of IFEval: each prompt stacks multiple machine-checkable constraints (length bounds, exact counts, forbidden characters/words, strict JSON, custom markup, positional rules). Graded on constraint compliance rather than content, so no judge is needed. Every item is gated on a loose check proving the task was attempted, so a prohibition can never be satisfied by an empty answer. The gate is never the constraint under measurement -- a near-miss keeps partial credit, only a non-attempt scores zero. Original items; difficulty comes from stacking individually-clear constraints, never from ambiguous wording.",
-  "version": "6.0.0",
+  "version": "6.0.1",
   "tags": [
     "instruction-following",
     "format",
@@ -215,7 +215,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "List exactly three benefits of writing tests, as three bullet points each starting with '- '. Use the word 'tests' exactly twice in the whole response. End with the exact sentence: Ship with confidence.",
+          "content": "List exactly three benefits of writing tests, as three bullet points each starting with '- '. Use at least 15 words in total across the bullets and closing sentence. Use the word 'tests' exactly twice in the whole response. End with the exact sentence: Ship with confidence.",
           "position": 0
         }
       ]

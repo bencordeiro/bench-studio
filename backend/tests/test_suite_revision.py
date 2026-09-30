@@ -155,6 +155,20 @@ def test_every_instruction_has_a_compliant_response(p):
     assert result["score"] == 100, result
 
 
+def test_bullet_prompt_discloses_its_minimum_word_count():
+    prompt = next(p for p in suite("instruction_following")["prompts"]
+                  if p["stable_id"] == "if-bullets-keyword-end")
+    assert "at least 15 words in total across the bullets and closing sentence" in prompt["messages"][0]["content"]
+    short = "- tests catch bugs early.\n- tests document expected behavior.\n- Enable safe refactoring.\nShip with confidence."
+    boundary = short.replace("Enable safe refactoring.", "Enable much safer refactoring.")
+    config = prompt["grader_config"]
+    result = run_deterministic(config, short)
+    assert not result["passed"] and result["gate_failed"]
+    length = next(check for check in result["checks"] if check["details"].get("count") == 14)
+    assert not length["passed"]
+    assert run_deterministic(config, boundary)["score"] == 100
+
+
 @pytest.mark.parametrize(
     "sid,bad",
     [
