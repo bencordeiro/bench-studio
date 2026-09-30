@@ -7,7 +7,7 @@ LocalBench Studio is a **desktop-hosted web application for benchmarking one LLM
 ## What it does
 
 - Save one or more OpenAI-compatible endpoint profiles (with optional API keys stored in the OS credential store).
-- Start from nine bundled suites (389 prompts): eight custom suites with automated validation plus the public **HumanEval** benchmark, or author your own.
+- Start from nine bundled suites (387 prompts): eight custom suites with automated validation plus the public **HumanEval** benchmark, or author your own.
 - Grade each prompt one of five ways: **deterministic**, **LLM judge**, **hybrid**, **manual review**, or **execution** (run the generated code against unit tests). Deterministic graders cover exact/numeric/regex/concept/JSON/multiple-choice/count and parsed **tool calls**.
 - Run a benchmark against one target model; close/refresh the browser without stopping the run.
 - Reopen later and see live progress, resume interrupted runs.
@@ -22,7 +22,7 @@ Choose **Endpoint Profiles → New Endpoint → Provider preset** to fill the AP
 
 ## Bundled benchmark suites
 
-Nine suites ship with the app and load on first run (389 prompts). Eight contain custom items designed to reduce reliance on familiar public benchmark questions. Mini Master intentionally shares some questions with Master. Originality does not guarantee freedom from training-data contamination. The ninth is the public **HumanEval** benchmark, included for numbers that stay comparable to the published literature.
+Nine suites ship with the app and load on first run (387 prompts). Eight contain custom items designed to reduce reliance on familiar public benchmark questions. Mini Master intentionally shares some questions with Master. Originality does not guarantee freedom from training-data contamination. The ninth is the public **HumanEval** benchmark, included for numbers that stay comparable to the published literature.
 
 | Suite | Prompts | What it measures |
 |---|---|---|
@@ -31,7 +31,7 @@ Nine suites ship with the app and load on first run (389 prompts). Eight contain
 | Agentic Tool-Use (Hermes) | 15 | Function calling in BFCL categories: simple, tool selection, parallel, argument precision, relevance |
 | Instruction-Following | 15 | IFEval-style stacked constraints: exact counts, forbidden vocabulary, strict JSON, custom markup |
 | **Master Suite** | 45 | Cross-domain reasoning with concise answer contracts — see below |
-| **Mini Master** | 25 | Selected Master code/tool questions plus compact math, systems, engineering, false-premise and context variants |
+| **Mini Master** | 23 | Selected Master code/tool questions plus compact variants and a short Python mutation/aliasing challenge |
 | **Cyber** | 18 | Defensive security: vulnerability identification, access controls, hardening, alert analysis, containment and patch triage; strict JSON answers |
 | Terminal Semantics & System Gotchas | 12 | Linux shell/permissions, git reachability, date normalization, log aggregation, text processing, SQLite WAL, cron, bash pipefail, packaging, locale sort, filesystem, iptables |
 | **HumanEval (OpenAI)** | 164 | Code generation: complete the function, executed against its unit tests — see below |
@@ -40,7 +40,7 @@ See [the suite audit](docs/SUITE_AUDIT.md) for revisions, validation evidence, a
 
 Cyber uses original, self-contained scenarios with fixed policy assumptions and deterministic answer keys. It needs no tool calls, code execution or judge. See [its answer-key review and grading contract](docs/CYBER_SUITE.md). Its difficulty estimates have not been measured against models.
 
-Mini Master keeps Master's cross-domain mix in 25 questions: 13 selected items and 12 compact variants. It excludes **Class scope versus comprehension scope**, reduces cache/clock/transaction traces, and replaces long evidence corpora with short precedence and reconciliation exercises. Every question is graded deterministically and uses global generation limits. See [the selection and reference controls](docs/MINI_MASTER_SUITE.md). Duration is unmeasured; no endpoint tokens were used to validate this addition.
+Mini Master keeps Master's cross-domain mix in 23 questions: 10 selected items, 12 compact variants, and one original short Python mutation/aliasing question. It excludes **Class scope versus comprehension scope**, **singledispatch over overlapping ABCs**, **except* splitting and re-raising**, and **structuredClone semantics**, reduces cache/clock/transaction traces, and replaces long evidence corpora with short precedence and reconciliation exercises. Every question is graded deterministically and uses global generation limits. See [the selection and reference controls](docs/MINI_MASTER_SUITE.md). Duration is unmeasured; no endpoint tokens were used to validate these changes.
 
 Tool questions support Hermes text and native API function calling. The app automatically selects native `tools` / `tool_calls` when a server rejects literal Hermes blocks, converts supplied call/result histories, and grades the same tool names and argument values. The server's tool-call parser can remain enabled. The selected protocol is recorded with each run; comparisons warn when protocols differ. A tool transport failure affects that question while the rest of a mixed suite continues. See [the compatibility notes and live validation](docs/HERMES_ENDPOINT_COMPATIBILITY.md).
 

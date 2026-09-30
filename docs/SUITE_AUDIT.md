@@ -1,7 +1,7 @@
 # Curated suite audit — September 2026
 
-This revision contains 225 custom prompts, plus the unchanged 164-question
-HumanEval suite (389 total). Mini Master intentionally overlaps with Master.
+This revision contains 223 custom prompts, plus the unchanged 164-question
+HumanEval suite (387 total). Mini Master intentionally overlaps with Master.
 It emphasizes clear contracts and reproducible
 scoring. Difficulty is a design judgment until measured against models. The
 Qwen Flash duration observations are documented separately; Cyber was validated
@@ -12,7 +12,7 @@ offline. No cross-model difficulty calibration has been completed.
 | Instruction-Following & Format Adherence | 12 → 15 | 6.0.1 | Reviewed all constraints; added untrusted-data extraction, CSV escaping, conditional redaction; disclosed the bullet item's 15-word minimum |
 | Agentic Tool-Use & Structured Output (Hermes) | 14 → 15 | 4.0.0 | Exact envelopes and types; harder argument derivation, cross-year dates, filtered fan-out, retry state |
 | Master Suite | 56 → 45 | 5.0.0 | Additional five duration-driven removals; concise final answers and disclosed numeric tolerances |
-| Mini Master | 0 → 25 | 1.0.0 | 13 selected Master items plus 12 compact variants; class-scope/comprehension item excluded |
+| Mini Master | 0 → 23 | 2.0.0 | 10 selected Master items, 12 compact variants and one original short Python challenge; three further duration removals |
 | Cyber | 0 → 18 | 1.0.0 | Original defensive-security scenarios, closed JSON schemas, independent answer and error controls |
 | Terminal Semantics & System Gotchas | 12 → 12 | 2.0.0 | Corrected three bad keys; revised four shallow items; specified environment assumptions |
 | Web Dev Correctness & Debugging (JS) | 46 → 45 | 5.0.0 | Removed `wd-typeof-null`; reproduced every remaining output |
@@ -275,7 +275,7 @@ output formats, exclusion, provenance, loading and native tool histories.
 No endpoint calls were made for this addition. Weights and duration remain
 unmeasured. Mini and full Master scores measure different question mixes and
 should be compared within their respective suites. The full Master remains at
-45 questions. Nine bundled suites now contain 389 prompts.
+45 questions. At that revision, nine bundled suites contained 389 prompts.
 
 Validation passed 61 Mini Master/seed/native-tool tests and 475 suite-quality/
 revision tests (536 total), plus fresh-build parity, Ruff and whitespace checks.
@@ -289,3 +289,23 @@ answer. Grading and question count are unchanged. A regression covers the suppli
 14-word response and a valid 15-word response. The version bump delivers the new
 wording to existing installations on startup; historical run snapshots retain
 their original prompts.
+
+## Mini Master 2.0.0
+
+At the user's request, removed `mm-py-singledispatch-ambiguity`,
+`mm-py-exception-groups`, and `mm-js-structured-clone` after reported 16k-token
+limit exhaustion. One original replacement, `mm-py-mutation-before-error`, asks
+for four output values from nine lines of Python. Its challenge is distinguishing
+an in-place mutation that survives a subsequent error from ordinary addition
+that rebinds to a new list. There are no loops, recursion, external dependencies
+or lengthy state traces. CPython computes the key; the grader rejects both a
+rollback interpretation and a mistaken alias-preservation interpretation.
+
+Mini Master now has 23 questions and a new version for automatic startup upgrades.
+The other 22 prompt bodies, graders and weights are unchanged; positions are
+renumbered. No endpoint calls were made and the replacement's live runtime remains
+unmeasured. Full Master is unchanged. Nine suites now contain 387 prompts.
+
+Local validation passed 33 Mini Master/seed tests and 21 upgrade/count/structural
+suite-quality tests, plus builder parity, Ruff and whitespace checks. A direct
+comparison verified that the remaining 22 items differ only in their positions.

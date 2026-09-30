@@ -29,7 +29,7 @@ def suite(name):
         ("instruction_following", 15),
         ("agentic_tool_use", 15),
         ("master_suite", 45),
-        ("mini_master", 25),
+        ("mini_master", 23),
         ("cyber", 18),
         ("terminal_semantics", 12),
         ("web_dev_js", 45),

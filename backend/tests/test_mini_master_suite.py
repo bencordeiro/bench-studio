@@ -17,6 +17,7 @@ MINI = json.loads((SUITES_DIR / "mini_master.json").read_text())
 PROMPTS = {p["stable_id"]: p for p in MINI["prompts"]}
 MASTER = {p["stable_id"]: p for p in json.loads((SUITES_DIR / "master_suite.json").read_text())["prompts"]}
 REFERENCES = {
+    "mm-py-mutation-before-error": "ANSWER: True False 3 6",
     "mm-math-multiset": "ANSWER: 84",
     "mm-math-second-coin": "ANSWER: 0.4625",
     "mm-math-gcd-triples": "ANSWER: 624",
@@ -42,15 +43,20 @@ def test_mini_master_bundle_is_current_and_excludes_problem_items():
     result = subprocess.run([sys.executable, str(REPO / "scripts/build_mini_master_suite.py"), "--check"],
                             capture_output=True, text=True, timeout=30)
     assert result.returncode == 0, result.stdout + result.stderr
-    assert MINI["name"] == "Mini Master" and MINI["version"] == "1.0.0"
-    assert len(PROMPTS) == len(MINI["prompts"]) == 25
-    assert [p["position"] for p in MINI["prompts"]] == list(range(25))
+    assert MINI["name"] == "Mini Master" and MINI["version"] == "2.0.0"
+    assert len(PROMPTS) == len(MINI["prompts"]) == 23
+    assert [p["position"] for p in MINI["prompts"]] == list(range(23))
     assert set(PROMPTS).isdisjoint(MASTER)
     excluded = {"ms-py-class-scope-comprehension", "ms-math-multiplicative-order",
                 "ms-math-lcm-matrix-determinant", "ms-cs-natural-mergesort",
-                "ms-cs-dynamic-array-copies", "ms-abs-false-output-claim"}
+                "ms-cs-dynamic-array-copies", "ms-abs-false-output-claim",
+                "ms-py-singledispatch-ambiguity", "ms-py-exception-groups", "ms-js-structured-clone"}
+    assert not {"mm-py-singledispatch-ambiguity", "mm-py-exception-groups", "mm-js-structured-clone"} & set(PROMPTS)
     for prompt in PROMPTS.values():
         sources = [t.removeprefix("source-") for t in prompt["tags"] if t.startswith("source-ms-")]
+        if prompt["stable_id"] == "mm-py-mutation-before-error":
+            assert not sources and "original" in prompt["tags"]
+            continue
         assert len(sources) == 1 and sources[0] in MASTER and sources[0] not in excluded
 
 
@@ -64,8 +70,10 @@ def test_mini_master_independent_reference_answers(sid, response):
 
 def test_mini_master_retained_code_matches_master():
     codes = [p for p in PROMPTS.values() if p["category"].startswith("code-reasoning/")]
-    assert len(codes) == 10
-    for prompt in codes:
+    assert len(codes) == 8
+    retained = [p for p in codes if "master-derived" in p["tags"]]
+    assert len(retained) == 7
+    for prompt in retained:
         original = MASTER["ms-" + prompt["stable_id"].removeprefix("mm-")]
         assert prompt["messages"] == original["messages"]
         assert prompt["grader_config"] == original["grader_config"]
@@ -75,6 +83,7 @@ def test_mini_master_retained_code_matches_master():
 
 def test_mini_master_wrong_policy_and_format_answers_are_penalized():
     wrong = {
+        "mm-py-mutation-before-error": "ANSWER: True False 1 4",  # Incorrectly roll back mutation on TypeError.
         "mm-cs-vector-clock": '{"clock":[4,2,3]}',  # Forget the receive increment.
         "mm-cs-transaction": '{"balances":{"A":60,"B":30,"C":5},"committed":["k1","k2","k3"]}',
         "mm-abs-raft": '{"supported":true,"fault_model":"BYZANTINE"}',
@@ -107,9 +116,25 @@ def test_mini_master_context_variants_are_compact():
 def test_mini_master_seeds_automatically_with_global_limits(session):
     seed_bundled_suites(session)
     suite = session.query(BenchmarkSet).filter_by(name="Mini Master").one()
-    assert len(suite.prompts) == 25
+    assert len(suite.prompts) == 23
     assert seed_bundled_suites(session) == 0
     for prompt in suite.prompts:
         assert prompt.grading_mode == "deterministic"
         assert "max_tokens" not in (prompt.generation_overrides or {})
         assert "unmeasured" in prompt.tags
+
+
+def test_mini_master_upgrade_removes_retired_questions_in_place(session):
+    seed_bundled_suites(session)
+    suite = session.query(BenchmarkSet).filter_by(name="Mini Master").one()
+    original_id = suite.id
+    suite.version = "1.0.0"
+    suite.prompts[0].stable_id = "mm-py-singledispatch-ambiguity"
+    session.flush()
+    assert seed_bundled_suites(session) == 1
+    upgraded = session.get(BenchmarkSet, original_id)
+    assert upgraded.version == "2.0.0"
+    assert len(upgraded.prompts) == 23
+    assert "mm-py-singledispatch-ambiguity" not in {p.stable_id for p in upgraded.prompts}
+    assert "mm-py-mutation-before-error" in {p.stable_id for p in upgraded.prompts}
+    assert seed_bundled_suites(session) == 0

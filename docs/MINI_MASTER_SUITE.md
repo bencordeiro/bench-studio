@@ -1,10 +1,14 @@
-# Mini Master 1.0.0
+# Mini Master 2.0.0
 
-Mini Master is a 25-question cross-domain suite adapted from Master 5.0.0.
-Thirteen selected items preserve Master's code and tool-use challenges; twelve
-new compact variants reduce repeated calculation, state tracing and evidence
-volume. **Class scope versus comprehension scope is excluded**, as are Master's
-retired duration workloads. Full Master remains unchanged at 45 questions.
+Mini Master is a 23-question cross-domain suite adapted from Master 5.0.0.
+Ten selected items preserve Master's code and tool-use challenges; twelve compact
+variants reduce repeated calculation, state tracing and evidence volume, and one
+original Python question tests mutation and alias rebinding in nine lines.
+**Class scope versus comprehension scope is excluded**, as are Master's retired
+duration workloads. Version 2.0.0 also removes singledispatch ambiguity, except*
+splitting/re-raising, and structuredClone after the user reported that these
+questions hit the global 16k-token limit. No live retest was made.
+Full Master remains unchanged at 45 questions.
 
 Every question has a deterministic grader and inherits global token/inactivity
 limits. Code snippets are executed locally while building their keys; the model's
@@ -18,8 +22,8 @@ specific duration on a reasoning model.
 
 | Domain | Questions | Selection or condensed variant |
 |---|---:|---|
-| Python output reasoning | 5 | Reflected operator priority, exception groups, ExitStack, groupby/tee, singledispatch ambiguity |
-| JavaScript output reasoning | 5 | Primitive conversion, generator return/finally, field initialization, proxy receivers, structuredClone |
+| Python output reasoning | 4 | Reflected operator priority, ExitStack, groupby/tee, and the new mutation-before-error/alias-rebinding question |
+| JavaScript output reasoning | 4 | Primitive conversion, generator return/finally, field initialization, proxy receivers |
 | Math | 3 | Six-letter multiset; three-flip posterior and a different coin; bounded ordered GCD sum |
 | Systems | 3 | Short two-segment SLRU trace; ten-event three-process clock; six durable transfer requests |
 | Physics and engineering | 2 | Already-rolling cylinder over two regimes; compressor/cooler with ideal temperature supplied |
@@ -27,17 +31,19 @@ specific duration on a reasoning model.
 | Stateful tool use | 3 | Customer-field propagation, cumulative retry correction, withholding an unfunded transfer |
 | Context synthesis | 2 | Five scoped configuration releases with an untrusted note; eight-row replay/reversal ledger |
 
-The ten code snippets and their graders are retained from Master. Three tool
+Seven code snippets and their graders are retained from Master. Three tool
 scenarios retain their schemas, history and grading with a brief-answer reminder.
 The twelve other prompts are compact variants, not claims of equal difficulty
-to their full-Master counterparts. Every prompt has a `source-ms-...` provenance
-tag and a distinct `mm-...` stable ID. Because content overlaps, the two suites'
+to their full-Master counterparts. The 22 Master-derived prompts have a
+`source-ms-...` provenance tag; the replacement has an `original` tag. Every
+prompt has a distinct `mm-...` stable ID. Because content overlaps, the two suites'
 scores are not independent measurements. Compare models on the same suite/version.
 
 ## Reference keys for the compact variants
 
 | Mini stable ID | Key | Control |
 |---|---|---|
+| `mm-py-mutation-before-error` (original) | True False 3 6 | Execution verifies that list mutation survives the failed tuple assignment and ordinary addition creates a new list |
 | `mm-math-multiset` | 84 | Memoized recurrence agrees with exhaustive distinct-permutation enumeration |
 | `mm-math-second-coin` | 0.4625 | Exact-rational posterior mixture agrees with joint/evidence calculation |
 | `mm-math-gcd-triples` | 624 | Direct triple enumeration agrees with a totient/divisibility sum |
@@ -68,8 +74,8 @@ cd backend
 .venv/bin/pytest tests/test_mini_master_suite.py tests/test_native_tools.py tests/test_seed_suites.py -q
 ```
 
-The builder reads the committed Master bundle, re-executes the ten selected code
-snippets, recomputes compact variants, and checks correct/incorrect responses
+The builder reads the committed Master bundle, re-executes the seven selected code
+snippets and the original replacement, recomputes compact variants, and checks correct/incorrect responses
 through the app's real graders. It verifies byte-identical output with `--check`.
 Changing inherited Master content requires regenerating and reviewing Mini Master
 and bumping its version if its shipped questions or grading change. Startup discovers

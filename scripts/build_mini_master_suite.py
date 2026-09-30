@@ -18,13 +18,26 @@ import build_master_suite as master
 
 OUT = master.REPO / "backend/app/seed/suites/mini_master.json"
 CODE_IDS = (
-    "ms-py-reflected-operator-priority", "ms-py-exception-groups",
-    "ms-py-exitstack-unwind", "ms-py-groupby-tee", "ms-py-singledispatch-ambiguity",
+    "ms-py-reflected-operator-priority", "ms-py-exitstack-unwind", "ms-py-groupby-tee",
     "ms-js-to-primitive", "ms-js-generator-return-finally", "ms-js-field-init-order",
-    "ms-js-proxy-receiver", "ms-js-structured-clone",
+    "ms-js-proxy-receiver",
 )
 TOOL_IDS = ("ms-agent-id-propagation", "ms-agent-error-recovery", "ms-agent-precondition-refusal")
-EXCLUDED = {"ms-py-class-scope-comprehension"} | master.RETIRED_DURATION_IDS
+EXCLUDED = {
+    "ms-py-class-scope-comprehension", "ms-py-singledispatch-ambiguity",
+    "ms-py-exception-groups", "ms-js-structured-clone",
+} | master.RETIRED_DURATION_IDS
+REPLACEMENT_ID = "mm-py-mutation-before-error"
+REPLACEMENT_CODE = """values = [1]
+holder = (values,)
+original = values
+try:
+    holder[0] += [2]
+except TypeError:
+    pass
+values = values + [3]
+print(holder[0] is original, values is original, sum(holder[0]), sum(values))
+"""
 
 
 def build() -> dict:
@@ -33,12 +46,13 @@ def build() -> dict:
     prompts = []
 
     def add(sid, title, category, body, grader, source_id, *, weight=2.0, tags=()):
-        assert source_id in originals and source_id not in EXCLUDED
+        assert source_id is None or (source_id in originals and source_id not in EXCLUDED)
         prompts.append({
             "stable_id": sid, "title": title,
-            "description": f"Compact variant of Master: {originals[source_id]['title']}.",
+            "description": (f"Compact variant of Master: {originals[source_id]['title']}." if source_id
+                            else "A list mutates before tuple item assignment fails; later list addition rebinds without changing the alias."),
             "category": category, "difficulty": "medium" if weight == 1.5 else "hard",
-            "tags": ["mini-master", "master-derived", f"source-{source_id}", "unmeasured", *tags],
+            "tags": ["mini-master", *(["master-derived", f"source-{source_id}"] if source_id else ["original"]), "unmeasured", *tags],
             "importance_weight": weight, "position": len(prompts), "enabled": True,
             "grading_mode": "deterministic", "generation_overrides": {"temperature": 0.0},
             "grader_config": grader,
@@ -77,6 +91,15 @@ def build() -> dict:
 
     for source_id in CODE_IDS:
         retain(source_id)
+
+    # Nine straight-line statements/lines; four short output fields. The trap
+    # is operation semantics, not a long trace or an environment-sensitive API.
+    add(REPLACEMENT_ID, "Mutation before a failed tuple assignment", "code-reasoning/python",
+        master.CODE_PREAMBLE.format(lang="Python 3") + "\n\n```\n" + REPLACEMENT_CODE + "```",
+        {"type": "exact", "canonical_answer": master.run_python(REPLACEMENT_CODE),
+         "accepted_aliases": [], "case_sensitive": True, "trim_whitespace": True,
+         "normalize_punctuation": False, "points": 100.0}, None,
+        weight=3.0, tags=["execution-verified", "aliasing", "augmented-assignment"])
 
     # Six letters replace the full Master's eight-letter enumeration. A memoized
     # recurrence and an independent exhaustive enumeration must agree.
@@ -298,12 +321,12 @@ def build() -> dict:
                + json.dumps(ledger, indent=2), {"balance": total, "applied": applied},
                "ms-lc-ledger-reconciliation", weight=3.0)
 
-    assert len(prompts) == 25 and len({p["stable_id"] for p in prompts}) == 25
+    assert len(prompts) == 23 and len({p["stable_id"] for p in prompts}) == 23
     verify_controls(prompts)
     return {
         "format": "localbench-benchmark", "format_version": "1.0",
-        "exported_at": "2026-09-29T00:00:00+00:00", "name": "Mini Master", "version": "1.0.0",
-        "description": "25 Master-derived deterministic questions: 10 selected code items, "
+        "exported_at": "2026-09-29T00:00:00+00:00", "name": "Mini Master", "version": "2.0.0",
+        "description": "23 deterministic questions: 7 selected Master code items, one original compact Python item, "
                        "3 stateful tool items and 12 compact variants across math, systems, physics, "
                        "engineering, false premises and context synthesis. Excludes class-scope versus "
                        "comprehension scope and retired duration workloads. Shorter traces and evidence "
@@ -330,6 +353,9 @@ def verify_controls(prompts):
     for prompt in prompts:
         config = prompt["grader_config"]
         assert master.GRADER.run_deterministic(config, reference_response(prompt))["score"] == 100, prompt["stable_id"]
+        if prompt["stable_id"] == REPLACEMENT_ID:
+            for wrong in ("ANSWER: True False 1 4", "ANSWER: True True 3 6"):
+                assert master.GRADER.run_deterministic(config, wrong)["score"] < 100
         for garbage in ("", "{}", "[]", "I don't know.", "ANSWER: 42"):
             assert master.GRADER.run_deterministic(config, garbage)["score"] == 0, prompt["stable_id"]
         source_id = "ms-" + prompt["stable_id"].removeprefix("mm-")
@@ -349,7 +375,7 @@ def main():
             raise SystemExit("Mini Master bundle is stale; run scripts/build_mini_master_suite.py")
     else:
         OUT.write_text(rendered, encoding="utf-8")
-    print(f"{'Verified' if args.check else 'Wrote'} {OUT.relative_to(master.REPO)} (25 questions)")
+    print(f"{'Verified' if args.check else 'Wrote'} {OUT.relative_to(master.REPO)} ({len(suite['prompts'])} questions)")
 
 
 if __name__ == "__main__":
