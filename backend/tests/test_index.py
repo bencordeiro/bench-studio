@@ -30,20 +30,20 @@ def _client():
     return TestClient(app)
 
 
-def test_exact_seven_defaults_and_only_fully_completed_models(session):
+def test_exact_six_defaults_and_only_fully_completed_models(session):
     ids = _suites(session)
     extras = [BenchmarkSet(id=str(uuid.uuid4()), name=name, version="1.0.0")
-              for name in ("Master Suite", "HumanEval (OpenAI)")]
+              for name in ("Mini Master", "HumanEval (OpenAI)")]
     session.add_all(extras)
     session.flush()
     for i, sid in enumerate(ids):
         _run(session, sid, "balanced", 60)
         _run(session, sid, "uneven", [90, 70, 60, 50, 40, 30, 20][i])
-        _run(session, sid, "completed-errors", 0 if i == 6 else 100,
-             status="completed_with_errors" if i == 6 else "completed")
+        _run(session, sid, "completed-errors", 0 if i == 5 else 100,
+             status="completed_with_errors" if i == 5 else "completed")
         _run(session, sid, "zero", 0, status="completed_with_errors")
-        _run(session, sid, "not-complete", 100, status="cancelled" if i == 6 else "completed")
-        _run(session, sid, "grading-pending", 100, scored=0 if i == 6 else 1)
+        _run(session, sid, "not-complete", 100, status="cancelled" if i == 5 else "completed")
+        _run(session, sid, "grading-pending", 100, scored=0 if i == 5 else 1)
     _run(session, ids[0], "one-suite-winner", 100)
     for extra in extras:
         _run(session, extra.id, "unselected-winner", 100)
@@ -52,11 +52,11 @@ def test_exact_seven_defaults_and_only_fully_completed_models(session):
         board = c.get("/api/index").json()
         assert [s["name"] for s in board["suites"]] == list(DEFAULT_INDEX_SUITE_NAMES)
         assert [e["model"] for e in board["entries"]] == ["completed-errors", "balanced", "uneven", "zero"]
-        assert [e["index_score"] for e in board["entries"]] == [85.71, 60, 51.43, 0]
-        assert all(e["completed_suites"] == 7 and e["required_suites"] == 7 for e in board["entries"])
+        assert [e["index_score"] for e in board["entries"]] == [83.33, 60, 56.67, 0]
+        assert all(e["completed_suites"] == 6 and e["required_suites"] == 6 for e in board["entries"])
         assert board["incomplete_model_count"] == 3
         assert c.get("/api/index?basis=invalid").status_code == 400
-        assert len(c.get("/api/index/config").json()["default_suite_ids"]) == 7
+        assert len(c.get("/api/index/config").json()["default_suite_ids"]) == 6
 
 
 def test_settings_membership_persists_and_recomputes_existing_runs(session):
@@ -81,7 +81,7 @@ def test_settings_membership_persists_and_recomputes_existing_runs(session):
         settings = c.get("/api/settings").json()
         settings["index_suite_ids"] = None
         c.put("/api/settings", json=settings)
-        assert len(c.get("/api/index").json()["suites"]) == 7
+        assert len(c.get("/api/index").json()["suites"]) == 6
         assert c.get("/api/index").json()["entries"] == []
 
 
@@ -126,7 +126,7 @@ def test_missing_suite_is_not_silently_removed_from_required_coverage(session):
         assert c.put("/api/settings", json=settings).status_code == 422
 
 
-def test_default_missing_suite_still_requires_seven(session):
+def test_default_missing_suite_still_requires_six(session):
     ids = _suites(session)
     session.query(BenchmarkSet).filter_by(id=ids[-1]).delete()
     for sid in ids[:-1]:
@@ -134,7 +134,7 @@ def test_default_missing_suite_still_requires_seven(session):
     session.commit()
     with _client() as c:
         board = c.get("/api/index").json()
-        assert len(board["suites"]) == 7
+        assert len(board["suites"]) == 6
         assert board["suites"][-1]["missing"]
         assert board["entries"] == []
 

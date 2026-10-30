@@ -23,27 +23,24 @@ Choose **Endpoint Profiles → New Endpoint → Provider preset** to fill the AP
 
 ## Bundled benchmark suites
 
-Nine suites ship with the app and load on first run (382 prompts). Eight contain custom items designed to reduce reliance on familiar public benchmark questions. Mini Master intentionally shares some questions with Master. Originality does not guarantee freedom from training-data contamination. The ninth is the public **HumanEval** benchmark, included for numbers that stay comparable to the published literature.
+Eight suites ship with the app and load on first run (329 prompts). The default Index combines the six core suites. Mini Master is a separate 25-question sampler, and HumanEval remains available as a public reference benchmark.
 
 | Suite | Prompts | What it measures |
 |---|---|---|
-| Code Reasoning (Python) | 45 | 29 output-reasoning questions and 16 original executable function tasks covering practical data processing and edge cases |
-| Web Dev Correctness (JS) | 45 | Coercion, the event loop and microtask ordering, prototypes, async semantics, JSON edge cases |
-| Agentic Tool-Use (Hermes) | 15 | Function calling in BFCL categories: simple, tool selection, parallel, argument precision, relevance |
-| Instruction-Following | 15 | IFEval-style stacked constraints: exact counts, forbidden vocabulary, strict JSON, custom markup |
-| **Master Suite** | 45 | Cross-domain reasoning with concise answer contracts — see below |
-| **Mini Master** | 23 | Selected Master code/tool questions plus compact variants and a short Python mutation/aliasing challenge |
-| **Cyber** | 18 | Defensive security: vulnerability identification, access controls, hardening, alert analysis, containment and patch triage; strict JSON answers |
-| Terminal Semantics & System Gotchas | 12 | Linux shell/permissions, git reachability, date normalization, log aggregation, text processing, SQLite WAL, cron, bash pipefail, packaging, locale sort, filesystem, iptables |
-| **HumanEval (OpenAI)** | 164 | Code generation: complete the function, executed against its unit tests — see below |
+| Code Reasoning (Python) | 40 | 26 output-reasoning questions and 14 executable function contracts |
+| Web Dev Correctness (JS) | 45 | JavaScript semantics, request bodies, cancellation, URL state, serialization and cache behavior |
+| Agentic Tool-Use (Hermes) | 15 | Exact next actions across supplied histories, revisions, partial failures and workflow dependencies |
+| Instruction-Following | 15 | Stacked constraints, strict JSON, formatting, redaction and untrusted data |
+| **Mini Master** | 25 | Standalone sampler selected from all seven other suites; excluded from the default Index |
+| **Cyber** | 10 | Multi-layer authorization, JWT/SSRF defenses, crash-safe nonces, event-time alerts, process identity and protocol decisions |
+| Terminal Semantics & System Gotchas | 15 | 12 systems questions and three functional adaptations from official Terminal-Bench tasks |
+| **HumanEval (OpenAI)** | 164 | Public function-completion benchmark with its original executable tests |
 
-See [the suite audit](docs/SUITE_AUDIT.md) for revisions, validation evidence, and limitations. Updated bundles upgrade in place on startup; historical runs retain their snapshots. The retired example suite is removed by migration.
+See [the October refresh and research](docs/BENCHMARK_REFRESH.md) for sources, removals, adaptations and verification. Changed bundles upgrade in place on startup; historical runs retain their snapshots. Master is retired by migration; its saved runs remain accessible. New difficulty estimates are unmeasured, so older duration/pass-rate measurements do not describe the revised suites.
 
-Python 7.0.0 retires five workloads that invite longer reasoning and requests concise outputs or compact function implementations. All remaining answer keys and reference functions are checked locally. The full Qwen Flash medium/8k diagnostic completed 45/45 normally in about 10m 38s, with no token exhaustion and a longest request of 34 seconds; see [the live measurements and their limits](docs/CALIBRATION_QWENFLASH_PYTHON_2026_09_30.md). See [the Python duration review](docs/PYTHON_SUITE_DURATION_REVIEW.md).
+The GNU sed mixed-script question remains **13**, reproduced with the real command. The terminal additions adapt official Terminal-Bench 2.0 tasks with original fixtures and in-memory artifacts; these are not official Terminal-Bench scores. See [the attribution and license](third_party/terminal-bench/ATTRIBUTION.md).
 
-Cyber uses original, self-contained scenarios with fixed policy assumptions and deterministic answer keys. It needs no tool calls, code execution or judge. See [its answer-key review and grading contract](docs/CYBER_SUITE.md). Its difficulty estimates have not been measured against models.
-
-Mini Master keeps Master's cross-domain mix in 23 questions: 10 selected items, 12 compact variants, and one original short Python mutation/aliasing question. It excludes **Class scope versus comprehension scope**, **singledispatch over overlapping ABCs**, **except* splitting and re-raising**, and **structuredClone semantics**, reduces cache/clock/transaction traces, and replaces long evidence corpora with short precedence and reconciliation exercises. Every question is graded deterministically and uses global generation limits. See [the selection and reference controls](docs/MINI_MASTER_SUITE.md). Duration is unmeasured; no endpoint tokens were used to validate these changes.
+Cyber contains ten original closed-policy problems with computed JSON keys and independent reviewed controls. See [its grading contract](docs/CYBER_SUITE.md). Mini Master selects four questions each from Cyber, Terminal, Python, Web Dev and Agentic, three Instruction Following questions and two HumanEval problems. See [its selection](docs/MINI_MASTER_SUITE.md). Mini Master is a short standalone alternative; the [Index](docs/INDEX.md) averages the six core suite scores equally.
 
 Tool questions support Hermes text and native API function calling. The app automatically selects native `tools` / `tool_calls` when a server rejects literal Hermes blocks, converts supplied call/result histories, and grades the same tool names and argument values. The server's tool-call parser can remain enabled. The selected protocol is recorded with each run; comparisons warn when protocols differ. A tool transport failure affects that question while the rest of a mixed suite continues. See [the compatibility notes and live validation](docs/HERMES_ENDPOINT_COMPATIBILITY.md).
 
@@ -56,39 +53,11 @@ Design rules the original items follow (HumanEval keeps the upstream problems as
 
 `backend/tests/test_suite_quality.py` enforces these as executable invariants, so a new or edited item cannot quietly break them.
 
-### The Master Suite
-
-The four base suites measure one competence each, and a strong model saturates them. The Master Suite exists for the other question: **given two models that both look good, which is actually better?** It is cross-domain, deterministically graded, and built to stay unsaturated.
-
-| Domain | Items | Sample of what it covers |
-|---|---|---|
-| Code reasoning (Python / JS) | 18 | `ExitStack` unwinding, `Symbol.toPrimitive` hints, field initialization vs `super()`, thenable microtask cost |
-| Quantitative reasoning | 5 | Multiset counting, a pattern race, posterior probability, GCD triple sums, circumradius |
-| Algorithms & distributed systems | 3 | Segmented-LRU simulation, vector clocks, transaction replay with rollback and retries |
-| Physics | 1 | Rolling-transition dynamics |
-| Automotive engineering | 1 | Intercooler charge temperature |
-| Abstention & false premises | 4 | Planted falsehoods the model must refuse rather than elaborate |
-| Multi-turn stateful tool use | 5 | Id propagation past a decoy, error recovery, withholding an unsafe action |
-| Long-context synthesis | 4 | 3.5k–6.4k token corpora with conflicting facts and precedence rules |
-| Anchors from the base suites | 4 | Lowest-weighted, so a run still says something about a model that scores near zero |
-
-Master 5.0.0 removes five lengthy manual calculations/simulations and asks for concise final answers, with existing numeric tolerances stated explicitly. The [Qwen Flash duration investigation](docs/CALIBRATION_QWENFLASH_MASTER_2026_09_29.md) records the 50-question baseline and two successful prompt trials. The revised 45-question suite has not been retested end to end; the 15–30 minute target is not a guaranteed duration. Global token budgets and the model's reasoning behavior still affect timing.
-
-Three properties make it different from the base suites:
-
-- **Nothing is hand-written — including the answer key.** `scripts/build_master_suite.py` re-executes every snippet, recomputes every quantity (several against a second independent method), and generates each long-context corpus together with its ground truth. Rebuild and the JSON regenerates byte-identically, or an item was wrong. `python scripts/build_master_suite.py --check` verifies the committed file is current.
-- **Every item is proven winnable.** The base suites verify that a non-answer scores zero. That is half a guarantee: a required pattern with a typo produces an item that scores zero for *everyone*, which is invisible because it looks like difficulty. The builder grades each item against a model answer that must earn 100.
-- **The items built to catch a mistake are proven to catch it.** Each false-premise and agentic item is also graded against the confident wrong answer — swallowing the premise, reusing the decoy id, acting despite a failed precondition — which must stay below 35.
-
-A four-tier ladder does the separating: **anchor** (weight 1.5) from the base suites, **hard** (2.0), **extreme** (3.0), and **frontier** (4.0) for items expected to break current frontier models, leaving headroom as models improve.
-
-> **The weights are predictions, not measurements.** Every item is tagged `unmeasured`. Guessed difficulty is unreliable — that lesson is what produced `calibrate_suite.py` in the first place. Run the calibration below against two models of different capability before trusting any ranking this suite produces.
-
 ### HumanEval (OpenAI)
 
 The 164 hand-written Python function-completion problems from OpenAI's Codex paper (Chen et al., 2021, ["Evaluating Large Language Models Trained on Code"](https://arxiv.org/abs/2107.03374)). The dataset is **MIT-licensed** and vendored under `data/humaneval/` (source: [openai/human-eval](https://github.com/openai/human-eval); see `data/humaneval/ATTRIBUTION.md`).
 
-It is the one bundled suite that is *not* original — deliberately. The custom suites provide complementary tasks; HumanEval is included so your scores stay **comparable to the published literature**, and it is wrapped for strict parity with the reference harness:
+HumanEval retains the original public problems. The custom suites provide complementary tasks; HumanEval is included so your scores stay **comparable to the published literature**, and it is wrapped for strict parity with the reference harness:
 
 - Each prompt is the dataset's problem text, **byte-for-byte** (verified by `backend/tests/test_humaneval_suite.py`).
 - The model's completion is executed as `prompt + completion + test + check(entry_point)` in a fresh `python -I` subprocess with the reference harness's **3.0-second timeout**, its reliability guard, and its `passed / timed out / failed` classification — no partial credit, no markdown-fence stripping.

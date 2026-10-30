@@ -3,8 +3,8 @@
   "format_version": "1.0",
   "exported_at": "",
   "name": "Web Dev Correctness & Debugging (JS)",
-  "description": "Output-prediction and debugging over original JavaScript snippets, in the CRUXEval output-prediction format. Covers coercion, the event loop and microtask ordering, closures and scope, prototypes, async/promise semantics, and JSON serialization. Every canonical answer is produced by executing the snippet under Node.js, never written by hand. Graded exactly on the final ANSWER line.",
-  "version": "5.0.0",
+  "description": "45 JavaScript correctness questions covering language semantics and original web-platform scenarios: URLSearchParams, response consumption/cloning, cancellation, thenable jobs, proxy receivers, transferred buffers, serialization, async cleanup, reentrant state and cache age. Every output is verified under Node.js; new tasks require Node.js 22+. No judge or network. New difficulty and weights are design estimates, not calibrated model results.",
+  "version": "6.0.0",
   "tags": [
     "web",
     "javascript",
@@ -25,416 +25,6 @@
     "performance": 0.03
   },
   "prompts": [
-    {
-      "stable_id": "wd-map-parseint",
-      "title": "Array.map with parseInt radix trap",
-      "description": "map passes (value, index); parseInt reads index as radix.",
-      "category": "web-js",
-      "tags": [
-        "javascript",
-        "coercion",
-        "web",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "1,NaN,NaN",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are a JavaScript engine (Node.js). Given a snippet, determine exactly what it writes to the console. You may reason briefly, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is printed (no quotes, no code fences).",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "console.log([1, 2, 3].map(parseInt).join(','));",
-          "position": 1
-        }
-      ],
-      "position": 0
-    },
-    {
-      "stable_id": "wd-default-sort",
-      "title": "Default Array.sort is lexicographic",
-      "description": "Without a comparator, sort compares stringified elements.",
-      "category": "web-js",
-      "tags": [
-        "javascript",
-        "coercion",
-        "web",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "1,10,100,9",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are a JavaScript engine (Node.js). Given a snippet, determine exactly what it writes to the console. You may reason briefly, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is printed (no quotes, no code fences).",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "console.log([10, 9, 100, 1].sort().join(','));",
-          "position": 1
-        }
-      ],
-      "position": 1
-    },
-    {
-      "stable_id": "wd-unary-plus-coercion",
-      "title": "Unary plus coercion chain",
-      "description": "+ 'a' is NaN, which stringifies to 'NaN'.",
-      "category": "web-js",
-      "tags": [
-        "javascript",
-        "coercion",
-        "web",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "banana",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are a JavaScript engine (Node.js). Given a snippet, determine exactly what it writes to the console. You may reason briefly, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is printed (no quotes, no code fences).",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "console.log(('b' + 'a' + + 'a' + 'a').toLowerCase());",
-          "position": 1
-        }
-      ],
-      "position": 2
-    },
-    {
-      "stable_id": "wd-float-add",
-      "title": "Floating point addition",
-      "description": "IEEE-754 double rounding.",
-      "category": "web-js",
-      "tags": [
-        "javascript",
-        "coercion",
-        "web",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "0.30000000000000004",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are a JavaScript engine (Node.js). Given a snippet, determine exactly what it writes to the console. You may reason briefly, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is printed (no quotes, no code fences).",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "console.log(0.1 + 0.2);",
-          "position": 1
-        }
-      ],
-      "position": 3
-    },
-    {
-      "stable_id": "wd-array-plus-object",
-      "title": "Array plus object coercion",
-      "description": "Both coerce to strings: '' + '[object Object]'.",
-      "category": "web-js",
-      "tags": [
-        "javascript",
-        "coercion",
-        "web",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "[object Object]",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are a JavaScript engine (Node.js). Given a snippet, determine exactly what it writes to the console. You may reason briefly, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is printed (no quotes, no code fences).",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "console.log([] + {});",
-          "position": 1
-        }
-      ],
-      "position": 4
-    },
-    {
-      "stable_id": "wd-equality-trio",
-      "title": "Loose vs strict equality and NaN",
-      "description": "null == undefined but not ===; NaN is never equal to itself.",
-      "category": "web-js",
-      "tags": [
-        "javascript",
-        "coercion",
-        "web",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "true,false,false",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are a JavaScript engine (Node.js). Given a snippet, determine exactly what it writes to the console. You may reason briefly, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is printed (no quotes, no code fences).",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "console.log((null == undefined) + ',' + (null === undefined) + ',' + (NaN === NaN));",
-          "position": 1
-        }
-      ],
-      "position": 5
-    },
-    {
-      "stable_id": "wd-bitwise-string-coerce",
-      "title": "Bitwise ops and string arithmetic",
-      "description": "~5 = -(5+1); - coerces to number, + concatenates.",
-      "category": "web-js",
-      "tags": [
-        "javascript",
-        "coercion",
-        "web",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "-6,1,2,53",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are a JavaScript engine (Node.js). Given a snippet, determine exactly what it writes to the console. You may reason briefly, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is printed (no quotes, no code fences).",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "console.log((~5) + ',' + (5 & 3) + ',' + ('5' - 3) + ',' + ('5' + 3));",
-          "position": 1
-        }
-      ],
-      "position": 6
-    },
-    {
-      "stable_id": "wd-negative-zero",
-      "title": "Negative zero identity",
-      "description": "=== treats -0 and 0 as equal; Object.is does not.",
-      "category": "web-js",
-      "tags": [
-        "javascript",
-        "coercion",
-        "web",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "false,true",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are a JavaScript engine (Node.js). Given a snippet, determine exactly what it writes to the console. You may reason briefly, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is printed (no quotes, no code fences).",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "console.log(Object.is(-0, 0) + ',' + (-0 === 0));",
-          "position": 1
-        }
-      ],
-      "position": 7
-    },
-    {
-      "stable_id": "wd-math-empty",
-      "title": "Math.max/min with no arguments",
-      "description": "Identity elements so any real argument wins.",
-      "category": "web-js",
-      "tags": [
-        "javascript",
-        "coercion",
-        "web",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "-Infinity,Infinity",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are a JavaScript engine (Node.js). Given a snippet, determine exactly what it writes to the console. You may reason briefly, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is printed (no quotes, no code fences).",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "console.log(Math.max() + ',' + Math.min());",
-          "position": 1
-        }
-      ],
-      "position": 8
-    },
-    {
-      "stable_id": "wd-parseint-number-edge",
-      "title": "parseInt vs Number edge cases",
-      "description": "parseInt stops at '.'; Number('') is 0; leading zero is decimal.",
-      "category": "web-js",
-      "tags": [
-        "javascript",
-        "coercion",
-        "web",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "0,0,8",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are a JavaScript engine (Node.js). Given a snippet, determine exactly what it writes to the console. You may reason briefly, but you MUST end your reply with a single final line in exactly this form:\nANSWER: <output>\nwhere <output> is precisely what is printed (no quotes, no code fences).",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "console.log(parseInt('0.5e3') + ',' + Number('') + ',' + parseInt('08'));",
-          "position": 1
-        }
-      ],
-      "position": 9
-    },
     {
       "stable_id": "wd-event-loop-order",
       "title": "Microtask vs macrotask ordering",
@@ -474,7 +64,7 @@
           "position": 1
         }
       ],
-      "position": 10
+      "position": 0
     },
     {
       "stable_id": "wd-this-unbound-method",
@@ -515,7 +105,7 @@
           "position": 1
         }
       ],
-      "position": 11
+      "position": 1
     },
     {
       "stable_id": "wd-var-let-closure",
@@ -557,7 +147,7 @@
           "position": 1
         }
       ],
-      "position": 12
+      "position": 2
     },
     {
       "stable_id": "wd-integer-key-order",
@@ -598,7 +188,7 @@
           "position": 1
         }
       ],
-      "position": 13
+      "position": 3
     },
     {
       "stable_id": "wd-spread-getter",
@@ -639,7 +229,7 @@
           "position": 1
         }
       ],
-      "position": 14
+      "position": 4
     },
     {
       "stable_id": "wd-async-await-loop-order",
@@ -680,7 +270,7 @@
           "position": 1
         }
       ],
-      "position": 15
+      "position": 5
     },
     {
       "stable_id": "wd-microtask-vs-timeout-nested",
@@ -722,7 +312,7 @@
           "position": 1
         }
       ],
-      "position": 16
+      "position": 6
     },
     {
       "stable_id": "wd-regex-lastindex",
@@ -763,7 +353,7 @@
           "position": 1
         }
       ],
-      "position": 17
+      "position": 7
     },
     {
       "stable_id": "wd-proto-shadow-assign",
@@ -804,7 +394,7 @@
           "position": 1
         }
       ],
-      "position": 18
+      "position": 8
     },
     {
       "stable_id": "wd-finally-overrides-return",
@@ -845,7 +435,7 @@
           "position": 1
         }
       ],
-      "position": 19
+      "position": 9
     },
     {
       "stable_id": "wd-array-sort-stability-compare",
@@ -886,7 +476,7 @@
           "position": 1
         }
       ],
-      "position": 20
+      "position": 10
     },
     {
       "stable_id": "wd-promise-catch-return",
@@ -928,7 +518,7 @@
           "position": 1
         }
       ],
-      "position": 21
+      "position": 11
     },
     {
       "stable_id": "wd-debounce-bug",
@@ -970,7 +560,7 @@
           "position": 1
         }
       ],
-      "position": 22
+      "position": 12
     },
     {
       "stable_id": "wd-json-stringify-quirks",
@@ -1011,7 +601,7 @@
           "position": 1
         }
       ],
-      "position": 23
+      "position": 13
     },
     {
       "stable_id": "wd-equality-object-coercion",
@@ -1052,7 +642,7 @@
           "position": 1
         }
       ],
-      "position": 24
+      "position": 14
     },
     {
       "stable_id": "wd3-deep-event-loop",
@@ -1067,7 +657,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 4.0,
-      "position": 25,
+      "position": 15,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1108,7 +698,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 26,
+      "position": 16,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1149,7 +739,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 27,
+      "position": 17,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1190,7 +780,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 28,
+      "position": 18,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1231,7 +821,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 29,
+      "position": 19,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1272,7 +862,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 4.0,
-      "position": 30,
+      "position": 20,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1313,7 +903,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 31,
+      "position": 21,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1354,7 +944,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 32,
+      "position": 22,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1395,7 +985,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 4.0,
-      "position": 33,
+      "position": 23,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1436,7 +1026,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 34,
+      "position": 24,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1477,7 +1067,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 35,
+      "position": 25,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1518,7 +1108,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 4.0,
-      "position": 36,
+      "position": 26,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1559,7 +1149,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 37,
+      "position": 27,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1600,7 +1190,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 38,
+      "position": 28,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1641,7 +1231,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 39,
+      "position": 29,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1682,7 +1272,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 40,
+      "position": 30,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1723,7 +1313,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 41,
+      "position": 31,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1764,7 +1354,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 4.0,
-      "position": 42,
+      "position": 32,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1805,7 +1395,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 4.0,
-      "position": 43,
+      "position": 33,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1846,7 +1436,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 44,
+      "position": 34,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1873,6 +1463,426 @@
           "position": 1
         }
       ]
+    },
+    {
+      "stable_id": "wd6-url-live-state",
+      "title": "URLSearchParams live state and encoding normalization",
+      "description": "Original executable web-platform scenario: URLSearchParams live state and encoding normalization",
+      "category": "web-js/url",
+      "tags": [
+        "web",
+        "javascript",
+        "original",
+        "execution-verified",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "[true,[\"c+d\",\"e f\"],[\"x\",\"y\"],\"?q=c%2Bd&q=e+f&tag=k&tag=m\"]",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Determine the exact single console output line under Node.js 22+ with standard web APIs. Reply only ANSWER: <output>, with no explanation or Markdown. The program has no network access or external packages.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "const url = new URL('https://app.test/search?q=a%20b&tag=x&tag=y');\nconst p = url.searchParams;\nconst snapshot = new URLSearchParams(p);\np.set('tag', 'z');\nurl.search = '?q=c%2Bd&tag=k&tag=m';\np.append('q', 'e f');\np.sort();\nconsole.log(JSON.stringify([p === url.searchParams, p.getAll('q'), snapshot.getAll('tag'), url.search]));\n",
+          "position": 1
+        }
+      ],
+      "position": 35
+    },
+    {
+      "stable_id": "wd6-response-clone",
+      "title": "Cloned response bodies, consumption and HTTP error status",
+      "description": "Original executable web-platform scenario: Cloned response bodies, consumption and HTTP error status",
+      "category": "web-js/fetch",
+      "tags": [
+        "web",
+        "javascript",
+        "original",
+        "execution-verified",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "[false,true,\"SyntaxError\",\"TypeError\",\"not-json\",true]",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Determine the exact single console output line under Node.js 22+ with standard web APIs. Reply only ANSWER: <output>, with no explanation or Markdown. The program has no network access or external packages.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "(async () => {\n  const response = new Response('not-json', {status: 409});\n  const copy = response.clone();\n  let first, second;\n  try { await response.json(); } catch (e) { first = e.name; }\n  try { await response.text(); } catch (e) { second = e.name; }\n  const text = await copy.text();\n  console.log(JSON.stringify([response.ok, response.bodyUsed, first, second, text, copy.bodyUsed]));\n})();\n",
+          "position": 1
+        }
+      ],
+      "position": 36
+    },
+    {
+      "stable_id": "wd6-abort-reentrancy",
+      "title": "Abort dispatch, reentrant abort and promise checkpoints",
+      "description": "Original executable web-platform scenario: Abort dispatch, reentrant abort and promise checkpoints",
+      "category": "web-js/abort",
+      "tags": [
+        "web",
+        "javascript",
+        "original",
+        "execution-verified",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "listener:first|after:first|promise|listener-microtask",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Determine the exact single console output line under Node.js 22+ with standard web APIs. Reply only ANSWER: <output>, with no explanation or Markdown. The program has no network access or external packages.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "const c = new AbortController();\nconst out = [];\nc.signal.addEventListener('abort', () => {\n  out.push('listener:' + c.signal.reason);\n  c.abort('second');\n  queueMicrotask(() => out.push('listener-microtask'));\n});\nPromise.resolve().then(() => out.push('promise'));\nc.abort('first');\nout.push('after:' + c.signal.reason);\nc.signal.addEventListener('abort', () => out.push('late'));\nqueueMicrotask(() => console.log(out.join('|')));\n",
+          "position": 1
+        }
+      ],
+      "position": 37
+    },
+    {
+      "stable_id": "wd6-thenable-jobs",
+      "title": "Thenable assimilation, ignored settlement and finally adoption",
+      "description": "Original executable web-platform scenario: Thenable assimilation, ignored settlement and finally adoption",
+      "category": "web-js/promise",
+      "tags": [
+        "web",
+        "javascript",
+        "original",
+        "execution-verified",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "get|sync|then|after-resolve|micro|finally|ok",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Determine the exact single console output line under Node.js 22+ with standard web APIs. Reply only ANSWER: <output>, with no explanation or Markdown. The program has no network access or external packages.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "const out = [];\nconst value = { get then() {\n  out.push('get');\n  return resolve => {\n    out.push('then'); resolve('ok'); out.push('after-resolve'); throw Error('ignored');\n  };\n}};\nconst p = Promise.resolve(value);\nout.push('sync');\np.finally(() => { out.push('finally'); return Promise.resolve('replacement'); })\n .then(x => { out.push(x); console.log(out.join('|')); });\nqueueMicrotask(() => out.push('micro'));\n",
+          "position": 1
+        }
+      ],
+      "position": 38
+    },
+    {
+      "stable_id": "wd6-proxy-receiver",
+      "title": "Proxy receiver writes through inherited accessors",
+      "description": "Original executable web-platform scenario: Proxy receiver writes through inherited accessors",
+      "category": "web-js/proxy",
+      "tags": [
+        "web",
+        "javascript",
+        "original",
+        "execution-verified",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "[12,6,6,3,false,[\"score:5\",\"_score:6\"]]",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Determine the exact single console output line under Node.js 22+ with standard web APIs. Reply only ANSWER: <output>, with no explanation or Markdown. The program has no network access or external packages.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "const events = [];\nconst base = { get score() { return this._score * 2; },\n  set score(v) { this._score = v + 1; } };\nconst target = Object.create(base);\ntarget._score = 3;\nconst proxy = new Proxy(target, {\n  set(t, k, v, receiver) {\n    events.push(String(k) + ':' + v);\n    return Reflect.set(t, k, v, receiver);\n  }\n});\nconst child = Object.create(proxy);\nchild.score = 5;\nconsole.log(JSON.stringify([child.score, proxy.score, child._score, target._score,\n  Object.hasOwn(child, 'score'), events]));\n",
+          "position": 1
+        }
+      ],
+      "position": 39
+    },
+    {
+      "stable_id": "wd6-clone-transfer",
+      "title": "Transferred buffers and alias identity in structuredClone",
+      "description": "Original executable web-platform scenario: Transferred buffers and alias identity in structuredClone",
+      "category": "web-js/clone",
+      "tags": [
+        "web",
+        "javascript",
+        "original",
+        "execution-verified",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "[0,0,true,true,[3,11,7,9],[11,7]]",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Determine the exact single console output line under Node.js 22+ with standard web APIs. Reply only ANSWER: <output>, with no explanation or Markdown. The program has no network access or external packages.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "const buffer = new ArrayBuffer(4);\nconst a = new Uint8Array(buffer);\na.set([3, 5, 7, 9]);\nconst source = {a, b: new Uint8Array(buffer, 1, 2)};\nsource.self = source;\nconst cloned = structuredClone(source, {transfer: [buffer]});\ncloned.b[0] = 11;\nconsole.log(JSON.stringify([buffer.byteLength, a.length, cloned.self === cloned,\n  cloned.a.buffer === cloned.b.buffer, [...cloned.a], [...cloned.b]]));\n",
+          "position": 1
+        }
+      ],
+      "position": 40
+    },
+    {
+      "stable_id": "wd6-json-replacer",
+      "title": "toJSON runs before replacers and changes the holder",
+      "description": "Original executable web-platform scenario: toJSON runs before replacers and changes the holder",
+      "category": "web-js/json",
+      "tags": [
+        "web",
+        "javascript",
+        "original",
+        "execution-verified",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "[\"{\\\"child\\\":{\\\"value\\\":10}}\",[\"secret:source\",\"json:child\",\"child:source\",\"value:other\",\"drop:other\"]]",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Determine the exact single console output line under Node.js 22+ with standard web APIs. Reply only ANSWER: <output>, with no explanation or Markdown. The program has no network access or external packages.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "const trace = [];\nconst source = {secret: 7, child: {value: 4,\n  toJSON(key) { trace.push('json:' + key); return {value: this.value + 1, drop: undefined}; }\n}};\nconst text = JSON.stringify(source, function(key, value) {\n  if (key) trace.push(key + ':' + (this === source ? 'source' : 'other'));\n  if (key === 'secret') return undefined;\n  if (key === 'value') return value * 2;\n  return value;\n});\nconsole.log(JSON.stringify([text, trace]));\n",
+          "position": 1
+        }
+      ],
+      "position": 41
+    },
+    {
+      "stable_id": "wd6-async-generator-close",
+      "title": "Breaking async iteration awaits yielding finally cleanup",
+      "description": "Original executable web-platform scenario: Breaking async iteration awaits yielding finally cleanup",
+      "category": "web-js/async-generator",
+      "tags": [
+        "web",
+        "javascript",
+        "original",
+        "execution-verified",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "1|cleanup-start|cleanup-end|after-loop",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Determine the exact single console output line under Node.js 22+ with standard web APIs. Reply only ANSWER: <output>, with no explanation or Markdown. The program has no network access or external packages.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "(async () => {\n  const out = [];\n  async function* values() {\n    try { yield 1; yield 2; }\n    finally { out.push('cleanup-start'); await Promise.resolve(); out.push('cleanup-end'); }\n  }\n  for await (const x of values()) { out.push(x); break; }\n  out.push('after-loop');\n  console.log(out.join('|'));\n})();\n",
+          "position": 1
+        }
+      ],
+      "position": 42
+    },
+    {
+      "stable_id": "wd6-store-reentrancy",
+      "title": "Snapshot subscriber lists during nested state updates",
+      "description": "Original executable web-platform scenario: Snapshot subscriber lists during nested state updates",
+      "category": "web-js/state",
+      "tags": [
+        "web",
+        "javascript",
+        "original",
+        "execution-verified",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "A1|A2|C2|B2",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Determine the exact single console output line under Node.js 22+ with standard web APIs. Reply only ANSWER: <output>, with no explanation or Markdown. The program has no network access or external packages.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "let state = 0;\nconst listeners = new Set();\nconst trace = [];\nfunction set(value) {\n  state = value;\n  for (const listener of [...listeners]) listener(state);\n}\nconst b = value => trace.push('B' + value);\nlisteners.add(value => {\n  trace.push('A' + value);\n  if (value === 1) { listeners.delete(b); listeners.add(x => trace.push('C' + x)); set(2); }\n});\nlisteners.add(b);\nset(1);\nconsole.log(trace.join('|'));\n",
+          "position": 1
+        }
+      ],
+      "position": 43
+    },
+    {
+      "stable_id": "wd6-cache-age",
+      "title": "HTTP cache age includes transit time and shared freshness",
+      "description": "Original executable web-platform scenario: HTTP cache age includes transit time and shared freshness",
+      "category": "web-js/http-cache",
+      "tags": [
+        "web",
+        "javascript",
+        "original",
+        "execution-verified",
+        "unmeasured"
+      ],
+      "difficulty": "hard",
+      "importance_weight": 3.0,
+      "enabled": true,
+      "grading_mode": "deterministic",
+      "generation_overrides": {
+        "temperature": 0.0
+      },
+      "grader_config": {
+        "type": "exact",
+        "canonical_answer": "[[19,true],[20,false],[20,true],[19,false]]",
+        "accepted_aliases": [],
+        "case_sensitive": true,
+        "trim_whitespace": true,
+        "normalize_punctuation": false,
+        "points": 100.0
+      },
+      "messages": [
+        {
+          "role": "system",
+          "content": "Determine the exact single console output line under Node.js 22+ with standard web APIs. Reply only ANSWER: <output>, with no explanation or Markdown. The program has no network access or external packages.",
+          "position": 0
+        },
+        {
+          "role": "user",
+          "content": "// All times below are seconds on the same clock. Implemented RFC 9111 rules:\n// apparent_age=max(0,response_time-Date), corrected_age=Age+response_delay;\n// current_age=max(apparent_age,corrected_age)+(now-response_time).\nconst response = {date: 90, age: 8, requestTime: 100, responseTime: 104,\n  maxAge: 60, sMaxAge: 20, vary: ['accept-language']};\nconst storedRequest = {'accept-language': 'en', 'x-theme': 'dark'};\nfunction reusable(now, request, shared) {\n  const delay = response.responseTime - response.requestTime;\n  const age = Math.max(0, response.responseTime - response.date, response.age + delay)\n    + now - response.responseTime;\n  const lifetime = shared ? response.sMaxAge : response.maxAge;\n  return [age, age < lifetime && response.vary.every(k => request[k] === storedRequest[k])];\n}\nconsole.log(JSON.stringify([\n  reusable(109, {'accept-language':'en','x-theme':'light'}, true),\n  reusable(110, {'accept-language':'en'}, true),\n  reusable(110, {'accept-language':'en'}, false),\n  reusable(109, {'accept-language':'fr'}, false)\n]));\n",
+          "position": 1
+        }
+      ],
+      "position": 44
     }
   ]
 }

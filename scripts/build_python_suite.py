@@ -1,10 +1,13 @@
-"""Rebuild the original execution tasks in the 45-question Python suite."""
+"""Rebuild the 40-question Python suite and its original execution contracts."""
 
 import argparse
 import json
+import subprocess
+import sys
 from pathlib import Path
 from textwrap import indent
 
+from hardening_tasks import PYTHON_REASONING
 from python_tasks import TASKS
 
 RETIRED_FUNCTIONS = {
@@ -12,6 +15,8 @@ RETIRED_FUNCTIONS = {
     "apply_patch",
     "allocate_cents",
     "first_conflict",
+    "latest_records",
+    "missing_ranges",
 }
 ACTIVE_TASKS = [t for t in TASKS if t["name"] not in RETIRED_FUNCTIONS]
 
@@ -19,7 +24,6 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "backend/app/seed/suites/code_reasoning_python.json"
 RETAIN = [
     "cr-closure-late-binding",
-    "cr-mutable-default",
     "cr-list-mult-aliasing",
     "cr-decorator-attr-target",
     "cr-floordiv-negatives",
@@ -36,17 +40,14 @@ RETAIN = [
     "cr-chained-comparison",
     "cr-class-var-shadow",
     "cr-tuple-mutation-error",
-    "cr-zip-strict-uneven",
     "cr3-descriptor-protocol",
     "cr3-context-suppress",
     "cr3-reflected-operator",
     "cr3-generator-send",
     "cr3-shallow-vs-deep",
     "cr3-iter-self-exhaust",
-    "cr3-exception-chaining",
     "cr3-closure-cell-rebind",
     "cr3-dict-mutation-order",
-    "cr4-accumulator-dict",
 ]
 
 
@@ -95,22 +96,37 @@ def execution_prompt(t):
 def build():
     suite = json.loads(OUT.read_text())
     suite["prompts"] = [p for p in suite["prompts"] if p["stable_id"] in RETAIN]
-    assert len(suite["prompts"]) == 29
+    assert len(suite["prompts"]) == 25
     for p in suite["prompts"]:
         p["messages"][0]["content"] = (
             "Determine the exact single line printed by this self-contained Python 3 program. "
             "Reply only with ANSWER: <output>, using the literal printed output. "
             "Do not include an explanation, quotes around the output, or Markdown fences."
         )
+    code = PYTHON_REASONING["code"]
+    output = subprocess.run([sys.executable, "-I", "-c", code], capture_output=True, text=True,
+                            check=True, timeout=5).stdout.strip()
+    suite["prompts"].append({
+        "stable_id": PYTHON_REASONING["stable_id"], "title": PYTHON_REASONING["title"],
+        "description": PYTHON_REASONING["description"], "category": "code-reasoning/python",
+        "tags": ["python", "original", "unmeasured", "execution-verified"],
+        "difficulty": "hard", "importance_weight": 3.0, "enabled": True,
+        "grading_mode": "deterministic", "generation_overrides": {"temperature": 0.0},
+        "grader_config": {"type": "exact", "canonical_answer": output, "accepted_aliases": [],
+                          "case_sensitive": True, "trim_whitespace": True,
+                          "normalize_punctuation": False, "points": 100.0},
+        "messages": [{"role": "system", "content": suite["prompts"][0]["messages"][0]["content"]},
+                     {"role": "user", "content": code}],
+    })
     suite["prompts"].extend(execution_prompt(t) for t in ACTIVE_TASKS)
-    assert len(suite["prompts"]) == 45
+    assert len(suite["prompts"]) == 40
     for i, p in enumerate(suite["prompts"]):
         p["position"] = i
         for j, m in enumerate(p["messages"]):
             m["position"] = j
-    suite["version"] = "7.0.0"
+    suite["version"] = "8.0.0"
     suite["description"] = (
-        "A compact 45-question Python test: 29 output-reasoning items covering mutation, scoping, iterators, exceptions and the data model, plus 16 original complete-function tasks inspired by HumanEval's executable-contract format. Practical tasks cover logs, caching, pagination and data processing. Execution tests check edge cases and non-mutation. Five higher-risk reasoning workloads have been retired; remaining tasks use short output traces or compact function contracts. Difficulty and duration are not model-calibrated; token budgets and model reasoning still affect runtime. Python 3.10+; no third-party packages or network required."
+        "40 Python questions: 26 output-reasoning items and 14 original complete-function tasks. Covers mutation, scope, descriptors, reflected operators, delegated-generator throw/return/cleanup, rolling event windows, caches, parsing and nested data. Output keys are executed locally; function checks cover edge cases and non-mutation. Difficulty and duration are unmeasured for this revision. Python 3.10+; no third-party packages or network required."
     )
     return suite
 
@@ -123,7 +139,7 @@ if __name__ == "__main__":
     if args.check:
         if OUT.read_text() != rendered:
             raise SystemExit("Python suite is stale")
-        print("Python suite is up to date (45 questions)")
+        print("Python suite is up to date (40 questions)")
     else:
         OUT.write_text(rendered)
-        print("Wrote Python suite (45 questions)")
+        print("Wrote Python suite (40 questions)")

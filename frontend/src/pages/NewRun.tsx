@@ -1,17 +1,22 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api/client";
-import { Card, EmptyState, PageHeader } from "@/components/ui";
+import { Card, EmptyState, PageHeader, Spinner } from "@/components/ui";
 import { useToast } from "@/store/toast";
 
 export default function NewRun() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const toast = useToast();
   const { data: endpoints } = useQuery({ queryKey: ["endpoints"], queryFn: api.listEndpoints });
-  const { data: benchmarks } = useQuery({ queryKey: ["benchmarks"], queryFn: api.listBenchmarks });
+  const { data: benchmarks, isLoading: loadingBenchmarks, error: benchmarkError, refetch: reloadBenchmarks } = useQuery({ queryKey: ["benchmarks"], queryFn: api.listBenchmarks });
+  const { data: indexConfig } = useQuery({ queryKey: ["index-config"], queryFn: api.getIndexConfig });
   const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: api.getSettings });
-  const [benchmarkIds, setBenchmarkIds] = useState<string[]>([]);
+  const [benchmarkIds, setBenchmarkIds] = useState<string[]>(() => {
+    const id = searchParams.get("benchmark");
+    return id ? [id] : [];
+  });
   const [targetEndpointId, setTargetEndpointId] = useState("");
   const [targetModel, setTargetModel] = useState("");
   const [judgeEndpointId, setJudgeEndpointId] = useState("");
@@ -31,6 +36,9 @@ export default function NewRun() {
   const selectedBenchmarks = benchmarkIds.flatMap((id) => benchmarks?.find((b) => b.id === id) || []);
   const promptCount = selectedBenchmarks.reduce((sum, b) => sum + b.enabled_prompt_count, 0) * repetitions;
   const targetEndpoint = endpoints?.find((e) => e.id === targetEndpointId);
+  const miniMaster = benchmarks?.find((b) => b.name === "Mini Master");
+  const coreIds = indexConfig?.default_suite_ids ?? [];
+  const coreAvailable = coreIds.length === 6 && coreIds.every((id) => benchmarks?.some((b) => b.id === id && b.enabled_prompt_count > 0));
   const sameModel = targetModel && judgeModel && targetEndpointId === judgeEndpointId && targetModel === judgeModel;
 
   // When an endpoint is selected, ask it for its /v1/models list so the model
@@ -80,6 +88,7 @@ export default function NewRun() {
 
   const validate = (): string | null => {
     if (!benchmarkIds.length) return "Select a benchmark.";
+    if (selectedBenchmarks.length !== benchmarkIds.length || selectedBenchmarks.some((b) => b.enabled_prompt_count === 0)) return "Select available benchmarks with enabled questions.";
     if (!targetEndpointId) return "Select a target endpoint.";
     if (!targetModel.trim()) return "Enter or select a target model.";
     return null;
@@ -136,7 +145,18 @@ export default function NewRun() {
       <div className="grid md:grid-cols-2 gap-4">
         <Card>
           <div className="label" id="benchmark-selection-label">Benchmark sets</div>
-          {!benchmarks || benchmarks.length === 0 ? (
+          <div className="flex flex-wrap gap-2 mb-3">
+            <button className="btn text-xs" disabled={!coreAvailable || submitting} onClick={() => setBenchmarkIds(coreIds)}>Select six Index suites</button>
+            <button className="btn text-xs" disabled={!miniMaster?.enabled_prompt_count || submitting} onClick={() => miniMaster && setBenchmarkIds([miniMaster.id])}>Mini Master only</button>
+            <button className="btn btn-ghost text-xs" disabled={!benchmarkIds.length || submitting} onClick={() => setBenchmarkIds([])}>Clear selection</button>
+          </div>
+          <p className="text-xs text-gray-400 mb-3">The default Index combines six core suites. Mini Master is a separate, shorter run with its own score.</p>
+          {loadingBenchmarks ? <Spinner label="Loading benchmarks…" /> : benchmarkError ? (
+            <div role="alert" className="text-sm text-err">
+              <p>Could not load benchmarks: {(benchmarkError as Error).message}</p>
+              <button className="btn mt-2" onClick={() => reloadBenchmarks()}>Retry loading benchmarks</button>
+            </div>
+          ) : !benchmarks || benchmarks.length === 0 ? (
             <EmptyState title="No benchmarks available" />
           ) : (
             <div role="group" aria-labelledby="benchmark-selection-label" className="max-h-64 overflow-y-auto space-y-2">
@@ -145,7 +165,9 @@ export default function NewRun() {
                   <input type="checkbox" className="mt-1" checked={benchmarkIds.includes(b.id)}
                     disabled={b.enabled_prompt_count === 0 || submitting}
                     onChange={(e) => setBenchmarkIds((ids) => e.target.checked ? [...ids, b.id] : ids.filter((id) => id !== b.id))} />
-                  <span>{b.name} ({b.enabled_prompt_count} prompts) v{b.version}</span>
+                  <span>{b.name} ({b.enabled_prompt_count} prompts) v{b.version}
+                    {b.name === "Mini Master" && <span className="text-accent text-xs ml-2">Standalone</span>}
+                  </span>
                 </label>
               ))}
             </div>

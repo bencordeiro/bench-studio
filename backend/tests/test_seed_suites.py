@@ -123,11 +123,7 @@ def test_instruction_following_violation_is_penalized(session):
 AGENTIC_COMPLIANT = {
     "ag-simple-weather":
         '<tool_call>{"name": "get_weather", "arguments": {"location": "Paris", "unit": "celsius"}}</tool_call>',
-    "ag-parallel-same":
-        '<tool_call>{"name": "get_weather", "arguments": {"location": "Paris", "unit": "celsius"}}</tool_call>\n'
-        '<tool_call>{"name": "get_weather", "arguments": {"location": "Tokyo", "unit": "celsius"}}</tool_call>',
-    "ag-relevance-haiku":
-        "Crisp autumn morning\nred leaves drift on the cool wind\nsilence fills the grove",
+
 }
 
 
@@ -139,12 +135,12 @@ def test_agentic_compliant_tool_calls_score_100(session):
         assert result["score"] == 100.0, f"{sid}: compliant call scored {result['score']}"
 
 
-def test_agentic_relevance_penalizes_spurious_call(session):
-    """Emitting a tool call when none is warranted must lose marks."""
+def test_agentic_extra_action_is_penalized(session):
     prompts = {p.stable_id: p for p in _all_prompts(session)}
-    p = prompts["ag-relevance-haiku"]
-    spurious = '<tool_call>{"name": "get_weather", "arguments": {"location": "autumn", "unit": "celsius"}}</tool_call>'
-    assert run_deterministic(p.grader_config, spurious)["score"] < 100.0
+    p = prompts["ag5-authoritative-identity"]
+    correct = '<tool_call>{"name":"restore_backup","arguments":{"backup_id":"b-74","target_id":"node-8","expected_generation":11}}</tool_call>'
+    extra = '<tool_call>{"name":"delete_backup","arguments":{"backup_id":"b-90"}}</tool_call>'
+    assert run_deterministic(p.grader_config, correct + extra)["score"] < 100
 
 
 def _tc(*calls: dict) -> str:
@@ -166,15 +162,6 @@ AGENTIC_MUST_FAIL = [
     ("ag-multiple-hotel", "hallucinated dates", _tc(
         {"name": "search_hotels",
          "arguments": {"city": "Kyoto", "check_in": "2024-05-03", "check_out": "2024-05-07"}})),
-    ("ag-parallel-same", "second call has the wrong unit", _tc(
-        {"name": "get_weather", "arguments": {"location": "Paris", "unit": "celsius"}},
-        {"name": "get_weather", "arguments": {"location": "Tokyo", "unit": "fahrenheit"}})),
-    ("ag-arg-precision", "12-hour time where the schema demands 24-hour", _tc(
-        {"name": "book_table",
-         "arguments": {"restaurant": "Nobu", "party_size": 4, "time": "7:30 PM"}})),
-    ("ag-missing-required-arg", "hallucinated the missing destination", _tc(
-        {"name": "search_flights",
-         "arguments": {"origin": "Denver", "destination": "New York", "date": "2026-04-12"}})),
     ("ag-nested-array-args", "attendees sent as a string, not an array", _tc(
         {"name": "create_event",
          "arguments": {"title": "Roadmap Review", "start": "2026-03-09T14:00",
@@ -227,8 +214,10 @@ def test_no_bundled_prompt_rewards_a_garbage_answer(session):
 def test_retiring_example_preserves_custom_suites_and_run_snapshots(session):
     import importlib.util
     from pathlib import Path
+
     from alembic.migration import MigrationContext
     from alembic.operations import Operations
+
     from app.models import BenchmarkRun
     from app.services.crud import create_benchmark_set
 

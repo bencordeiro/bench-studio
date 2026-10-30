@@ -1,22 +1,24 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter } from "react-router-dom";
+import { MemoryRouter } from "react-router-dom";
 import NewRun from "@/pages/NewRun";
 
-const { mockEndpoints, mockBenchmarks, mockCreate, mockChain, mockFetchModels } = vi.hoisted(() => ({
+const { mockEndpoints, mockBenchmarks, mockCreate, mockChain, mockFetchModels, mockIndexConfig } = vi.hoisted(() => ({
   mockEndpoints: vi.fn(),
   mockBenchmarks: vi.fn(),
   mockCreate: vi.fn(),
   mockChain: vi.fn(),
   mockFetchModels: vi.fn(),
+  mockIndexConfig: vi.fn(),
 }));
 
 vi.mock("@/api/client", () => ({
   api: {
     getSettings: async () => ({ default_max_tokens: 4096, default_timeout: 90 }),
     listEndpoints: () => mockEndpoints(),
+    getIndexConfig: () => mockIndexConfig(),
     listBenchmarks: () => mockBenchmarks(),
     createRun: (data: unknown) => mockCreate(data),
     createRunChain: (data: unknown) => mockChain(data),
@@ -24,22 +26,54 @@ vi.mock("@/api/client", () => ({
   },
 }));
 
-function renderPage() {
+function renderPage(path = "/runs/new") {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <BrowserRouter>
+      <MemoryRouter initialEntries={[path]}>
         <NewRun />
-      </BrowserRouter>
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 }
 
 describe("New Run form validation", () => {
+  it("selects the six core suites and keeps Mini Master as a separate shortcut", async () => {
+    const core = Array.from({ length: 6 }, (_, i) => ({ id: `core-${i}`, name: `Core ${i}`, enabled_prompt_count: 10, version: "1.0.0" }));
+    mockBenchmarks.mockResolvedValue([...core, { id: "mini", name: "Mini Master", enabled_prompt_count: 25, version: "3.0.0" }]);
+    mockIndexConfig.mockResolvedValue({ default_suite_ids: core.map((b) => b.id), suites: [] });
+    renderPage();
+    const selectCore = await screen.findByRole("button", { name: "Select six Index suites" });
+    await waitFor(() => expect(selectCore).toBeEnabled());
+    await userEvent.click(selectCore);
+    expect(within(screen.getByRole("group", { name: "Benchmark sets" })).getAllByRole("checkbox").filter((box) => (box as HTMLInputElement).checked)).toHaveLength(6);
+    expect(screen.getByRole("checkbox", { name: /Mini Master/ })).not.toBeChecked();
+    await userEvent.click(screen.getByRole("button", { name: "Mini Master only" }));
+    expect(within(screen.getByRole("group", { name: "Benchmark sets" })).getAllByRole("checkbox").filter((box) => (box as HTMLInputElement).checked)).toHaveLength(1);
+    expect(screen.getByRole("checkbox", { name: /Mini Master/ })).toBeChecked();
+    await userEvent.click(screen.getByRole("button", { name: "Clear selection" }));
+    expect(within(screen.getByRole("group", { name: "Benchmark sets" })).getAllByRole("checkbox").every((box) => !(box as HTMLInputElement).checked)).toBe(true);
+  });
+
+  it("preselects the suite linked from the library", async () => {
+    renderPage("/runs/new?benchmark=b1");
+    await waitFor(() => expect(screen.getByRole("checkbox", { name: /Bench/ })).toBeChecked());
+  });
+
+  it("shows failed benchmark loading with a retry action", async () => {
+    mockBenchmarks.mockRejectedValue(new Error("Library unavailable"));
+    renderPage();
+    expect(await screen.findByRole("alert")).toHaveTextContent("Library unavailable");
+    expect(screen.queryByText("No benchmarks available")).not.toBeInTheDocument();
+    mockBenchmarks.mockResolvedValue([{ id: "b1", name: "Recovered", enabled_prompt_count: 5, version: "1.0.0" }]);
+    await userEvent.click(screen.getByRole("button", { name: "Retry loading benchmarks" }));
+    expect(await screen.findByRole("checkbox", { name: /Recovered/ })).toBeInTheDocument();
+  });
+
   it("queues multiple benchmarks in the chosen order with shared settings", async () => {
     mockBenchmarks.mockResolvedValue([
-      { id: "b1", name: "Python", enabled_prompt_count: 45, version: "7.0.0" },
-      { id: "b2", name: "Mini Master", enabled_prompt_count: 23, version: "2.0.0" },
+      { id: "b1", name: "Python", enabled_prompt_count: 40, version: "8.0.0" },
+      { id: "b2", name: "Mini Master", enabled_prompt_count: 25, version: "3.0.0" },
       { id: "b3", name: "Empty", enabled_prompt_count: 0, version: "1.0.0" },
     ]);
     mockFetchModels.mockResolvedValue({ success: true, models: ["demo"], error: null });
@@ -50,7 +84,7 @@ describe("New Run form validation", () => {
     await userEvent.click(screen.getByRole("checkbox", { name: /Mini Master/ }));
     await userEvent.click(screen.getByRole("button", { name: "Move Mini Master up" }));
     expect(screen.getByText("1. Mini Master")).toBeInTheDocument();
-    expect(screen.getByText(/68 prompts including repetitions/)).toBeInTheDocument();
+    expect(screen.getByText(/65 prompts including repetitions/)).toBeInTheDocument();
     await userEvent.selectOptions(screen.getAllByRole("combobox")[0], "e1");
     await waitFor(() => expect(screen.getByDisplayValue("demo")).toBeInTheDocument());
     await userEvent.click(screen.getByRole("button", { name: "Start 2 benchmarks" }));
@@ -77,6 +111,7 @@ describe("New Run form validation", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockIndexConfig.mockResolvedValue({ default_suite_ids: [], suites: [] });
     mockEndpoints.mockResolvedValue([
       { id: "e1", name: "Local", enabled: true, default_model: "demo" },
     ]);

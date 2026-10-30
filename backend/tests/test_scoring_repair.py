@@ -1,7 +1,5 @@
 """Saved attempts are rescored locally, without repeating model requests."""
-import json
 import uuid
-from pathlib import Path
 from unittest.mock import AsyncMock
 
 from fastapi.testclient import TestClient
@@ -62,7 +60,11 @@ def test_startup_repairs_historical_comparison_without_generation(session, monke
 
     chat = AsyncMock(side_effect=AssertionError("Rescoring must not generate"))
     monkeypatch.setattr(engine, "chat_completion", chat)
-    suite = json.loads((Path(__file__).parents[1] / "app/seed/suites/mini_master.json").read_text())
+    weights = [4, 4, 3, 3, 4, 4, 4, 3, 3, 3, 2, 3, 3, 3, 2, 2, 2, 1.5, 4, 4, 3, 3, 3]
+    suite = {"name": "Mini Master", "version": "2.0.0", "prompts": [
+        {"stable_id": f"historical-{i}", "category": "historical", "importance_weight": weight}
+        for i, weight in enumerate(weights)
+    ]}
     bench = BenchmarkSet(id=str(uuid.uuid4()), name="Mini Master", version="2.0.0", show_in_leaderboards=True)
     session.add(bench)
     session.flush()

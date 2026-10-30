@@ -1,5 +1,7 @@
 # Curated suite audit — September 2026
 
+> Historical review. Current suites and counts are documented in [the October 29 refresh](BENCHMARK_REFRESH.md). Master is retired.
+
 This revision contains 218 custom prompts, plus the unchanged 164-question
 HumanEval suite (382 total). Mini Master intentionally overlaps with Master.
 It emphasizes clear contracts and reproducible

@@ -1,5 +1,7 @@
 # Qwen Flash Master duration investigation — 2026-09-29
 
+> Historical review. Current suites and counts are documented in [the October 29 refresh](BENCHMARK_REFRESH.md). Master is retired.
+
 The requested target is 15–30 minutes for a complete Master run, while retaining
 difficult questions. The 50-question Master 4.1.0 baseline took approximately
 25 minutes 46 seconds to complete its requests, but 15 responses exhausted

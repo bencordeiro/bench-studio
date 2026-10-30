@@ -1,5 +1,7 @@
 # Python suite duration review — September 30, 2026
 
+> Historical review. Current suites and counts are documented in [the October 29 refresh](BENCHMARK_REFRESH.md). Master is retired.
+
 Code Reasoning & Correctness (Python) 7.0.0 contains **45 questions**:
 29 output traces and 16 complete-function tasks. This review used the prompt
 contracts, actual CPython outputs, and local execution graders. **No endpoint

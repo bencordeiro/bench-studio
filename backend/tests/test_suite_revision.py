@@ -30,12 +30,11 @@ def suite(name):
     [
         ("instruction_following", 15),
         ("agentic_tool_use", 15),
-        ("master_suite", 45),
-        ("mini_master", 23),
-        ("cyber", 18),
-        ("terminal_semantics", 12),
+        ("mini_master", 25),
+        ("cyber", 10),
+        ("terminal_semantics", 15),
         ("web_dev_js", 45),
-        ("code_reasoning_python", 45),
+        ("code_reasoning_python", 40),
     ],
 )
 def test_requested_suite_counts(name, count):
@@ -242,11 +241,11 @@ def test_python_suite_builder_and_retired_workloads():
                             capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, result.stdout + result.stderr
     python_suite = suite("code_reasoning_python")
-    assert python_suite["version"] == "7.0.0"
+    assert python_suite["version"] == "8.0.0"
     retired = {"cr3-super-kwargs-chain", "cr-fn-dependency-batches", "cr-fn-apply-patch",
                "cr-fn-allocate-cents", "cr-fn-first-conflict"}
     assert not retired.intersection(p["stable_id"] for p in python_suite["prompts"])
-    assert sum(p["grading_mode"] == "execution" for p in python_suite["prompts"]) == 16
+    assert sum(p["grading_mode"] == "execution" for p in python_suite["prompts"]) == 14
 
 
 def test_python_upgrade_keeps_historical_run_snapshot(session):
@@ -274,6 +273,6 @@ def test_python_upgrade_keeps_historical_run_snapshot(session):
     session.flush()
     original_id = bench.id
     seed_bundled_suites(session)
-    assert session.get(BenchmarkSet, original_id).version == "7.0.0"
-    assert len(session.get(BenchmarkSet, original_id).prompts) == 45
+    assert session.get(BenchmarkSet, original_id).version == "8.0.0"
+    assert len(session.get(BenchmarkSet, original_id).prompts) == 40
     assert run.benchmark_snapshot == old

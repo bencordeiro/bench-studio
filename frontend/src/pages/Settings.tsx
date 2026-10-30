@@ -93,6 +93,7 @@ export default function SettingsPage() {
           <div id="index-settings" className="scroll-mt-4">
             <h3 className="font-medium text-white mb-2">Index benchmarks</h3>
             <p className="text-xs text-gray-400 mb-3">Choose the benchmarks for the Index leaderboard. Each contributes equally to the average quality score. Models appear only after completing and scoring every selected benchmark. Save to apply.</p>
+            <p className="text-xs text-gray-400 mb-3">The six defaults cover Instruction Following, Terminal, Web Dev, Python, Cyber and Agentic. Mini Master is a separate benchmark and is excluded by default.</p>
             {!benchmarks || !indexConfig ? <Spinner label="Loading Index configuration…" /> : (
               <div className="grid sm:grid-cols-2 gap-2">
                 {benchmarks.map((bench) => <label key={bench.id} className="flex items-center gap-2 text-sm">
@@ -109,7 +110,7 @@ export default function SettingsPage() {
               </div>
             )}
             <div className="flex items-center gap-3 mt-3">
-              <button className="btn text-xs" disabled={saving} onClick={() => set({ index_suite_ids: null })}>Restore seven defaults</button>
+              <button className="btn text-xs" disabled={saving} onClick={() => set({ index_suite_ids: null })}>Restore six defaults</button>
               <span className="text-xs text-gray-500">{indexIds.length} selected{indexIds.length === 0 ? " — Index is empty" : ""}</span>
             </div>
           </div>

@@ -24,6 +24,7 @@ export default function IndexPage() {
       <Card className="mb-4">
         <p className="text-sm text-gray-300">Only models with completed, fully scored runs for every selected benchmark appear. Failed generations count as zero within a completed run.</p>
         <p className="text-xs text-gray-500 mt-2">Each benchmark contributes equally, regardless of its question count. The basis applies separately to each benchmark.</p>
+        <p className="text-xs text-gray-400 mt-2">The default Index combines six core suites. <Link to="/benchmarks" className="text-accent hover:underline">Mini Master</Link> has a separate score and is excluded by default.</p>
         <div className="flex flex-wrap gap-2 mt-3" role="group" aria-label="Index scoring basis">
           {(Object.keys(BASIS_LABELS) as LeaderboardBasis[]).map((value) => (
             <button key={value} className={`btn text-xs ${basis === value ? "btn-primary" : "btn-ghost"}`}

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/client";
 import { Badge, Card, ConfirmButton, EmptyState, Modal, PageHeader, Spinner } from "@/components/ui";
@@ -10,7 +10,8 @@ import type { BenchmarkSet } from "@/types";
 export default function BenchmarkLibrary() {
   const toast = useToast();
   const qc = useQueryClient();
-  const { data, isLoading } = useQuery({ queryKey: ["benchmarks"], queryFn: api.listBenchmarks });
+  const navigate = useNavigate();
+  const { data, isLoading, error, refetch } = useQuery({ queryKey: ["benchmarks"], queryFn: api.listBenchmarks });
   const [search, setSearch] = useState("");
   const filtered = data?.filter((b) => `${b.name} ${b.description} ${b.tags.join(" ")}`.toLowerCase().includes(search.toLowerCase()));
   const [creating, setCreating] = useState(false);
@@ -31,8 +32,9 @@ export default function BenchmarkLibrary() {
       qc.invalidateQueries({ queryKey: ["benchmarks"] });
       setCreating(false);
       toast("Benchmark created", "success");
-      window.location.href = `/benchmarks/${b.id}`;
+      navigate(`/benchmarks/${b.id}`);
     },
+    onError: (e: Error) => toast(e.message, "error"),
   });
 
   return (
@@ -53,8 +55,8 @@ export default function BenchmarkLibrary() {
                 e.target.value = "";
               }}
             />
-            <button className="btn" onClick={() => fileRef.current?.click()}>
-              Import JSON
+            <button className="btn" disabled={importMut.isPending} onClick={() => fileRef.current?.click()}>
+              {importMut.isPending ? "Importing…" : "Import JSON"}
             </button>
             <button className="btn btn-primary" onClick={() => setCreating(true)}>
               + New Benchmark
@@ -62,12 +64,15 @@ export default function BenchmarkLibrary() {
           </>
         }
       />
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex flex-wrap items-center gap-3 mb-4">
         <input aria-label="Search benchmarks" className="input max-w-md" placeholder="Search suites, topics, or tags…" value={search} onChange={(e) => setSearch(e.target.value)} />
         <span className="text-xs text-gray-400">{filtered?.length ?? 0} suites</span>
       </div>
       {isLoading ? (
         <Spinner label="Loading…" />
+      ) : error ? (
+        <Card><div role="alert"><p className="text-err">Could not load benchmarks: {(error as Error).message}</p>
+          <button className="btn mt-3" onClick={() => refetch()}>Retry</button></div></Card>
       ) : !data || data.length === 0 ? (
         <EmptyState title="No benchmarks" hint="Create one or import a benchmark JSON file." />
       ) : filtered?.length === 0 ? (
@@ -82,6 +87,7 @@ export default function BenchmarkLibrary() {
                 </Link>
                 <div className="flex gap-1 flex-shrink-0">
                   {b.is_example && <Badge className="text-warn border-warn/40 bg-warn/10">example</Badge>}
+                  {b.name === "Mini Master" && <Badge className="text-accent border-accent/40">Standalone</Badge>}
                   <Badge className="text-gray-400 border-border bg-bg-elev">v{b.version}</Badge>
                 </div>
               </div>
@@ -90,19 +96,20 @@ export default function BenchmarkLibrary() {
                 <div className="text-xs text-gray-500">
                   {b.enabled_prompt_count} / {b.prompt_count} prompts · {fmtRelative(b.updated_at)}
                 </div>
-                <div className="flex gap-1">
+                <div className="flex flex-wrap gap-1">
+                  {b.enabled_prompt_count > 0 && <Link className="btn btn-primary" to={`/runs/new?benchmark=${encodeURIComponent(b.id)}`}>Run suite</Link>}
                   <a className="btn" href={api.exportBenchmarkUrl(b.id)} download>
                     Export
                   </a>
                   <button
                     className="btn"
-                    onClick={() => api.duplicateBenchmark(b.id).then(() => { qc.invalidateQueries({ queryKey: ["benchmarks"] }); toast("Duplicated", "success"); })}
+                    onClick={() => api.duplicateBenchmark(b.id).then(() => { qc.invalidateQueries({ queryKey: ["benchmarks"] }); toast("Duplicated", "success"); }).catch((e: Error) => toast(e.message, "error"))}
                   >
                     Duplicate
                   </button>
                   <ConfirmButton
                     message={`Delete benchmark '${b.name}'? This cannot be undone.`}
-                    onConfirm={() => api.deleteBenchmark(b.id).then(() => { qc.invalidateQueries({ queryKey: ["benchmarks"] }); toast("Deleted", "success"); })}
+                    onConfirm={() => api.deleteBenchmark(b.id).then(() => { qc.invalidateQueries({ queryKey: ["benchmarks"] }); toast("Deleted", "success"); }).catch((e: Error) => toast(e.message, "error"))}
                   >
                     Delete
                   </ConfirmButton>
@@ -150,12 +157,12 @@ function CreateBenchmarkModal({
     >
       <div className="space-y-3">
         <div>
-          <label className="label">Name</label>
-          <input className="input" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+          <label className="label" htmlFor="new-benchmark-name">Name</label>
+          <input id="new-benchmark-name" className="input" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
         </div>
         <div>
-          <label className="label">Description</label>
-          <textarea className="input h-20" value={description} onChange={(e) => setDescription(e.target.value)} />
+          <label className="label" htmlFor="new-benchmark-description">Description</label>
+          <textarea id="new-benchmark-description" className="input h-20" value={description} onChange={(e) => setDescription(e.target.value)} />
         </div>
       </div>
     </Modal>

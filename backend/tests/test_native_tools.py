@@ -13,7 +13,7 @@ from app.services.tool_compatibility import requires_text_tool_calls
 
 def prompts():
     folder = Path(__file__).resolve().parents[1] / "app" / "seed" / "suites"
-    return [prompt for suite in ("master_suite", "agentic_tool_use")
+    return [prompt for suite in ("mini_master", "agentic_tool_use")
             for prompt in json.loads((folder / f"{suite}.json").read_text())["prompts"]
             if requires_text_tool_calls(prompt)]
 
@@ -80,6 +80,6 @@ def test_native_call_with_prose_still_fails_call_only_constraint():
 
 
 def test_native_history_missing_a_tool_result_is_not_fabricated():
-    prompt = next(p for p in prompts() if p["stable_id"] == "ms-agent-id-propagation")
+    prompt = next(p for p in prompts() if p["stable_id"] == "ag5-paginated-join")
     with pytest.raises(ValueError, match="without the supplied tool results"):
-        native_request(prompt["messages"][:-1])
+        native_request(prompt["messages"][:-2])

@@ -409,8 +409,12 @@ async def test_native_target_calls_are_stored_and_graded_alongside_normal_questi
     from app.models import TargetResponse
 
     bundle = json.loads((Path(__file__).resolve().parents[1] / "app/seed/suites/agentic_tool_use.json").read_text())
-    prompts = [next(p for p in bundle["prompts"] if p["stable_id"] == key)
-               for key in ("ag-simple-weather", "ag-missing-required-arg")]
+    prompts = [next(p for p in bundle["prompts"] if p["stable_id"] == "ag-simple-weather")]
+    from copy import deepcopy
+    no_call = deepcopy(prompts[0])
+    no_call.update(stable_id="transport-no-call", grader_config={"type": "exact", "canonical_answer": "What is your destination?"})
+    no_call["messages"][-1]["content"] = "Reply exactly: What is your destination? Do not call a tool."
+    prompts.append(no_call)
     prompts.append({"stable_id": "ordinary", "grading_mode": "deterministic",
                     "grader_config": {"type": "exact", "canonical_answer": "yes"},
                     "messages": [{"role": "user", "content": "Say yes"}]})

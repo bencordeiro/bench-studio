@@ -3,8 +3,8 @@
   "format_version": "1.0",
   "exported_at": "",
   "name": "Code Reasoning & Correctness (Python)",
-  "description": "A compact 45-question Python test: 29 output-reasoning items covering mutation, scoping, iterators, exceptions and the data model, plus 16 original complete-function tasks inspired by HumanEval's executable-contract format. Practical tasks cover logs, caching, pagination and data processing. Execution tests check edge cases and non-mutation. Five higher-risk reasoning workloads have been retired; remaining tasks use short output traces or compact function contracts. Difficulty and duration are not model-calibrated; token budgets and model reasoning still affect runtime. Python 3.10+; no third-party packages or network required.",
-  "version": "7.0.0",
+  "description": "40 Python questions: 26 output-reasoning items and 14 original complete-function tasks. Covers mutation, scope, descriptors, reflected operators, delegated-generator throw/return/cleanup, rolling event windows, caches, parsing and nested data. Output keys are executed locally; function checks cover edge cases and non-mutation. Difficulty and duration are unmeasured for this revision. Python 3.10+; no third-party packages or network required.",
+  "version": "8.0.0",
   "tags": [
     "coding",
     "python",
@@ -68,48 +68,6 @@
       "position": 0
     },
     {
-      "stable_id": "cr-mutable-default",
-      "title": "Mutable default argument identity",
-      "description": "The default list is created once and shared across calls.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "output-prediction",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "True",
-        "accepted_aliases": [
-          "true"
-        ],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "def f(x, acc=[]):\n    acc.append(x)\n    return acc\n\nprint(f(1) is f(3))",
-          "position": 1
-        }
-      ],
-      "position": 1
-    },
-    {
       "stable_id": "cr-list-mult-aliasing",
       "title": "Row aliasing from list multiplication",
       "description": "The outer list holds three references to the same inner list.",
@@ -147,7 +105,7 @@
           "position": 1
         }
       ],
-      "position": 2
+      "position": 1
     },
     {
       "stable_id": "cr-decorator-attr-target",
@@ -187,7 +145,7 @@
           "position": 1
         }
       ],
-      "position": 3
+      "position": 2
     },
     {
       "stable_id": "cr-floordiv-negatives",
@@ -227,7 +185,7 @@
           "position": 1
         }
       ],
-      "position": 4
+      "position": 3
     },
     {
       "stable_id": "cr-try-else",
@@ -267,7 +225,7 @@
           "position": 1
         }
       ],
-      "position": 5
+      "position": 4
     },
     {
       "stable_id": "cr-chained-aug-assign",
@@ -307,7 +265,7 @@
           "position": 1
         }
       ],
-      "position": 6
+      "position": 5
     },
     {
       "stable_id": "cr-yield-from-sum",
@@ -347,7 +305,7 @@
           "position": 1
         }
       ],
-      "position": 7
+      "position": 6
     },
     {
       "stable_id": "cr-mro-diamond",
@@ -362,7 +320,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 8,
+      "position": 7,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -403,7 +361,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 9,
+      "position": 8,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -444,7 +402,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 10,
+      "position": 9,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -485,7 +443,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 11,
+      "position": 10,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -526,7 +484,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 12,
+      "position": 11,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -567,7 +525,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 13,
+      "position": 12,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -608,7 +566,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 14,
+      "position": 13,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -649,7 +607,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 4.0,
-      "position": 15,
+      "position": 14,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -690,7 +648,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 16,
+      "position": 15,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -731,7 +689,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 4.0,
-      "position": 17,
+      "position": 16,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -760,47 +718,6 @@
       ]
     },
     {
-      "stable_id": "cr-zip-strict-uneven",
-      "title": "zip truncates and consumes",
-      "description": "zip stops at the shortest input, but has already pulled from the longer one.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "code-reasoning",
-        "tracing",
-        "discriminator"
-      ],
-      "difficulty": "hard",
-      "importance_weight": 4.0,
-      "position": 18,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "[(1, 10), (2, 20)] [4, 5]",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "a = iter([1, 2, 3, 4, 5])\nb = [10, 20]\npaired = list(zip(a, b))\nprint(paired, list(a))",
-          "position": 1
-        }
-      ]
-    },
-    {
       "stable_id": "cr3-descriptor-protocol",
       "title": "Descriptor overrides instance dict",
       "description": "A data descriptor on the class wins over the instance __dict__; a non-data one does not.",
@@ -813,7 +730,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 19,
+      "position": 17,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -854,7 +771,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 20,
+      "position": 18,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -895,7 +812,7 @@
       ],
       "difficulty": "hard",
       "importance_weight": 4.0,
-      "position": 21,
+      "position": 19,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -936,7 +853,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 22,
+      "position": 20,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -977,7 +894,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 23,
+      "position": 21,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1018,7 +935,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 24,
+      "position": 22,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1047,47 +964,6 @@
       ]
     },
     {
-      "stable_id": "cr3-exception-chaining",
-      "title": "Implicit exception chaining through __context__",
-      "description": "Raising inside an except block links the original as __context__.",
-      "category": "code-reasoning",
-      "tags": [
-        "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
-      ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 25,
-      "enabled": true,
-      "grading_mode": "deterministic",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "type": "exact",
-        "canonical_answer": "KeyError ValueError None second",
-        "accepted_aliases": [],
-        "case_sensitive": true,
-        "trim_whitespace": true,
-        "normalize_punctuation": false,
-        "points": 100.0
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "Determine the exact single line printed by this self-contained Python 3 program. Reply only with ANSWER: <output>, using the literal printed output. Do not include an explanation, quotes around the output, or Markdown fences.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "def f():\n    try:\n        raise ValueError('first')\n    except ValueError:\n        raise KeyError('second')\n\ntry:\n    f()\nexcept KeyError as e:\n    print(type(e).__name__, type(e.__context__).__name__, e.__cause__, e.args[0])",
-          "position": 1
-        }
-      ]
-    },
-    {
       "stable_id": "cr3-closure-cell-rebind",
       "title": "Closures capture the variable, not the value",
       "description": "Rebinding after the closures are built changes what all of them see.",
@@ -1100,7 +976,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 26,
+      "position": 23,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1141,7 +1017,7 @@
       ],
       "difficulty": "medium",
       "importance_weight": 1.0,
-      "position": 27,
+      "position": 24,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1170,19 +1046,18 @@
       ]
     },
     {
-      "stable_id": "cr4-accumulator-dict",
-      "title": "Group and aggregate in one pass",
-      "description": "Bucketing with derived keys, then a second pass that depends on the first.",
-      "category": "code-reasoning",
+      "stable_id": "cr8-generator-delegation-unwind",
+      "title": "Delegated generator throw, return and cleanup",
+      "description": "Track an exception injected through yield from, its return value, and close unwinding.",
+      "category": "code-reasoning/python",
       "tags": [
         "python",
-        "code-reasoning",
-        "tracing",
-        "anchor"
+        "original",
+        "unmeasured",
+        "execution-verified"
       ],
-      "difficulty": "medium",
-      "importance_weight": 1.0,
-      "position": 28,
+      "difficulty": "hard",
+      "importance_weight": 3.0,
       "enabled": true,
       "grading_mode": "deterministic",
       "generation_overrides": {
@@ -1190,7 +1065,7 @@
       },
       "grader_config": {
         "type": "exact",
-        "canonical_answer": "[('a', 3, 9, 5), ('b', 2, 9, 8), ('c', 2, 9, 7)]",
+        "canonical_answer": "ready|handled|tail|['fault', 'child-finally', 14, 'parent-finally']",
         "accepted_aliases": [],
         "case_sensitive": true,
         "trim_whitespace": true,
@@ -1205,10 +1080,11 @@
         },
         {
           "role": "user",
-          "content": "records = [('a', 3), ('b', 1), ('a', 5), ('c', 2), ('b', 8), ('a', 1), ('c', 7)]\nagg = {}\nfor k, v in records:\n    slot = agg.setdefault(k, {'n': 0, 'sum': 0, 'max': None})\n    slot['n'] += 1\n    slot['sum'] += v\n    slot['max'] = v if slot['max'] is None else max(slot['max'], v)\nranked = sorted(agg.items(), key=lambda kv: (-kv[1]['sum'], kv[0]))\nprint([(k, d['n'], d['sum'], d['max']) for k, d in ranked])",
+          "content": "trace = []\ndef child():\n    try:\n        try:\n            yield 'ready'\n        except ValueError as exc:\n            trace.append(str(exc))\n            value = yield 'handled'\n            return value * 2\n    finally:\n        trace.append('child-finally')\ndef parent():\n    try:\n        result = yield from child()\n        trace.append(result)\n        yield 'tail'\n    finally:\n        trace.append('parent-finally')\ng = parent()\na = next(g)\nb = g.throw(ValueError('fault'))\nc = g.send(7)\ng.close()\nprint(a, b, c, trace, sep='|')\n",
           "position": 1
         }
-      ]
+      ],
+      "position": 25
     },
     {
       "stable_id": "cr-fn-merge-windows",
@@ -1247,46 +1123,7 @@
           "position": 1
         }
       ],
-      "position": 29
-    },
-    {
-      "stable_id": "cr-fn-latest-records",
-      "title": "Select the latest event per ID",
-      "description": "records is a list of dicts with string id, integer timestamp and arbitrary payload. Return one dict per id: highest timestamp wins; on ties the last input record wins. Order output by each id's FIRST appearance, even when its winner is replaced. Empty input returns [].",
-      "category": "code-generation/python",
-      "tags": [
-        "python",
-        "execution-graded",
-        "original",
-        "unmeasured"
-      ],
-      "difficulty": "hard",
-      "importance_weight": 3.0,
-      "enabled": true,
-      "grading_mode": "execution",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "language": "python",
-        "completion_mode": "full_function",
-        "entry_point": "latest_records",
-        "timeout_seconds": 3.0,
-        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([],)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n    args = ([{'id': 'a', 'timestamp': 2, 'payload': 1}, {'id': 'b', 'timestamp': 1, 'payload': 9}, {'id': 'a', 'timestamp': 2, 'payload': 3}, {'id': 'a', 'timestamp': 0, 'payload': 0}],)\n    original = deepcopy(args)\n    assert candidate(*args) == [{'id': 'a', 'timestamp': 2, 'payload': 3}, {'id': 'b', 'timestamp': 1, 'payload': 9}]\n    assert args == original, \"inputs mutated\"\n    args = ([{'id': 'x', 'timestamp': -3, 'payload': None}, {'id': 'x', 'timestamp': -1, 'payload': False}],)\n    original = deepcopy(args)\n    assert candidate(*args) == [{'id': 'x', 'timestamp': -1, 'payload': False}]\n    assert args == original, \"inputs mutated\"\n"
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature. A compact implementation that satisfies the contract is sufficient; do not add a test harness, commentary, or alternative implementations.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "def latest_records(records):\n    \"\"\"records is a list of dicts with string id, integer timestamp and arbitrary payload. Return one dict per id: highest timestamp wins; on ties the last input record wins. Order output by each id's FIRST appearance, even when its winner is replaced. Empty input returns [].\n    Do not mutate any input. Use only the Python standard library.\n    Inputs satisfy the stated preconditions; no malformed-input validation is required.\n    \"\"\"\n",
-          "position": 1
-        }
-      ],
-      "position": 30
+      "position": 26
     },
     {
       "stable_id": "cr-fn-resolve-path",
@@ -1325,7 +1162,7 @@
           "position": 1
         }
       ],
-      "position": 31
+      "position": 27
     },
     {
       "stable_id": "cr-fn-inventory-ledger",
@@ -1364,7 +1201,7 @@
           "position": 1
         }
       ],
-      "position": 32
+      "position": 28
     },
     {
       "stable_id": "cr-fn-rolling-totals",
@@ -1403,7 +1240,7 @@
           "position": 1
         }
       ],
-      "position": 33
+      "position": 29
     },
     {
       "stable_id": "cr-fn-retry-delays",
@@ -1442,7 +1279,7 @@
           "position": 1
         }
       ],
-      "position": 34
+      "position": 30
     },
     {
       "stable_id": "cr-fn-parse-query",
@@ -1481,7 +1318,7 @@
           "position": 1
         }
       ],
-      "position": 35
+      "position": 31
     },
     {
       "stable_id": "cr-fn-diff-records",
@@ -1520,7 +1357,7 @@
           "position": 1
         }
       ],
-      "position": 36
+      "position": 32
     },
     {
       "stable_id": "cr-fn-longest-streak",
@@ -1559,7 +1396,7 @@
           "position": 1
         }
       ],
-      "position": 37
+      "position": 33
     },
     {
       "stable_id": "cr-fn-flatten-records",
@@ -1598,46 +1435,7 @@
           "position": 1
         }
       ],
-      "position": 38
-    },
-    {
-      "stable_id": "cr-fn-missing-ranges",
-      "title": "Compress missing IDs into inclusive ranges",
-      "description": "low <= high are integers. ids is an unsorted list of integers, with duplicates and possible values outside [low, high]. Return sorted inclusive (start, end) tuples covering exactly the missing integers within that interval. Do not enumerate every integer in the interval; it may span billions.",
-      "category": "code-generation/python",
-      "tags": [
-        "python",
-        "execution-graded",
-        "original",
-        "unmeasured"
-      ],
-      "difficulty": "hard",
-      "importance_weight": 3.0,
-      "enabled": true,
-      "grading_mode": "execution",
-      "generation_overrides": {
-        "temperature": 0.0
-      },
-      "grader_config": {
-        "language": "python",
-        "completion_mode": "full_function",
-        "entry_point": "missing_ranges",
-        "timeout_seconds": 3.0,
-        "test_code": "def check(candidate):\n    from copy import deepcopy\n    args = ([], 1, 5)\n    original = deepcopy(args)\n    assert candidate(*args) == [(1, 5)]\n    assert args == original, \"inputs mutated\"\n    args = ([5, 1, 1, 3, 8], 1, 5)\n    original = deepcopy(args)\n    assert candidate(*args) == [(2, 2), (4, 4)]\n    assert args == original, \"inputs mutated\"\n    args = ([1, 2], 1, 2)\n    original = deepcopy(args)\n    assert candidate(*args) == []\n    assert args == original, \"inputs mutated\"\n    args = ([0], -1000000000, 1000000000)\n    original = deepcopy(args)\n    assert candidate(*args) == [(-1000000000, -1), (1, 1000000000)]\n    assert args == original, \"inputs mutated\"\n    args = ([8], 3, 3)\n    original = deepcopy(args)\n    assert candidate(*args) == [(3, 3)]\n    assert args == original, \"inputs mutated\"\n"
-      },
-      "messages": [
-        {
-          "role": "system",
-          "content": "Implement the Python function below. Return the complete function definition, including its def line, as raw Python. Do not use Markdown fences or explanations. Preserve the requested function name and signature. A compact implementation that satisfies the contract is sufficient; do not add a test harness, commentary, or alternative implementations.",
-          "position": 0
-        },
-        {
-          "role": "user",
-          "content": "def missing_ranges(ids, low, high):\n    \"\"\"low <= high are integers. ids is an unsorted list of integers, with duplicates and possible values outside [low, high]. Return sorted inclusive (start, end) tuples covering exactly the missing integers within that interval. Do not enumerate every integer in the interval; it may span billions.\n    Do not mutate any input. Use only the Python standard library.\n    Inputs satisfy the stated preconditions; no malformed-input validation is required.\n    \"\"\"\n",
-          "position": 1
-        }
-      ],
-      "position": 39
+      "position": 34
     },
     {
       "stable_id": "cr-fn-lru-misses",
@@ -1676,7 +1474,7 @@
           "position": 1
         }
       ],
-      "position": 40
+      "position": 35
     },
     {
       "stable_id": "cr-fn-sessionize",
@@ -1715,7 +1513,7 @@
           "position": 1
         }
       ],
-      "position": 41
+      "position": 36
     },
     {
       "stable_id": "cr-fn-expand-template",
@@ -1754,7 +1552,7 @@
           "position": 1
         }
       ],
-      "position": 42
+      "position": 37
     },
     {
       "stable_id": "cr-fn-match-route",
@@ -1793,7 +1591,7 @@
           "position": 1
         }
       ],
-      "position": 43
+      "position": 38
     },
     {
       "stable_id": "cr-fn-paginate",
@@ -1832,7 +1630,7 @@
           "position": 1
         }
       ],
-      "position": 44
+      "position": 39
     }
   ]
 }

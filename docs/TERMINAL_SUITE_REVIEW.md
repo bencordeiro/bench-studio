@@ -1,5 +1,7 @@
 # Terminal suite review
 
+> Historical review. Current suites and counts are documented in [the October 29 refresh](BENCHMARK_REFRESH.md). Master is retired.
+
 The three questioned answer keys were reproduced locally with SQLite, GNU sed and Git. None needs a different expected value. Terminal suite 2.1.0 retains all twelve questions and their weights.
 
 | Question | Expected answer | Reason |

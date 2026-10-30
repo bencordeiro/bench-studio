@@ -5,13 +5,12 @@ from pydantic import BaseModel, Field, field_validator
 
 DEFAULT_COMPOSITE_WEIGHTS = {"quality": 0.85, "reliability": 0.10, "performance": 0.05}
 DEFAULT_INDEX_SUITE_NAMES = (
-    "Code Reasoning & Correctness (Python)",
-    "Mini Master",
     "Instruction-Following & Format Adherence",
-    "Cyber",
     "Terminal Semantics & System Gotchas",
-    "Agentic Tool-Use & Structured Output (Hermes)",
     "Web Dev Correctness & Debugging (JS)",
+    "Code Reasoning & Correctness (Python)",
+    "Cyber",
+    "Agentic Tool-Use & Structured Output (Hermes)",
 )
 
 
@@ -25,7 +24,7 @@ class AppSettings(BaseModel):
     default_temperature: float = 0.0
     default_top_p: float = 1.0
     default_max_tokens: int = Field(default=0, ge=0)
-    # None follows the seven curated defaults; [] explicitly disables the Index.
+    # None follows the six curated defaults; [] explicitly disables the Index.
     index_suite_ids: list[str] | None = Field(default=None, max_length=50)
     composite_weights: dict[str, float] = Field(default_factory=lambda: dict(DEFAULT_COMPOSITE_WEIGHTS))
     automatic_backup: bool = True
